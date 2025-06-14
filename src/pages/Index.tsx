@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { useApartments, type Apartment } from '@/hooks/useApartments';
 import Map from '@/components/Map';
+import CatGame from '@/components/CatGame';
 
 const Index = () => {
   const [title, setTitle] = useState('');
@@ -27,6 +28,7 @@ const Index = () => {
   const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<Apartment>>({});
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCatGameOpen, setIsCatGameOpen] = useState(false);
   const { toast } = useToast();
 
   const { 
@@ -175,7 +177,16 @@ const Index = () => {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-purple-800 mb-2">מור וגבי מוצאים דירה</h1>
           <p className="text-purple-600 text-lg">וואו איזה ביתתת 🏠✨</p>
-          <p className="text-sm text-purple-500 mt-2">מי שמוסיף הכי פחות דירות עושה כלים לשבוע בבית החדש</p>
+          <div className="flex items-center justify-center gap-4 mt-2">
+            <p className="text-sm text-purple-500">מי שמוסיף הכי פחות דירות עושה כלים לשבוע בבית החדש</p>
+            <Button
+              onClick={() => setIsCatGameOpen(true)}
+              className="bg-gradient-to-r from-orange-400 to-pink-500 hover:from-orange-500 hover:to-pink-600 text-white text-2xl p-3 rounded-full animate-bounce"
+              title="תפוס את החתול!"
+            >
+              🐱
+            </Button>
+          </div>
         </div>
 
         {/* Add Apartment Form */}
@@ -530,6 +541,9 @@ const Index = () => {
           </div>
         )}
       </div>
+
+      {/* Cat Game Modal */}
+      <CatGame isOpen={isCatGameOpen} onClose={() => setIsCatGameOpen(false)} />
     </div>
   );
 };
