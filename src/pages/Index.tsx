@@ -437,7 +437,7 @@ const Index = () => {
                   )}
 
                   {/* Ratings */}
-                  <div className="mb-3 space-y-1">
+                  <div className="mb-4 space-y-1">
                     <div className="flex items-center gap-2 justify-end">
                       <div className="scale-75">
                         <StarRating 
@@ -468,7 +468,7 @@ const Index = () => {
                   </div>
 
                   {/* Note */}
-                  <div className="mb-4 flex-grow">
+                  <div className="mb-6 flex-grow">
                     <p className="text-xs text-gray-600 line-clamp-2 text-right">
                       {apartment.note || 'אין הערות'}
                     </p>

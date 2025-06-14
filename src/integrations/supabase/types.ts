@@ -17,9 +17,11 @@ export type Database = {
           created_at: string
           description: string | null
           fb_url: string | null
+          gabi_rating: number | null
           id: string
           image_url: string | null
           location: string | null
+          mor_rating: number | null
           note: string | null
           pets_allowed: string | null
           price: number | null
@@ -35,9 +37,11 @@ export type Database = {
           created_at?: string
           description?: string | null
           fb_url?: string | null
+          gabi_rating?: number | null
           id?: string
           image_url?: string | null
           location?: string | null
+          mor_rating?: number | null
           note?: string | null
           pets_allowed?: string | null
           price?: number | null
@@ -53,9 +57,11 @@ export type Database = {
           created_at?: string
           description?: string | null
           fb_url?: string | null
+          gabi_rating?: number | null
           id?: string
           image_url?: string | null
           location?: string | null
+          mor_rating?: number | null
           note?: string | null
           pets_allowed?: string | null
           price?: number | null
