@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,42 +8,32 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import type { Apartment } from '@/hooks/useApartments';
-import PasswordPromptDialog from './PasswordPromptDialog';
 
 interface EditApartmentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   apartment: Apartment | null;
-  onSave: (apartmentId: string, updates: Partial<Apartment>) => void;
+  onSave: (apartmentId: string, updates: Partial<Apartment>) => Promise<void>;
   uploadImage: (file: File) => Promise<string | null>;
-  isAdd?: boolean;
 }
-
-const SECRET = "wika";
 
 const EditApartmentDialog: React.FC<EditApartmentDialogProps> = ({
   isOpen,
   onClose,
   apartment,
   onSave,
-  uploadImage,
-  isAdd = false
+  uploadImage
 }) => {
   const [editFormData, setEditFormData] = useState<Partial<Apartment>>({});
   const [editUploadingImage, setEditUploadingImage] = useState(false);
   const editFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
-  const [pendingEditData, setPendingEditData] = useState<Partial<Apartment>|null>(null);
-
   useEffect(() => {
-    if (!isAdd && apartment) {
-      setEditFormData({...apartment});
-    } else if (isAdd) {
-      setEditFormData({});
+    if (apartment) {
+      setEditFormData({ ...apartment });
     }
-  }, [apartment, isAdd, isOpen]);
+  }, [apartment]);
 
   const handleEditImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -58,9 +47,8 @@ const EditApartmentDialog: React.FC<EditApartmentDialogProps> = ({
     setEditUploadingImage(false);
   };
 
-  const handleRequestSave = async () => {
-    // בדיקה בסיסית
-    if (!(isAdd ? editFormData.title : editFormData.title?.trim())) {
+  const handleSaveEdit = async () => {
+    if (!apartment || !editFormData.title?.trim()) {
       toast({
         title: "שגיאה",
         description: "אנא מלא את שדה הכותרת",
@@ -68,28 +56,11 @@ const EditApartmentDialog: React.FC<EditApartmentDialogProps> = ({
       });
       return;
     }
-    setPendingEditData(editFormData);
-    setPasswordDialogOpen(true);
-  };
 
-  const handlePasswordPrompt = (password: string) => {
-    if (password.trim() === SECRET) {
-      if (isAdd) {
-        onSave('', editFormData);
-      } else if (apartment) {
-        onSave(apartment.id, editFormData);
-      }
-      setPasswordDialogOpen(false);
-      setPendingEditData(null);
-      onClose();
-    } else {
-      toast({
-        title: "סיסמה שגויה",
-        description: "הפעולה בוטלה.",
-        variant: "destructive"
-      });
-      setPasswordDialogOpen(false);
-      setPendingEditData(null);
+    await onSave(apartment.id, editFormData);
+    onClose();
+    if (editFileInputRef.current) {
+      editFileInputRef.current.value = '';
     }
   };
 
@@ -97,7 +68,7 @@ const EditApartmentDialog: React.FC<EditApartmentDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="text-right">{isAdd ? "הוסף דירה" : "ערוך דירה"}</DialogTitle>
+          <DialogTitle className="text-right">ערוך דירה</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -252,21 +223,13 @@ const EditApartmentDialog: React.FC<EditApartmentDialogProps> = ({
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-4">
-          <Button onClick={handleRequestSave} className="bg-purple-600 hover:bg-purple-700">
+          <Button onClick={handleSaveEdit} className="bg-purple-600 hover:bg-purple-700">
             שמור
           </Button>
           <Button variant="outline" onClick={onClose}>
             ביטול
           </Button>
         </div>
-        {/* דיאלוג לקבלת סיסמה */}
-        <PasswordPromptDialog
-          isOpen={passwordDialogOpen}
-          onConfirm={handlePasswordPrompt}
-          onCancel={() => setPasswordDialogOpen(false)}
-          title="אימות סיסמה"
-          confirmText="אישור"
-        />
       </DialogContent>
     </Dialog>
   );

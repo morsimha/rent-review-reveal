@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useApartments, type Apartment } from '@/hooks/useApartments';
@@ -8,10 +7,6 @@ import DrawingGame from '@/components/DrawingGame';
 import ApartmentForm from '@/components/ApartmentForm';
 import ApartmentCard from '@/components/ApartmentCard';
 import EditApartmentDialog from '@/components/EditApartmentDialog';
-import PasswordPromptDialog from '@/components/PasswordPromptDialog';
-import { useToast } from '@/hooks/use-toast';
-
-const SECRET = "wika";
 
 const Index = () => {
   const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
@@ -20,12 +15,6 @@ const Index = () => {
   const [isDrawingGameOpen, setIsDrawingGameOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"rating" | "entry_date" | "created_at">("rating");
   const [showWithShelter, setShowWithShelter] = useState<null | boolean>(null);
-
-  // דיאלוגים ותצוגה להוספה ולסיסמה
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [pendingPasswordAction, setPendingPasswordAction] = useState<null | { cb: (ok: boolean) => void; action: 'edit' | 'delete'; }>(null);
-  const [pendingEditData, setPendingEditData] = useState<{ id: string, updates: Partial<Apartment> } | null>(null);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const { 
     apartments, 
@@ -38,71 +27,34 @@ const Index = () => {
     uploadImage
   } = useApartments();
 
-  const { toast } = useToast();
-
-  // *** הוספת דירה - ללא אימות נוסף כי הדיאלוג מטפל בזה ***
-  const handleAddApartment = async (apartmentId: string, apartmentData: Partial<Apartment>) => {
-    // אם זה הוספה (apartmentId ריק), הוסף את הדירה
-    if (apartmentId === '') {
-      addApartment(apartmentData);
-      setIsAddDialogOpen(false);
-      return true;
-    }
-    return false;
+  const handleAddApartment = async (apartmentData: any) => {
+    const result = await addApartment(apartmentData);
+    return result.success;
   };
 
-  // *** עריכת דירה ***
+  const handleMorRatingChange = async (apartmentId: string, newRating: number) => {
+    await updateMorRating(apartmentId, newRating);
+  };
+
+  const handleGabiRatingChange = async (apartmentId: string, newRating: number) => {
+    await updateGabiRating(apartmentId, newRating);
+  };
+
   const handleEditApartment = (apartment: Apartment) => {
     setEditingApartment(apartment);
     setIsEditDialogOpen(true);
   };
-  const handleSaveEdit = (apartmentId: string, updates: Partial<Apartment>) => {
-    // אם זה עריכה (apartmentId לא ריק), בקש אימות
-    if (apartmentId !== '') {
-      setPendingEditData({ id: apartmentId, updates });
-      setPendingPasswordAction({ cb: handleEditPassword, action: 'edit' });
-    }
-  };
-  const handleEditPassword = (ok: boolean) => {
-    if (ok && pendingEditData) {
-      updateApartment(pendingEditData.id, pendingEditData.updates);
+
+  const handleSaveEdit = async (apartmentId: string, editFormData: Partial<Apartment>) => {
+    const result = await updateApartment(apartmentId, editFormData);
+    if (result.success) {
+      setEditingApartment(null);
       setIsEditDialogOpen(false);
-    } else if (!ok) {
-      toast({
-        title: "סיסמה שגויה",
-        description: "הפעולה בוטלה.",
-        variant: "destructive"
-      });
     }
-    setPendingEditData(null);
-    setPendingPasswordAction(null);
   };
 
-  // *** מחיקת דירה ***
-  const handleRequestDelete = (apartmentId: string) => {
-    setPendingDeleteId(apartmentId);
-    setPendingPasswordAction({ cb: handleDeletePassword, action: 'delete' });
-  };
-  const handleDeletePassword = (ok: boolean) => {
-    if (ok && pendingDeleteId) {
-      deleteApartment(pendingDeleteId);
-    } else if (!ok) {
-      toast({
-        title: "סיסמה שגויה",
-        description: "המחיקה בוטלה.",
-        variant: "destructive"
-      });
-    }
-    setPendingDeleteId(null);
-    setPendingPasswordAction(null);
-  };
-
-  // הצגת דיאלוג סיסמה
-  const handlePasswordPrompt = (password: string) => {
-    const ok = password.trim() === SECRET;
-    if (pendingPasswordAction) {
-      pendingPasswordAction.cb(ok);
-    }
+  const handleDelete = async (apartmentId: string) => {
+    await deleteApartment(apartmentId);
   };
 
   if (loading) {
@@ -205,25 +157,8 @@ const Index = () => {
           </div>
         </div>
 
-        {/* כפתור בלבד להוספת דירה */}
-        <div className="flex justify-center mb-7">
-          <Button
-            className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 shadow-lg text-xl"
-            onClick={() => setIsAddDialogOpen(true)}
-          >
-            הוסף דירה
-          </Button>
-        </div>
-
-        {/* דיאלוג הוספת דירה */}
-        <EditApartmentDialog
-          isOpen={isAddDialogOpen}
-          onClose={() => setIsAddDialogOpen(false)}
-          apartment={null}
-          onSave={handleAddApartment}
-          uploadImage={uploadImage}
-          isAdd={true}
-        />
+        {/* Add Apartment Form */}
+        <ApartmentForm onAddApartment={handleAddApartment} uploadImage={uploadImage} />
 
         {/* Map Section */}
         <div className="mb-8">
@@ -238,9 +173,9 @@ const Index = () => {
               key={apartment.id}
               apartment={apartment}
               onEdit={handleEditApartment}
-              onDelete={handleRequestDelete}
-              onMorRatingChange={updateMorRating}
-              onGabiRatingChange={updateGabiRating}
+              onDelete={handleDelete}
+              onMorRatingChange={handleMorRatingChange}
+              onGabiRatingChange={handleGabiRatingChange}
             />
           ))}
         </div>
@@ -259,16 +194,6 @@ const Index = () => {
         apartment={editingApartment}
         onSave={handleSaveEdit}
         uploadImage={uploadImage}
-        isAdd={false}
-      />
-
-      {/* דיאלוג להזנת סיסמה */}
-      <PasswordPromptDialog
-        isOpen={!!pendingPasswordAction}
-        onConfirm={handlePasswordPrompt}
-        onCancel={() => setPendingPasswordAction(null)}
-        title="אימות סיסמה"
-        confirmText="אישור"
       />
 
       {/* Drawing Game Modal */}
