@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -32,7 +31,9 @@ const Index = () => {
     uploadImage
   } = useApartments();
 
+  // handleAddApartment now supports arnona
   const handleAddApartment = async (apartmentData: any) => {
+    // נתמך גם arnona
     const result = await addApartment(apartmentData);
     return result.success;
   };
@@ -235,4 +236,3 @@ const Index = () => {
 };
 
 export default Index;
-

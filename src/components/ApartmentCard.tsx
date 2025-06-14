@@ -8,7 +8,7 @@ import type { Apartment } from '@/hooks/useApartments';
 import { format, parseISO } from 'date-fns';
 
 interface ApartmentCardProps {
-  apartment: Apartment;
+  apartment: Apartment & { arnona?: number | null };
   onEdit: (apartment: Apartment) => void;
   onDelete: (apartmentId: string) => void;
   onMorRatingChange: (apartmentId: string, rating: number) => void;
@@ -55,11 +55,20 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             alt={apartment.title}
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-110 rounded-tr-lg"
           />
-          {apartment.price && (
-            <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full font-bold text-sm z-20">
-              ₪{apartment.price}
-            </div>
-          )}
+          {/* מחירים וארנונה */}
+          <div className="absolute top-2 right-2 flex flex-row-reverse gap-2 z-20">
+            {apartment.price && (
+              <div className="bg-green-500 text-white px-2 py-1 rounded-full font-bold text-sm">
+                ₪{apartment.price}
+              </div>
+            )}
+            {/* ארנונה */}
+            {apartment.arnona != null && !isNaN(Number(apartment.arnona)) && (
+              <div className="bg-yellow-400 text-black px-2 py-1 rounded-full font-bold text-sm" title="מחיר ארנונה">
+                ₪{apartment.arnona} ארנונה
+              </div>
+            )}
+          </div>
           {apartment.pets_allowed === 'yes' && (
             <div className="absolute top-2 left-2 text-xl">🐱</div>
           )}
@@ -177,4 +186,3 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 };
 
 export default ApartmentCard;
-
