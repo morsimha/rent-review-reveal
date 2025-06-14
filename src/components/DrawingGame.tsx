@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, StopCircle, Eye, ZoomIn, Palette, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -52,6 +53,10 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     return player === 'player1' ? 'מור' : 'גבי';
   };
 
+  const getPlayerTurnText = (player: 'player1' | 'player2') => {
+    return player === 'player1' ? 'עכשיו תורו של מור' : 'עכשיו תורה של גבי';
+  };
+
   const initializeCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -95,9 +100,12 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     if (!canvas) return { x: 0, y: 0 };
     
     const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
     };
   };
 
@@ -107,9 +115,12 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     
     const rect = canvas.getBoundingClientRect();
     const touch = e.touches[0];
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
     return {
-      x: touch.clientX - rect.left,
-      y: touch.clientY - rect.top
+      x: (touch.clientX - rect.left) * scaleX,
+      y: (touch.clientY - rect.top) * scaleY
     };
   };
 
@@ -288,7 +299,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                 🎨 משחק ציור שיתופי
               </h2>
               <div className="text-lg font-semibold text-orange-600">
-                {gameState === 'drawing' ? `תור של ${getPlayerName(currentPlayer)}` : ''}
+                {gameState === 'drawing' ? getPlayerTurnText(currentPlayer) : ''}
               </div>
             </div>
 
@@ -314,7 +325,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                 <div className="flex flex-col items-center w-full">
                   <div className="mb-4 text-center">
                     <p className="text-lg font-semibold text-orange-800 mb-2">
-                      עכשיו תור של {getPlayerName(currentPlayer)}
+                      {getPlayerTurnText(currentPlayer)}
                     </p>
                     
                     {/* Color Selection */}
@@ -352,7 +363,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                       onTouchMove={handleTouchMove}
                       onTouchEnd={stopDrawing}
                       className="cursor-crosshair touch-none max-w-full h-auto"
-                      style={{ maxWidth: '100%', height: 'auto' }}
+                      style={{ maxWidth: '100%', height: 'auto', display: 'block' }}
                     />
                   </div>
 
