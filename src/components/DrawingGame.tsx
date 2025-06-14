@@ -342,26 +342,31 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                     </p>
                     
                     {/* Color Selection */}
-                    <div className="flex items-center justify-center gap-4 mb-4">
+                    <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
                       <Palette className="w-5 h-5 text-orange-600" />
-                      <Select value={selectedColor} onValueChange={handleColorChange}>
-                        <SelectTrigger className="w-48">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {colors.map((color) => (
-                            <SelectItem key={color.value} value={color.value}>
-                              <div className="flex items-center gap-2">
-                                <div 
-                                  className="w-4 h-4 rounded-full border border-gray-300" 
-                                  style={{ backgroundColor: color.value }}
-                                />
-                                {color.name}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex flex-wrap gap-2">
+                        {colors.map((color) => (
+                          <button
+                            key={color.value}
+                            title={color.name}
+                            className={
+                              `w-7 h-7 rounded-full border-2 transition
+                              flex items-center justify-center
+                              ${selectedColor === color.value
+                                ? 'border-orange-500 ring-2 ring-orange-400'
+                                : 'border-gray-200'
+                              }`
+                            }
+                            style={{ backgroundColor: color.value }}
+                            onClick={() => handleColorChange(color.value)}
+                            aria-label={color.name}
+                          >
+                            {selectedColor === color.value && (
+                              <span className="block w-3 h-3 rounded-full border border-white bg-white bg-opacity-70" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                   
