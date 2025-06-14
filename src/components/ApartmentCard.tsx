@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Trash2, Edit, Phone, Link } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -43,7 +44,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-110 rounded-tr-lg"
           />
           {apartment.price && (
-            <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full font-bold text-sm">
+            <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full font-bold text-sm z-20">
               ₪{apartment.price}
             </div>
           )}
@@ -51,29 +52,34 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             <div className="absolute top-2 left-2 text-xl">🐱</div>
           )}
           {apartment.has_shelter && (
-            <div className="absolute top-12 right-2 text-lg bg-white/70 rounded px-2 py-1 flex items-center gap-1 shadow"><span className="text-xl">🏠</span><span className="text-xs text-purple-800">מקלט</span></div>
+            <div className="absolute top-12 right-2 text-lg bg-white/70 rounded px-2 py-1 flex items-center gap-1 shadow z-10">
+              <span className="text-xl">🏠</span>
+              <span className="text-xs text-purple-800">מקלט</span>
+            </div>
           )}
         </div>
 
         <div className="p-4 flex flex-col flex-grow min-h-0">
-          {/* Title and Description */}
+          {/* Title */}
           <h3 className="font-bold text-base mb-2 text-gray-800 line-clamp-1 text-right">{apartment.title}</h3>
-          <div className="mb-2 h-10 flex items-start">
-            <p className="text-gray-600 text-sm line-clamp-2 text-right leading-5">{apartment.description}</p>
-          </div>
           
+          {/* Entry Date */}
+          {apartment.entry_date && (
+            <div className="flex flex-row-reverse items-center gap-1 mb-2">
+              <span className="text-purple-700 text-xs font-bold">תאריך כניסה:</span>
+              <span className="text-xs text-purple-700 font-normal" dir="ltr" style={{direction: 'ltr'}}>{apartment.entry_date}</span>
+            </div>
+          )}
+
           {/* Location */}
           {apartment.location && (
             <p className="text-purple-600 text-sm mb-2 font-medium text-right">{apartment.location}</p>
           )}
 
-          {/* Entry Date */}
-          {apartment.entry_date && (
-            <p className="text-purple-700 text-xs mb-1 text-right flex flex-row-reverse gap-1 items-center">
-              <span>תאריך כניסה:</span>
-              <span dir="rtl">{apartment.entry_date}</span>
-            </p>
-          )}
+          {/* Description */}
+          <div className="mb-2 h-10 flex items-start">
+            <p className="text-gray-600 text-sm line-clamp-2 text-right leading-5">{apartment.description}</p>
+          </div>
 
           {/* Contact Info - Aligned to right */}
           {(apartment.contact_name || apartment.contact_phone) && (
@@ -151,3 +157,4 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 };
 
 export default ApartmentCard;
+
