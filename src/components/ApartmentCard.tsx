@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import StarRating from './StarRating';
 import type { Apartment } from '@/hooks/useApartments';
+import { format, parseISO } from 'date-fns';
 
 interface ApartmentCardProps {
   apartment: Apartment;
@@ -29,6 +30,18 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
       default: return 'bg-gray-400';
     }
   };
+
+  // Format entry date as dd/MM if it exists and is parseable
+  let formattedEntryDate = '';
+  if (apartment.entry_date) {
+    // Try ISO first; fallback to displaying the raw value if parse fails
+    try {
+      const parsed = parseISO(apartment.entry_date);
+      formattedEntryDate = format(parsed, 'dd/MM');
+    } catch {
+      formattedEntryDate = apartment.entry_date;
+    }
+  }
 
   return (
     <Card className="bg-white/90 backdrop-blur-sm border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 h-[550px] flex flex-col">
@@ -60,23 +73,23 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
         </div>
 
         <div className="p-4 flex flex-col flex-grow min-h-0">
-          {/* Title (left) + Entry Date (right) */}
-          <div className="flex flex-row items-center gap-2 mb-2 w-full justify-between">
-            {/* תאריך כניסה - הכי מימין */}
-            {apartment.entry_date && (
-              <span
-                className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap"
-                dir="ltr"
-                style={{ direction: 'ltr', marginRight: 0 }}
-              >
-                {apartment.entry_date}
-              </span>
-            )}
-            {/* שם דירה - הכי משמאל */}
-            <h3 className="font-bold text-base text-gray-800 line-clamp-1 text-left flex-1" style={{ minWidth: 0 }}>
+          {/* Title on top right */}
+          <div className="flex w-full mb-0">
+            <h3 className="font-bold text-base text-gray-800 line-clamp-1 text-right w-full" style={{minWidth: 0}}>
               {apartment.title}
             </h3>
           </div>
+          {/* Entry date below, if exists, on right */}
+          {formattedEntryDate && (
+            <div className="flex w-full mb-2">
+              <span
+                className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap"
+                dir="ltr"
+              >
+                {formattedEntryDate}
+              </span>
+            </div>
+          )}
 
           {/* Location */}
           {apartment.location && (
@@ -113,18 +126,18 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 
           {/* Ratings */}
           <div className="mb-3 space-y-2">
-            {/* מור: הכי שמאל, כוכבים מימין */}
-            <div className="flex flex-row items-center gap-2 justify-start text-right">
+            {/* מור: label left, stars right */}
+            <div className="flex flex-row items-center gap-2 justify-end text-right">
               <span className="text-sm font-medium text-purple-600 ml-1">מור:</span>
-              <StarRating 
-                rating={apartment.mor_rating || 0} 
+              <StarRating
+                rating={apartment.mor_rating || 0}
                 onRatingChange={(rating) => onMorRatingChange(apartment.id, rating)}
               />
             </div>
-            <div className="flex flex-row items-center gap-2 justify-start text-right">
+            <div className="flex flex-row items-center gap-2 justify-end text-right">
               <span className="text-sm font-medium text-pink-600 ml-1">גבי:</span>
-              <StarRating 
-                rating={apartment.gabi_rating || 0} 
+              <StarRating
+                rating={apartment.gabi_rating || 0}
                 onRatingChange={(rating) => onGabiRatingChange(apartment.id, rating)}
               />
             </div>
@@ -165,4 +178,3 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 };
 
 export default ApartmentCard;
-
