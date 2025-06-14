@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Save, Eye, Palette, Trash2, Lock } from 'lucide-react';
+import { X, Send, Save, Eye, Palette, Trash2, Lock, Users, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -35,6 +34,8 @@ const colors = [
   { name: 'צהוב', value: '#EAB308' }
 ];
 
+type GameMode = 'single' | 'multi';
+
 const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -43,7 +44,8 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
   const [selectedDrawing, setSelectedDrawing] = useState<SavedDrawing | null>(null);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [drawingName, setDrawingName] = useState('');
-  
+  const [gameMode, setGameMode] = useState<GameMode>('multi'); // ברירת מחדל למולטי
+
   const { 
     saveDrawing, 
     getDrawings, 
@@ -58,15 +60,17 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
   } = useDrawingGame();
   const { toast } = useToast();
 
-  // Initialize canvas
-  const initializeCanvas = () => {
+  // החזקת תוכן אחרון של ציור (רק למצב multi)
+  const [lastDrawingData, setLastDrawingData] = useState<string | null>(null);
+
+  // יצירת קנבס
+  const initializeCanvas = (imgSrc?: string) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const isMobile = window.innerWidth < 768;
     const width = isMobile ? Math.min(window.innerWidth - 32, 480) : 800;
     const height = isMobile ? Math.round(width * 0.625) : 500;
-    
     canvas.width = width;
     canvas.height = height;
 
@@ -75,6 +79,16 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
 
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, width, height);
+
+    // אם יש ציור, טען אותו
+    if (imgSrc) {
+      const image = new window.Image();
+      image.onload = () => {
+        ctx.drawImage(image, 0, 0, width, height);
+      };
+      image.src = imgSrc;
+    }
+
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.lineWidth = 3;
@@ -108,8 +122,8 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
 
   // Drawing functions
   const startDrawing = (point: Point) => {
-    // Check if it's the player's turn
-    if (!isMyTurn()) {
+    // Multi only: Check if player's turn
+    if (gameMode === 'multi' && !isMyTurn()) {
       toast({
         variant: "destructive",
         title: "לא התורו שלך!",
@@ -171,6 +185,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
 
   // Switch player turn
   const handleSwitchTurn = async () => {
+    if (gameMode === 'single') return; // disable
     if (!isMyTurn()) {
       toast({
         variant: "destructive",
@@ -180,6 +195,12 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
       return;
     }
 
+    // ב-save נשמור גם את הקנבס הנוכחי לשחקן הבא
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const currentImageData = canvas.toDataURL();
+      setLastDrawingData(currentImageData);
+    }
     const result = await switchTurn();
     if (result.success) {
       toast({
@@ -210,9 +231,9 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     if (!canvas) return;
 
     const imageData = canvas.toDataURL();
-    const currentTurn = currentSession?.current_turn as 'player1' | 'player2' || 'player1';
+    const currentTurn = (currentSession?.current_turn as 'player1' | 'player2') || 'player1';
     const result = await saveDrawing(imageData, currentTurn, true, drawingName.trim());
-    
+
     if (result.success) {
       toast({
         title: "הציור נשמר!",
@@ -222,6 +243,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
       setShowSaveDialog(false);
       setDrawingName('');
       loadSavedDrawings();
+      setLastDrawingData(imageData); // עדכן תמונה לאחר שמירה, המשך למשתמש הבא (multi)
     } else {
       toast({
         variant: "destructive",
@@ -264,11 +286,15 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (isOpen) {
-      initializeCanvas();
+      if (gameMode === 'multi' && lastDrawingData) {
+        initializeCanvas(lastDrawingData);
+      } else {
+        initializeCanvas();
+      }
       initializeSession();
       loadSavedDrawings();
     }
-  }, [isOpen]);
+  }, [isOpen, gameMode]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -280,7 +306,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const myTurn = isMyTurn();
+  const myTurn = gameMode === 'single' ? true : isMyTurn();
   const currentPlayerName = getCurrentPlayerName();
 
   return (
@@ -309,8 +335,30 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
               </div>
             </div>
 
+            {/* מצב משחק: יחיד/שני משתתפים */}
+            <div className="flex gap-2 items-center justify-center mb-2">
+              <Button
+                variant={gameMode === 'multi' ? "default" : "outline"}
+                onClick={() => setGameMode('multi')}
+                disabled={gameMode === 'multi'}
+                className={`flex items-center gap-1 ${gameMode === 'multi' ? 'bg-purple-200 text-purple-900' : ''}`}
+              >
+                <Users className="w-4 h-4" />
+                שני משתתפים
+              </Button>
+              <Button
+                variant={gameMode === 'single' ? "default" : "outline"}
+                onClick={() => setGameMode('single')}
+                disabled={gameMode === 'single'}
+                className={`flex items-center gap-1 ${gameMode === 'single' ? 'bg-yellow-100 text-yellow-900' : ''}`}
+              >
+                <User className="w-4 h-4" />
+                עם עצמי
+              </Button>
+            </div>
+
             {/* Turn Status */}
-            {!myTurn && (
+            {gameMode === 'multi' && !myTurn && (
               <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-4 text-center">
                 <p className="text-orange-800">🔒 ממתין ל{currentPlayerName} לסיים את התור...</p>
                 <p className="text-sm text-orange-600">המכשיר שלך: {deviceId}</p>
@@ -359,7 +407,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
               <div className="flex gap-3 flex-wrap justify-center">
                 <Button 
                   onClick={handleSwitchTurn}
-                  disabled={!myTurn || loading}
+                  disabled={gameMode === 'single' || !myTurn || loading}
                   className="bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50"
                 >
                   <Send className="w-4 h-4 ml-1" />
@@ -374,7 +422,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                   שמור ציור
                 </Button>
                 <Button 
-                  onClick={clearCanvas}
+                  onClick={() => clearCanvas()}
                   disabled={!myTurn}
                   variant="outline"
                   className="border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50"
