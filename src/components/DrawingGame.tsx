@@ -288,7 +288,9 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                 🎨 משחק ציור שיתופי
               </h2>
               <div className="text-lg font-semibold text-orange-600">
-                {gameState === 'drawing' ? `תור של ${getPlayerName(currentPlayer)}` : ''}
+                {gameState === 'drawing' ? (
+                  currentPlayer === 'player1' ? 'עכשיו תורו של מור' : 'עכשיו תורה של גבי'
+                ) : ''}
               </div>
             </div>
 
@@ -314,7 +316,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                 <div className="flex flex-col items-center w-full">
                   <div className="mb-4 text-center">
                     <p className="text-lg font-semibold text-orange-800 mb-2">
-                      עכשיו תור של {getPlayerName(currentPlayer)}
+                      {currentPlayer === 'player1' ? 'עכשיו תורו של מור' : 'עכשיו תורה של גבי'}
                     </p>
                     
                     {/* Color Selection */}
@@ -351,8 +353,8 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                       onTouchStart={handleTouchStart}
                       onTouchMove={handleTouchMove}
                       onTouchEnd={stopDrawing}
-                      className="cursor-crosshair touch-none max-w-full h-auto"
-                      style={{ maxWidth: '100%', height: 'auto' }}
+                      className="cursor-crosshair touch-none block"
+                      style={{ width: '800px', height: '500px' }}
                     />
                   </div>
 
