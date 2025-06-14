@@ -39,7 +39,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
         {/* Image Section */}
         <div className="relative overflow-hidden flex-shrink-0 h-48">
           <img
-            src={apartment.image_url || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'}
+            src={apartment.image_url || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2070&q=80'}
             alt={apartment.title}
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-110 rounded-tr-lg"
           />
@@ -60,20 +60,22 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
         </div>
 
         <div className="p-4 flex flex-col flex-grow min-h-0">
-          {/* Title + Entry Date INLINE */}
-          <div className="flex flex-row-reverse items-center gap-2 mb-2 w-full">
-            <h3 className="font-bold text-base text-gray-800 line-clamp-1 text-right" style={{minWidth:0}}>
-              {apartment.title}
-            </h3>
+          {/* Title (left) + Entry Date (right) */}
+          <div className="flex flex-row items-center gap-2 mb-2 w-full justify-between">
+            {/* תאריך כניסה - הכי מימין */}
             {apartment.entry_date && (
               <span
                 className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap"
                 dir="ltr"
-                style={{ direction: 'ltr', marginLeft:"auto" }}
+                style={{ direction: 'ltr', marginRight: 0 }}
               >
                 {apartment.entry_date}
               </span>
             )}
+            {/* שם דירה - הכי משמאל */}
+            <h3 className="font-bold text-base text-gray-800 line-clamp-1 text-left flex-1" style={{ minWidth: 0 }}>
+              {apartment.title}
+            </h3>
           </div>
 
           {/* Location */}
@@ -111,14 +113,15 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 
           {/* Ratings */}
           <div className="mb-3 space-y-2">
-            <div className="flex flex-row-reverse items-center gap-2 justify-end text-right">
+            {/* מור: הכי שמאל, כוכבים מימין */}
+            <div className="flex flex-row items-center gap-2 justify-start text-right">
               <span className="text-sm font-medium text-purple-600 ml-1">מור:</span>
               <StarRating 
                 rating={apartment.mor_rating || 0} 
                 onRatingChange={(rating) => onMorRatingChange(apartment.id, rating)}
               />
             </div>
-            <div className="flex flex-row-reverse items-center gap-2 justify-end text-right">
+            <div className="flex flex-row items-center gap-2 justify-start text-right">
               <span className="text-sm font-medium text-pink-600 ml-1">גבי:</span>
               <StarRating 
                 rating={apartment.gabi_rating || 0} 
