@@ -10,24 +10,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { useApartments, type Apartment } from '@/hooks/useApartments';
 
-interface Apartment {
-  id: string;
-  fb_url: string;
-  title: string;
-  description: string;
-  price?: number;
-  location: string;
-  image_url: string;
-  rating: number;
-  note: string;
-  apartment_link: string;
-  contact_phone: string;
-  contact_name: string;
-  status: 'spoke' | 'not_spoke' | 'no_answer';
-  pets_allowed: 'yes' | 'no' | 'unknown';
-  created_at: string;
-}
-
 const Index = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
