@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useApartments, type Apartment } from '@/hooks/useApartments';
@@ -108,18 +107,21 @@ const Index = () => {
     setPendingPasswordAction({ cb: handleDeletePassword, action: 'delete' });
   };
   
-  const handleDeletePassword = (ok: boolean) => {
+  const handleDeletePassword = async (ok: boolean) => {
     if (ok && pendingDeleteId) {
-      deleteApartment(pendingDeleteId);
+      await deleteApartment(pendingDeleteId);
+      setPendingDeleteId(null);
+      setPendingPasswordAction(null);
+      // דגש: מתאים אם צריך גם לרענן את הדירות (ב־useApartments יש fetch מחדש)
     } else if (!ok) {
       toast({
         title: "סיסמה שגויה",
         description: "המחיקה בוטלה.",
         variant: "destructive"
       });
+      setPendingDeleteId(null);
+      setPendingPasswordAction(null);
     }
-    setPendingDeleteId(null);
-    setPendingPasswordAction(null);
   };
 
   // הצגת דיאלוג סיסמה
