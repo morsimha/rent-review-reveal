@@ -142,36 +142,40 @@ const EditApartmentDialog: React.FC<EditApartmentDialogProps> = ({
             />
           </div>
           <div>
-            <Label className="text-right">סטטוס</Label>
+            <Label className="text-right block mb-1">סטטוס</Label>
             <RadioGroup value={editFormData.status} onValueChange={(value: 'spoke' | 'not_spoke' | 'no_answer') => setEditFormData({...editFormData, status: value})}>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <RadioGroupItem value="spoke" id="edit_spoke" />
-                <Label htmlFor="edit_spoke" className="text-green-600">דיברנו</Label>
-              </div>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <RadioGroupItem value="not_spoke" id="edit_not_spoke" />
-                <Label htmlFor="edit_not_spoke" className="text-yellow-600">לא דיברנו</Label>
-              </div>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <RadioGroupItem value="no_answer" id="edit_no_answer" />
-                <Label htmlFor="edit_no_answer" className="text-red-600">לא ענו</Label>
+              <div className="flex flex-col gap-2 items-end">
+                <div className="flex flex-row-reverse items-center gap-2">
+                  <RadioGroupItem value="spoke" id="edit_spoke" />
+                  <Label htmlFor="edit_spoke" className="text-green-600">דיברנו</Label>
+                </div>
+                <div className="flex flex-row-reverse items-center gap-2">
+                  <RadioGroupItem value="not_spoke" id="edit_not_spoke" />
+                  <Label htmlFor="edit_not_spoke" className="text-yellow-600">לא דיברנו</Label>
+                </div>
+                <div className="flex flex-row-reverse items-center gap-2">
+                  <RadioGroupItem value="no_answer" id="edit_no_answer" />
+                  <Label htmlFor="edit_no_answer" className="text-red-600">לא ענו</Label>
+                </div>
               </div>
             </RadioGroup>
           </div>
           <div>
-            <Label className="text-right">בעלי חיים</Label>
+            <Label className="text-right block mb-1">בעלי חיים</Label>
             <RadioGroup value={editFormData.pets_allowed} onValueChange={(value: 'yes' | 'no' | 'unknown') => setEditFormData({...editFormData, pets_allowed: value})}>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <RadioGroupItem value="yes" id="edit_pets_yes" />
-                <Label htmlFor="edit_pets_yes">כן 🐱</Label>
-              </div>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <RadioGroupItem value="no" id="edit_pets_no" />
-                <Label htmlFor="edit_pets_no">לא 🚫</Label>
-              </div>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <RadioGroupItem value="unknown" id="edit_pets_unknown" />
-                <Label htmlFor="edit_pets_unknown">לא יודע</Label>
+              <div className="flex flex-col gap-2 items-end">
+                <div className="flex flex-row-reverse items-center gap-2">
+                  <RadioGroupItem value="yes" id="edit_pets_yes" />
+                  <Label htmlFor="edit_pets_yes">כן 🐱</Label>
+                </div>
+                <div className="flex flex-row-reverse items-center gap-2">
+                  <RadioGroupItem value="no" id="edit_pets_no" />
+                  <Label htmlFor="edit_pets_no">לא 🚫</Label>
+                </div>
+                <div className="flex flex-row-reverse items-center gap-2">
+                  <RadioGroupItem value="unknown" id="edit_pets_unknown" />
+                  <Label htmlFor="edit_pets_unknown">לא יודע</Label>
+                </div>
               </div>
             </RadioGroup>
           </div>

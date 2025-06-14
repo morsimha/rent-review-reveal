@@ -69,9 +69,9 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 
           {/* Entry Date */}
           {apartment.entry_date && (
-            <p className="text-purple-700 text-xs mb-1 text-right">
-              <span>תאריך כניסה: </span>
-              <span dir="ltr">{apartment.entry_date}</span>
+            <p className="text-purple-700 text-xs mb-1 text-right flex flex-row-reverse gap-1 items-center">
+              <span>תאריך כניסה:</span>
+              <span dir="rtl">{apartment.entry_date}</span>
             </p>
           )}
 

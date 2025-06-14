@@ -172,36 +172,43 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
               className="bg-white/70 border-purple-300 focus:border-purple-500"
             />
           </div>
+          {/* שדה דיברנו/לא דיברנו - יישור נכון */}
           <div className="text-right">
             <RadioGroup value={status} onValueChange={(value: 'spoke' | 'not_spoke' | 'no_answer') => setStatus(value)}>
-              <div className="flex items-center space-x-2 space-x-reverse justify-end">
-                <Label htmlFor="spoke" className="text-green-600">דיברנו</Label>
-                <RadioGroupItem value="spoke" id="spoke" />
-              </div>
-              <div className="flex items-center space-x-2 space-x-reverse justify-end">
-                <Label htmlFor="not_spoke" className="text-yellow-600">לא דיברנו</Label>
-                <RadioGroupItem value="not_spoke" id="not_spoke" />
-              </div>
-              <div className="flex items-center space-x-2 space-x-reverse justify-end">
-                <Label htmlFor="no_answer" className="text-red-600">לא ענו</Label>
-                <RadioGroupItem value="no_answer" id="no_answer" />
+              <Label className="text-sm font-medium block mb-1 text-right">סטטוס</Label>
+              <div className="flex flex-col gap-2 items-end">
+                <div className="flex flex-row-reverse items-center gap-2">
+                  <RadioGroupItem value="spoke" id="spoke" />
+                  <Label htmlFor="spoke" className="text-green-600">דיברנו</Label>
+                </div>
+                <div className="flex flex-row-reverse items-center gap-2">
+                  <RadioGroupItem value="not_spoke" id="not_spoke" />
+                  <Label htmlFor="not_spoke" className="text-yellow-600">לא דיברנו</Label>
+                </div>
+                <div className="flex flex-row-reverse items-center gap-2">
+                  <RadioGroupItem value="no_answer" id="no_answer" />
+                  <Label htmlFor="no_answer" className="text-red-600">לא ענו</Label>
+                </div>
               </div>
             </RadioGroup>
           </div>
+          {/* שדה בעלי חיים - יישור נכון */}
           <div className="text-right">
             <RadioGroup value={petsAllowed} onValueChange={(value: 'yes' | 'no' | 'unknown') => setPetsAllowed(value)}>
-              <Label className="text-sm font-medium">בעלי חיים מותרים?</Label>
-              <div className="flex items-center space-x-2 space-x-reverse justify-end">
-                <Label htmlFor="pets_yes">כן 🐱</Label>
-                <RadioGroupItem value="yes" id="pets_yes" />
-              </div>
-              <div className="flex items-center space-x-2 space-x-reverse justify-end">
-                <Label htmlFor="pets_no">לא 🚫</Label>
-                <RadioGroupItem value="no" id="pets_no" />
-              </div>
-              <div className="flex items-center space-x-2 space-x-reverse justify-end">
-                <Label htmlFor="pets_unknown">לא יודע</Label>
-                <RadioGroupItem value="unknown" id="pets_unknown" />
+              <Label className="text-sm font-medium block mb-1 text-right">בעלי חיים מותרים?</Label>
+              <div className="flex flex-col gap-2 items-end">
+                <div className="flex flex-row-reverse items-center gap-2">
+                  <RadioGroupItem value="yes" id="pets_yes" />
+                  <Label htmlFor="pets_yes">כן 🐱</Label>
+                </div>
+                <div className="flex flex-row-reverse items-center gap-2">
+                  <RadioGroupItem value="no" id="pets_no" />
+                  <Label htmlFor="pets_no">לא 🚫</Label>
+                </div>
+                <div className="flex flex-row-reverse items-center gap-2">
+                  <RadioGroupItem value="unknown" id="pets_unknown" />
+                  <Label htmlFor="pets_unknown">לא יודע</Label>
+                </div>
               </div>
             </RadioGroup>
           </div>
