@@ -1,7 +1,5 @@
-
-
 import React, { useState } from 'react';
-import { Plus, Star, Trash2, Edit, Phone, Link, Heart } from 'lucide-react';
+import { Plus, Star, Trash2, Edit, Phone, Link } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
+import { useApartments, type Apartment } from '@/hooks/useApartments';
 
 interface Apartment {
   id: string;
@@ -42,47 +41,19 @@ const Index = () => {
   const [status, setStatus] = useState<'spoke' | 'not_spoke' | 'no_answer'>('not_spoke');
   const [petsAllowed, setPetsAllowed] = useState<'yes' | 'no' | 'unknown'>('unknown');
   
-  const [apartments, setApartments] = useState<Apartment[]>([
-    {
-      id: '1',
-      fb_url: 'https://www.facebook.com/groups/402682483445663/permalink/2466035413777016/',
-      title: 'דירת 2 חדרים מהממת במרכז העיר',
-      description: 'דירה מרווחת עם אמניטים מודרניים, קרוב לתחבורה ציבורית ומרכזי קניות.',
-      price: 4500,
-      location: 'מרכז העיר, תל אביב',
-      image_url: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-      rating: 4,
-      note: 'מיקום מעולה, אולי קצת רועש',
-      apartment_link: 'https://yad2.co.il/example1',
-      contact_phone: '050-1234567',
-      contact_name: 'דני כהן',
-      status: 'spoke',
-      pets_allowed: 'yes',
-      created_at: '2024-01-15T10:30:00Z'
-    },
-    {
-      id: '2',
-      fb_url: 'https://facebook.com/example2',
-      title: 'סטודיו נעים ליד האוניברסיטה',
-      description: 'מושלם לסטודנטים או צעירים עובדים. מרוהט לחלוטין עם כל השירותים כלולים.',
-      price: 3200,
-      location: 'רמת אביב',
-      image_url: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-      rating: 5,
-      note: 'גודל מושלם בשבילי, אוהבת את האזור',
-      apartment_link: 'https://rent.co.il/example2',
-      contact_phone: '052-9876543',
-      contact_name: 'שרה לוי',
-      status: 'no_answer',
-      pets_allowed: 'no',
-      created_at: '2024-01-14T15:45:00Z'
-    }
-  ]);
-
   const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<Apartment>>({});
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  const { 
+    apartments, 
+    loading, 
+    addApartment, 
+    updateApartment, 
+    deleteApartment, 
+    updateRating 
+  } = useApartments();
 
   const handleAddApartment = async () => {
     if (!title.trim()) {
@@ -94,12 +65,11 @@ const Index = () => {
       return;
     }
 
-    const newApartment: Apartment = {
-      id: Math.random().toString(36).substr(2, 9),
+    const apartmentData = {
       fb_url: `https://facebook.com/generated-${Date.now()}`,
       title,
       description,
-      price: price ? parseInt(price) : undefined,
+      price: price ? parseInt(price) : null,
       location,
       image_url: imageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
       rating: 0,
@@ -109,41 +79,28 @@ const Index = () => {
       contact_name: contactName,
       status,
       pets_allowed: petsAllowed,
-      created_at: new Date().toISOString()
     };
 
-    setApartments(prev => [newApartment, ...prev]);
-
-    toast({
-      title: "הצלחה",
-      description: "הדירה נוספה בהצלחה!",
-    });
-
-    // Reset form
-    setTitle('');
-    setDescription('');
-    setPrice('');
-    setLocation('');
-    setImageUrl('');
-    setInitialNote('');
-    setApartmentLink('');
-    setContactPhone('');
-    setContactName('');
-    setStatus('not_spoke');
-    setPetsAllowed('unknown');
+    const result = await addApartment(apartmentData);
+    
+    if (result.success) {
+      // Reset form
+      setTitle('');
+      setDescription('');
+      setPrice('');
+      setLocation('');
+      setImageUrl('');
+      setInitialNote('');
+      setApartmentLink('');
+      setContactPhone('');
+      setContactName('');
+      setStatus('not_spoke');
+      setPetsAllowed('unknown');
+    }
   };
 
-  const handleRatingChange = (apartmentId: string, newRating: number) => {
-    setApartments(prev => 
-      prev.map(apt => 
-        apt.id === apartmentId ? { ...apt, rating: newRating } : apt
-      ).sort((a, b) => b.rating - a.rating)
-    );
-    
-    toast({
-      title: "הדירוג עודכן",
-      description: `דירוג הדירה: ${newRating} כוכבים`,
-    });
+  const handleRatingChange = async (apartmentId: string, newRating: number) => {
+    await updateRating(apartmentId, newRating);
   };
 
   const handleEditApartment = (apartment: Apartment) => {
@@ -152,7 +109,7 @@ const Index = () => {
     setIsEditDialogOpen(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingApartment || !editFormData.title?.trim()) {
       toast({
         title: "שגיאה",
@@ -162,29 +119,17 @@ const Index = () => {
       return;
     }
 
-    setApartments(prev => 
-      prev.map(apt => 
-        apt.id === editingApartment.id ? { ...apt, ...editFormData } : apt
-      )
-    );
+    const result = await updateApartment(editingApartment.id, editFormData);
     
-    setEditingApartment(null);
-    setEditFormData({});
-    setIsEditDialogOpen(false);
-    
-    toast({
-      title: "הדירה עודכנה",
-      description: "הפרטים נשמרו בהצלחה",
-    });
+    if (result.success) {
+      setEditingApartment(null);
+      setEditFormData({});
+      setIsEditDialogOpen(false);
+    }
   };
 
-  const handleDelete = (apartmentId: string) => {
-    setApartments(prev => prev.filter(apt => apt.id !== apartmentId));
-    
-    toast({
-      title: "הדירה נמחקה",
-      description: "הדירה הוסרה מהרשימה",
-    });
+  const handleDelete = async (apartmentId: string) => {
+    await deleteApartment(apartmentId);
   };
 
   const getStatusColor = (status: 'spoke' | 'not_spoke' | 'no_answer') => {
@@ -218,8 +163,16 @@ const Index = () => {
     );
   };
 
-  // Sort apartments by rating (highest first)
-  const sortedApartments = [...apartments].sort((a, b) => b.rating - a.rating);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 flex items-center justify-center" dir="rtl">
+        <div className="text-center">
+          <div className="text-4xl mb-4">🏠</div>
+          <p className="text-purple-600 text-lg">טוען דירות...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 relative overflow-hidden" dir="rtl">
@@ -239,6 +192,7 @@ const Index = () => {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-purple-800 mb-2">מור וגבי מוצאים דירה</h1>
           <p className="text-purple-600 text-lg">וואו איזה ביתתת 🏠✨</p>
+          <p className="text-sm text-purple-500 mt-2">מסד נתונים משותף - כל המשתמשים רואים את אותן הדירות</p>
         </div>
 
         {/* Add Apartment Form */}
@@ -366,7 +320,7 @@ const Index = () => {
 
         {/* Apartments Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {sortedApartments.map((apartment) => (
+          {apartments.map((apartment) => (
             <Card key={apartment.id} className="bg-white/90 backdrop-blur-sm border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 aspect-square flex flex-col">
               <CardContent className="p-0 flex flex-col h-full">
                 {/* Status Bar */}
@@ -375,7 +329,7 @@ const Index = () => {
                 {/* Image */}
                 <div className="relative overflow-hidden flex-shrink-0" style={{height: '35%'}}>
                   <img
-                    src={apartment.image_url}
+                    src={apartment.image_url || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'}
                     alt={apartment.title}
                     className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
                   />
@@ -482,7 +436,7 @@ const Index = () => {
                             <Input
                               type="number"
                               value={editFormData.price || ''}
-                              onChange={(e) => setEditFormData({...editFormData, price: e.target.value ? parseInt(e.target.value) : undefined})}
+                              onChange={(e) => setEditFormData({...editFormData, price: e.target.value ? parseInt(e.target.value) : null})}
                             />
                           </div>
                           <div>
@@ -592,4 +546,3 @@ const Index = () => {
 };
 
 export default Index;
-
