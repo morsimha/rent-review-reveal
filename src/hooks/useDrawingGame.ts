@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -227,6 +226,32 @@ export const useDrawingGame = () => {
     }
   };
 
+  // Save the draft canvas to the current session
+  const saveDraftCanvas = async (draftCanvasData: string) => {
+    if (!currentSession) return { success: false, error: "No active session" };
+    try {
+      const { data, error } = await supabase
+        .from('game_sessions')
+        .update({ draft_canvas_data: draftCanvasData })
+        .eq('id', currentSession.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error saving draft canvas:', error);
+        return { success: false, error };
+      }
+      setCurrentSession(data);
+      return { success: true };
+    } catch (error) {
+      console.error('Error in saveDraftCanvas:', error);
+      return { success: false, error };
+    }
+  };
+
+  // Fetch the current draft canvas from the session
+  const getDraftCanvasData = () => currentSession?.draft_canvas_data || null;
+
   // Subscribe to real-time updates for the game session
   useEffect(() => {
     const channel = supabase
@@ -263,6 +288,8 @@ export const useDrawingGame = () => {
     saveDrawing,
     getDrawings,
     updateDrawingName,
-    deleteDrawing
+    deleteDrawing,
+    saveDraftCanvas,
+    getDraftCanvasData
   };
 };

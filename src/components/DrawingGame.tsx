@@ -56,7 +56,9 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     initializeSession,
     switchTurn,
     isMyTurn,
-    getCurrentPlayerName
+    getCurrentPlayerName,
+    saveDraftCanvas,
+    getDraftCanvasData,
   } = useDrawingGame();
   const { toast } = useToast();
 
@@ -195,10 +197,11 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
       return;
     }
 
-    // ב-save נשמור גם את הקנבס הנוכחי לשחקן הבא
+    // שמור טיוטה של הקנבס הנוכחי המשוייכת לסשן
     const canvas = canvasRef.current;
     if (canvas) {
       const currentImageData = canvas.toDataURL();
+      await saveDraftCanvas(currentImageData);
       setLastDrawingData(currentImageData);
     }
     const result = await switchTurn();
@@ -303,6 +306,30 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
       ctx.strokeStyle = selectedColor;
     }
   }, [selectedColor]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    async function loadCanvasForMulti() {
+      // Only for multi mode: load the latest draft for the session
+      const draft = getDraftCanvasData();
+      if (gameMode === 'multi' && draft) {
+        initializeCanvas(draft);
+        setLastDrawingData(draft);
+      } else {
+        initializeCanvas();
+        setLastDrawingData(null);
+      }
+    }
+
+    if (gameMode === 'multi') {
+      loadCanvasForMulti();
+    } else {
+      initializeCanvas();
+      setLastDrawingData(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, gameMode, currentSession?.draft_canvas_data]);
 
   if (!isOpen) return null;
 

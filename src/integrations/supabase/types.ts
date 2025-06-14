@@ -147,6 +147,7 @@ export type Database = {
         Row: {
           created_at: string
           current_turn: string
+          draft_canvas_data: string | null
           drawing_id: string | null
           id: string
           last_player_device_id: string | null
@@ -156,6 +157,7 @@ export type Database = {
         Insert: {
           created_at?: string
           current_turn?: string
+          draft_canvas_data?: string | null
           drawing_id?: string | null
           id?: string
           last_player_device_id?: string | null
@@ -165,6 +167,7 @@ export type Database = {
         Update: {
           created_at?: string
           current_turn?: string
+          draft_canvas_data?: string | null
           drawing_id?: string | null
           id?: string
           last_player_device_id?: string | null
