@@ -1,8 +1,7 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import type { Apartment } from '@/hooks/useApartments';
@@ -14,13 +13,11 @@ interface MapProps {
 const Map: React.FC<MapProps> = ({ apartments }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const [mapboxToken, setMapboxToken] = useState('');
-  const [tokenEntered, setTokenEntered] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // We'll track error state to show feedback
-  const [error, setError] = useState<string | null>(null);
+  // Mapbox token embedded directly
+  const mapboxToken = 'pk.eyJ1IjoibW9yb3k5IiwiYSI6ImNtYndnN2s5YzBrMm4ycXNkMGw3bDRtMW0ifQ.TfWPfMMUQfcjEy4OzGR9XA';
 
   // Geocoding function to convert address to coordinates
   const geocodeAddress = async (location: string, token: string): Promise<[number, number] | null> => {
@@ -48,22 +45,15 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
 
   const initializeMap = async () => {
     if (!mapContainer.current || !mapboxToken) {
-      setError("אנא הכנס מפתח Mapbox תקין");
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
-    setError(null);
 
     try {
       // Set the access token
       mapboxgl.accessToken = mapboxToken;
-      // Test token
-      const testResponse = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/test.json?access_token=${mapboxToken}&limit=1`);
-      if (!testResponse.ok) {
-        throw new Error('Invalid Mapbox token');
-      }
 
       // Clean up map if exists
       if (map.current) {
@@ -139,7 +129,6 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
             }
           }
         }
-        setTokenEntered(true);
         setIsLoading(false);
         toast({
           title: "המפה נטענה בהצלחה",
@@ -149,77 +138,23 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
 
     } catch (error) {
       setIsLoading(false);
-      setError("מפתח Mapbox לא תקין או תקלה בעת טעינת המפה. נסה שנית.");
       toast({
         title: "שגיאה בטעינת המפה",
-        description: "אנא בדוק את מפתח ה-Mapbox ונסה שוב.",
+        description: "תקלה בעת טעינת המפה. נסה שנית.",
         variant: "destructive"
       });
     }
-  };
-
-  const handleTokenSubmit = () => {
-    if (!mapboxToken.trim()) {
-      setError("אנא הכנס מפתח Mapbox");
-      toast({
-        title: "שגיאה",
-        description: "אנא הכנס מפתח Mapbox",
-        variant: "destructive"
-      });
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-    initializeMap();
   };
 
   useEffect(() => {
+    initializeMap();
+    
     return () => {
       if (map.current) {
         map.current.remove();
       }
     };
-  }, []);
-
-  if (!tokenEntered) {
-    return (
-      <Card className="bg-white/90 backdrop-blur-sm border-purple-200">
-        <CardContent className="p-6">
-          <div className="text-center space-y-4" dir="rtl">
-            <h3 className="text-lg font-bold text-purple-800">הגדרת מפה</h3>
-            <p className="text-sm text-gray-600">
-              כדי להציג את המפה, אנא הכנס את המפתח הציבורי של Mapbox
-            </p>
-            <p className="text-xs text-blue-600">
-              ניתן לקבל מפתח חינם ב-{' '}
-              <a href="https://mapbox.com" target="_blank" rel="noopener noreferrer" className="underline">
-                mapbox.com
-              </a>
-            </p>
-            <div className="flex gap-2">
-              <Input
-                placeholder="הכנס מפתח Mapbox"
-                value={mapboxToken}
-                onChange={(e) => setMapboxToken(e.target.value)}
-                type="text"
-                disabled={isLoading}
-              />
-              <Button 
-                onClick={handleTokenSubmit} 
-                className="bg-purple-600 hover:bg-purple-700"
-                disabled={isLoading}
-              >
-                {isLoading ? 'טוען...' : 'הצג מפה'}
-              </Button>
-            </div>
-            {error && (
-              <p className="text-red-600 font-semibold mt-4">{error}</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  }, [apartments]);
 
   return (
     <Card className="bg-white/90 backdrop-blur-sm border-purple-200">
