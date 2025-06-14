@@ -60,14 +60,16 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
         </div>
 
         <div className="p-4 flex flex-col flex-grow min-h-0">
-          {/* Title + Entry Date */}
-          <div className="flex flex-row-reverse items-end gap-2 mb-2">
-            <h3 className="font-bold text-base text-gray-800 line-clamp-1 text-right flex-1">{apartment.title}</h3>
+          {/* Title + Entry Date INLINE */}
+          <div className="flex flex-row-reverse items-center gap-2 mb-2 w-full">
+            <h3 className="font-bold text-base text-gray-800 line-clamp-1 text-right" style={{minWidth:0}}>
+              {apartment.title}
+            </h3>
             {apartment.entry_date && (
               <span
-                className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap mx-auto"
+                className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap"
                 dir="ltr"
-                style={{ direction: 'ltr', marginLeft: 0, marginRight: 0 }}
+                style={{ direction: 'ltr', marginLeft:"auto" }}
               >
                 {apartment.entry_date}
               </span>
@@ -109,15 +111,15 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 
           {/* Ratings */}
           <div className="mb-3 space-y-2">
-            <div className="flex items-center gap-2 justify-end text-right flex-row-reverse">
-              <span className="text-sm font-medium text-purple-600">:מור</span>
+            <div className="flex flex-row-reverse items-center gap-2 justify-end text-right">
+              <span className="text-sm font-medium text-purple-600 ml-1">מור:</span>
               <StarRating 
                 rating={apartment.mor_rating || 0} 
                 onRatingChange={(rating) => onMorRatingChange(apartment.id, rating)}
               />
             </div>
-            <div className="flex items-center gap-2 justify-end text-right flex-row-reverse">
-              <span className="text-sm font-medium text-pink-600">:גבי</span>
+            <div className="flex flex-row-reverse items-center gap-2 justify-end text-right">
+              <span className="text-sm font-medium text-pink-600 ml-1">גבי:</span>
               <StarRating 
                 rating={apartment.gabi_rating || 0} 
                 onRatingChange={(rating) => onGabiRatingChange(apartment.id, rating)}
@@ -134,7 +136,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 
           {/* Actions */}
           <div className="flex justify-between items-center mt-auto pt-2">
-            {/* Edit button first (right), then Delete */}
+            {/* Edit button (right), then Delete (left) */}
             <Button
               size="sm"
               variant="outline"
@@ -160,3 +162,4 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 };
 
 export default ApartmentCard;
+
