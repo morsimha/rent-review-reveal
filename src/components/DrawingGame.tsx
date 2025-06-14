@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, Save, Eye, Palette, Trash2, Lock, Users, User, UserPlus, UserMinus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -106,7 +105,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
 
     const isMobile = window.innerWidth < 768;
     const width = isMobile ? Math.min(window.innerWidth - 32, 480) : 800;
-    const height = isMobile ? Math.round(width * 0.625) : 500;
+    const height = isMobile ? Math.round(width * 0.5625) : 450; // הקטנת הגובה מ-500 ל-450, ועדכון היחס בהתאם
 
     // התאמה ל-devicePixelRatio
     const dpr = window.devicePixelRatio || 1;
