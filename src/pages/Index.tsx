@@ -97,8 +97,6 @@ const Index = () => {
         if (result && result.success) {
           setIsEditDialogOpen(false);
           setEditingApartment(null);
-          setPendingEditData(null);
-          setPendingPasswordAction(null);
           toast({
             title: "הצלחה",
             description: "הדירה עודכנה בהצלחה",
@@ -125,9 +123,11 @@ const Index = () => {
         description: "הפעולה בוטלה.",
         variant: "destructive"
       });
-      setPendingEditData(null);
-      setPendingPasswordAction(null);
     }
+    
+    // איפוס המצב תמיד, גם אם הסיסמה נכונה וגם אם לא
+    setPendingEditData(null);
+    setPendingPasswordAction(null);
   };
 
   // *** מחיקת דירה ***
@@ -144,8 +144,6 @@ const Index = () => {
         console.log('deleteApartment result:', result);
         
         if (result && result.success) {
-          setPendingDeleteId(null);
-          setPendingPasswordAction(null);
           toast({
             title: "הצלחה",
             description: "הדירה נמחקה בהצלחה",
@@ -172,9 +170,11 @@ const Index = () => {
         description: "המחיקה בוטלה.",
         variant: "destructive"
       });
-      setPendingDeleteId(null);
-      setPendingPasswordAction(null);
     }
+    
+    // איפוס המצב תמיד, גם אם הסיסמה נכונה וגם אם לא
+    setPendingDeleteId(null);
+    setPendingPasswordAction(null);
   };
 
   // הצגת דיאלוג סיסמה
