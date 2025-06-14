@@ -200,8 +200,8 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     if (!isMyTurn()) {
       toast({
         variant: "destructive",
-        title: "לא יכול להחליף תור",
-        description: "רק השחקן שהתור שלו יכול להחליף תור",
+        title: "לא ניתן להחליף תור",
+        description: "רק השחקן שבתורו יכול להחליף תור",
       });
       return;
     }
@@ -216,8 +216,8 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     const result = await switchTurn();
     if (result.success) {
       toast({
-        title: `התור עבר ל${getCurrentPlayerName()}`,
-        description: "עכשיו השחקן השני יכול לצייר!",
+        title: `עבר לתור שלהם`,
+        description: "עכשיו הצד השני יכול לצייר!",
       });
     } else {
       toast({
@@ -342,8 +342,11 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
+  // עדכון הפונקציה לזיהוי סטטוס תור בעברית תקינה
   const myTurn = gameMode === 'single' ? true : isMyTurn();
-  const currentPlayerName = getCurrentPlayerName();
+
+  // במקום שם שחקן, ממירים לטקסט "התור שלך" או "התור שלהם"
+  const turnLabel = myTurn ? 'התור שלך' : 'התור שלהם';
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2" dir="rtl">
@@ -365,9 +368,10 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
               <h2 className="text-xl md:text-2xl font-bold text-orange-800 flex items-center gap-2">
                 🎨 משחק ציור שיתופי
               </h2>
+              {/* כאן תצוגת סטטוס התור */}
               <div className={`text-lg font-semibold flex items-center gap-2 ${myTurn ? 'text-green-600' : 'text-orange-600'}`}>
                 {!myTurn && <Lock className="w-4 h-4" />}
-                {myTurn ? 'התורו שלך!' : `תורו של ${currentPlayerName}`}
+                {turnLabel}
               </div>
             </div>
 
@@ -396,7 +400,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
             {/* Turn Status */}
             {gameMode === 'multi' && !myTurn && (
               <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-4 text-center">
-                <p className="text-orange-800">🔒 ממתין ל{currentPlayerName} לסיים את התור...</p>
+                <p className="text-orange-800">🔒 ממתין לסיום התור שלהם...</p>
                 <p className="text-sm text-orange-600">המכשיר שלך: {deviceId}</p>
               </div>
             )}
