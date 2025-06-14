@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Plus, Star, Trash2, Edit, Phone, Link } from 'lucide-react';
+
+import React, { useState, useRef } from 'react';
+import { Plus, Star, Trash2, Edit, Phone, Link, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,11 +25,16 @@ const Index = () => {
   const [contactName, setContactName] = useState('');
   const [status, setStatus] = useState<'spoke' | 'not_spoke' | 'no_answer'>('not_spoke');
   const [petsAllowed, setPetsAllowed] = useState<'yes' | 'no' | 'unknown'>('unknown');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [editUploadingImage, setEditUploadingImage] = useState(false);
   
   const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<Apartment>>({});
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCatGameOpen, setIsCatGameOpen] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const { 
@@ -37,8 +43,35 @@ const Index = () => {
     addApartment, 
     updateApartment, 
     deleteApartment, 
-    updateRating 
+    updateRating,
+    updateMorRating,
+    updateGabiRating,
+    uploadImage
   } = useApartments();
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    const uploadedUrl = await uploadImage(file);
+    if (uploadedUrl) {
+      setImageUrl(uploadedUrl);
+    }
+    setUploadingImage(false);
+  };
+
+  const handleEditImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setEditUploadingImage(true);
+    const uploadedUrl = await uploadImage(file);
+    if (uploadedUrl) {
+      setEditFormData({...editFormData, image_url: uploadedUrl});
+    }
+    setEditUploadingImage(false);
+  };
 
   const handleAddApartment = async () => {
     if (!title.trim()) {
@@ -58,6 +91,8 @@ const Index = () => {
       location,
       image_url: imageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
       rating: 0,
+      mor_rating: 0,
+      gabi_rating: 0,
       note: initialNote,
       apartment_link: apartmentLink,
       contact_phone: contactPhone,
@@ -81,11 +116,22 @@ const Index = () => {
       setContactName('');
       setStatus('not_spoke');
       setPetsAllowed('unknown');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
   const handleRatingChange = async (apartmentId: string, newRating: number) => {
     await updateRating(apartmentId, newRating);
+  };
+
+  const handleMorRatingChange = async (apartmentId: string, newRating: number) => {
+    await updateMorRating(apartmentId, newRating);
+  };
+
+  const handleGabiRatingChange = async (apartmentId: string, newRating: number) => {
+    await updateGabiRating(apartmentId, newRating);
   };
 
   const handleEditApartment = (apartment: Apartment) => {
@@ -110,6 +156,9 @@ const Index = () => {
       setEditingApartment(null);
       setEditFormData({});
       setIsEditDialogOpen(false);
+      if (editFileInputRef.current) {
+        editFileInputRef.current.value = '';
+      }
     }
   };
 
@@ -136,7 +185,7 @@ const Index = () => {
             className="transition-all duration-200 hover:scale-110"
           >
             <Star
-              className={`w-5 h-5 ${
+              className={`w-4 h-4 ${
                 star <= rating
                   ? 'fill-yellow-400 text-yellow-400'
                   : 'fill-gray-200 text-gray-200 hover:fill-yellow-200 hover:text-yellow-200'
@@ -218,13 +267,29 @@ const Index = () => {
                   className="bg-white/70 border-purple-300 focus:border-purple-500"
                 />
               </div>
-              <div>
+              <div className="flex gap-2">
                 <Input
                   placeholder="קישור לתמונה"
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
-                  className="bg-white/70 border-purple-300 focus:border-purple-500"
+                  className="bg-white/70 border-purple-300 focus:border-purple-500 flex-1"
                 />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  ref={fileInputRef}
+                />
+                <Button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImage}
+                  className="bg-purple-500 hover:bg-purple-600"
+                >
+                  <Upload className="w-4 h-4" />
+                  {uploadingImage ? "מעלה..." : "העלה"}
+                </Button>
               </div>
               <div>
                 <Input
@@ -371,19 +436,39 @@ const Index = () => {
                     </div>
                   )}
 
-                  {/* Rating */}
-                  <div className="flex items-center gap-1 mb-2 justify-end">
-                    <div className="scale-75">
-                      <StarRating 
-                        rating={apartment.rating} 
-                        onRatingChange={(rating) => handleRatingChange(apartment.id, rating)}
-                      />
+                  {/* Ratings */}
+                  <div className="mb-3 space-y-1">
+                    <div className="flex items-center gap-2 justify-end">
+                      <div className="scale-75">
+                        <StarRating 
+                          rating={apartment.rating} 
+                          onRatingChange={(rating) => handleRatingChange(apartment.id, rating)}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-gray-700">:כללי</span>
                     </div>
-                    <span className="text-xs font-medium text-gray-700">:דירוג</span>
+                    <div className="flex items-center gap-2 justify-end">
+                      <div className="scale-75">
+                        <StarRating 
+                          rating={apartment.mor_rating || 0} 
+                          onRatingChange={(rating) => handleMorRatingChange(apartment.id, rating)}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-purple-600">:מור</span>
+                    </div>
+                    <div className="flex items-center gap-2 justify-end">
+                      <div className="scale-75">
+                        <StarRating 
+                          rating={apartment.gabi_rating || 0} 
+                          onRatingChange={(rating) => handleGabiRatingChange(apartment.id, rating)}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-pink-600">:גבי</span>
+                    </div>
                   </div>
 
                   {/* Note */}
-                  <div className="mb-2 flex-grow">
+                  <div className="mb-4 flex-grow">
                     <p className="text-xs text-gray-600 line-clamp-2 text-right">
                       {apartment.note || 'אין הערות'}
                     </p>
@@ -440,11 +525,31 @@ const Index = () => {
                             />
                           </div>
                           <div>
-                            <Label className="text-right">קישור לתמונה</Label>
-                            <Input
-                              value={editFormData.image_url || ''}
-                              onChange={(e) => setEditFormData({...editFormData, image_url: e.target.value})}
-                            />
+                            <Label className="text-right">תמונה</Label>
+                            <div className="flex gap-2">
+                              <Input
+                                value={editFormData.image_url || ''}
+                                onChange={(e) => setEditFormData({...editFormData, image_url: e.target.value})}
+                                placeholder="קישור לתמונה"
+                                className="flex-1"
+                              />
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleEditImageUpload}
+                                className="hidden"
+                                ref={editFileInputRef}
+                              />
+                              <Button
+                                type="button"
+                                onClick={() => editFileInputRef.current?.click()}
+                                disabled={editUploadingImage}
+                                className="bg-purple-500 hover:bg-purple-600"
+                              >
+                                <Upload className="w-4 h-4" />
+                                {editUploadingImage ? "מעלה..." : "העלה"}
+                              </Button>
+                            </div>
                           </div>
                           <div>
                             <Label className="text-right">קישור לדירה</Label>

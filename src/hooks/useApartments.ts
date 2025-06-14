@@ -12,6 +12,8 @@ export interface Apartment {
   location: string | null;
   image_url: string | null;
   rating: number;
+  mor_rating: number;
+  gabi_rating: number;
   note: string | null;
   apartment_link: string | null;
   contact_phone: string | null;
@@ -46,6 +48,34 @@ export const useApartments = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `apartment-images/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('apartment-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('apartment-images')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "שגיאה",
+        description: "לא ניתן להעלות את התמונה",
+        variant: "destructive"
+      });
+      return null;
     }
   };
 
@@ -135,6 +165,14 @@ export const useApartments = () => {
     return updateApartment(id, { rating });
   };
 
+  const updateMorRating = async (id: string, morRating: number) => {
+    return updateApartment(id, { mor_rating: morRating });
+  };
+
+  const updateGabiRating = async (id: string, gabiRating: number) => {
+    return updateApartment(id, { gabi_rating: gabiRating });
+  };
+
   useEffect(() => {
     fetchApartments();
   }, []);
@@ -146,6 +184,9 @@ export const useApartments = () => {
     updateApartment,
     deleteApartment,
     updateRating,
+    updateMorRating,
+    updateGabiRating,
+    uploadImage,
     refreshApartments: fetchApartments
   };
 };
