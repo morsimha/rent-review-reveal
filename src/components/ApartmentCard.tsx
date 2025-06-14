@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Trash2, Edit, Phone, Link } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,7 +40,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           <img
             src={apartment.image_url || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'}
             alt={apartment.title}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-300 hover:scale-110 rounded-tr-lg"
           />
           {apartment.price && (
             <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full font-bold text-sm">
@@ -50,6 +49,9 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           )}
           {apartment.pets_allowed === 'yes' && (
             <div className="absolute top-2 left-2 text-xl">🐱</div>
+          )}
+          {apartment.has_shelter && (
+            <div className="absolute top-12 right-2 text-lg bg-white/70 rounded px-2 py-1 flex items-center gap-1 shadow"><span className="text-xl">🏠</span><span className="text-xs text-purple-800">מקלט</span></div>
           )}
         </div>
 
@@ -63,6 +65,14 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           {/* Location */}
           {apartment.location && (
             <p className="text-purple-600 text-sm mb-2 font-medium text-right">{apartment.location}</p>
+          )}
+
+          {/* Entry Date */}
+          {apartment.entry_date && (
+            <p className="text-purple-700 text-xs mb-1 text-right">
+              <span>תאריך כניסה: </span>
+              <span dir="ltr">{apartment.entry_date}</span>
+            </p>
           )}
 
           {/* Contact Info - Aligned to right */}

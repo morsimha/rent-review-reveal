@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useApartments, type Apartment } from '@/hooks/useApartments';
@@ -14,6 +13,8 @@ const Index = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCatGameOpen, setIsCatGameOpen] = useState(false);
   const [isDrawingGameOpen, setIsDrawingGameOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<"rating" | "entry_date" | "created_at">("rating");
+  const [showWithShelter, setShowWithShelter] = useState<null | boolean>(null);
 
   const { 
     apartments, 
@@ -67,6 +68,26 @@ const Index = () => {
     );
   }
 
+  let filteredApartments = apartments;
+  if (showWithShelter !== null) {
+    filteredApartments = filteredApartments.filter(a => (a.has_shelter ?? false) === showWithShelter);
+  }
+  if (sortBy === "entry_date") {
+    filteredApartments = [...filteredApartments].sort((a, b) => {
+      if (!a.entry_date) return 1;
+      if (!b.entry_date) return -1;
+      return a.entry_date.localeCompare(b.entry_date); // מוקדם קודם
+    });
+  } else if (sortBy === "rating") {
+    filteredApartments = [...filteredApartments].sort((a, b) => {
+      const totalA = (a.mor_rating||0)+(a.gabi_rating||0);
+      const totalB = (b.mor_rating||0)+(b.gabi_rating||0);
+      return totalB-totalA;
+    });
+  } else if (sortBy === "created_at") {
+    filteredApartments = [...filteredApartments].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 relative overflow-hidden" dir="rtl">
       {/* Cat Background Pattern */}
@@ -104,6 +125,38 @@ const Index = () => {
           </div>
         </div>
 
+        {/* תפריט מיון ופילטור */}
+        <div className="flex flex-wrap justify-center items-center gap-3 mb-7">
+          <div className="flex items-center gap-2">
+            <label className="font-medium text-purple-700 text-sm">מיין לפי:</label>
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value as any)}
+              className="rounded border px-2 py-1 text-right"
+            >
+              <option value="rating">דירוג 🏅</option>
+              <option value="entry_date">תאריך כניסה 🗓️</option>
+              <option value="created_at">מועד הוספה ⏰</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="font-medium text-purple-700 text-sm">רק עם מקלט</label>
+            <input
+              type="checkbox"
+              checked={showWithShelter === true}
+              onChange={() => setShowWithShelter(showWithShelter === true ? null : true)}
+              className="accent-purple-600 w-4 h-4"
+            />
+            <label className="font-medium text-purple-700 text-sm">רק בלי מקלט</label>
+            <input
+              type="checkbox"
+              checked={showWithShelter === false}
+              onChange={() => setShowWithShelter(showWithShelter === false ? null : false)}
+              className="accent-purple-600 w-4 h-4"
+            />
+          </div>
+        </div>
+
         {/* Add Apartment Form */}
         <ApartmentForm onAddApartment={handleAddApartment} uploadImage={uploadImage} />
 
@@ -115,7 +168,7 @@ const Index = () => {
 
         {/* Apartments Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {apartments.map((apartment) => (
+          {filteredApartments.map((apartment) => (
             <ApartmentCard
               key={apartment.id}
               apartment={apartment}
@@ -127,9 +180,9 @@ const Index = () => {
           ))}
         </div>
 
-        {apartments.length === 0 && (
+        {filteredApartments.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-purple-600 text-lg">עדיין לא נוספו דירות. התחילו לחפש! 🏠</p>
+            <p className="text-purple-600 text-lg">לא נמצאו דירות בהתאם לסינון 🏠</p>
           </div>
         )}
       </div>

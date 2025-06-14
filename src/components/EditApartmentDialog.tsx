@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -175,6 +174,32 @@ const EditApartmentDialog: React.FC<EditApartmentDialogProps> = ({
                 <Label htmlFor="edit_pets_unknown">לא יודע</Label>
               </div>
             </RadioGroup>
+          </div>
+          <div>
+            <Label className="text-right block mb-1">יש מקלט?</Label>
+            <RadioGroup value={editFormData.has_shelter === null || editFormData.has_shelter === undefined ? "" : editFormData.has_shelter ? "yes" : "no"}
+              onValueChange={v => setEditFormData({...editFormData, has_shelter: v === "yes" ? true : v === "no" ? false : null})}
+              className="flex flex-row gap-2 justify-end"
+            >
+              <div className="flex items-center space-x-2 space-x-reverse flex-row-reverse">
+                <Label htmlFor="edit_hasShelter_yes" className="text-green-600 flex items-center gap-1">כן <span className="text-lg">🏠</span></Label>
+                <RadioGroupItem value="yes" id="edit_hasShelter_yes" />
+              </div>
+              <div className="flex items-center space-x-2 space-x-reverse flex-row-reverse">
+                <Label htmlFor="edit_hasShelter_no" className="text-gray-600">לא</Label>
+                <RadioGroupItem value="no" id="edit_hasShelter_no" />
+              </div>
+            </RadioGroup>
+          </div>
+          <div>
+            <Label className="text-right block mb-1">תאריך כניסה</Label>
+            <Input
+              type="date"
+              value={editFormData.entry_date || ''}
+              onChange={e => setEditFormData({...editFormData, entry_date: e.target.value})}
+              min={new Date().toISOString().split("T")[0]}
+              className="bg-white/70 border-purple-300 focus:border-purple-500"
+            />
           </div>
           <div className="md:col-span-2">
             <Label className="text-right">תיאור</Label>

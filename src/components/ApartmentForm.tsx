@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Plus, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,7 +26,9 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
   const [status, setStatus] = useState<'spoke' | 'not_spoke' | 'no_answer'>('not_spoke');
   const [petsAllowed, setPetsAllowed] = useState<'yes' | 'no' | 'unknown'>('unknown');
   const [uploadingImage, setUploadingImage] = useState(false);
-  
+  const [hasShelter, setHasShelter] = useState<boolean | null>(null);
+  const [entryDate, setEntryDate] = useState('');
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -69,6 +70,8 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
       contact_name: contactName,
       status,
       pets_allowed: petsAllowed,
+      has_shelter: hasShelter,
+      entry_date: entryDate ? entryDate : null,
     };
 
     await onAddApartment(apartmentData);
@@ -85,6 +88,8 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
     setContactName('');
     setStatus('not_spoke');
     setPetsAllowed('unknown');
+    setHasShelter(null);
+    setEntryDate('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -199,6 +204,32 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
                 <RadioGroupItem value="unknown" id="pets_unknown" />
               </div>
             </RadioGroup>
+          </div>
+          <div className="text-right">
+            <Label className="mr-2 text-right block">יש מקלט?</Label>
+            <RadioGroup value={hasShelter === null ? "" : hasShelter ? "yes" : "no"} 
+              onValueChange={v => setHasShelter(v === "yes" ? true : v === "no" ? false : null)} 
+              className="flex flex-row gap-2 justify-end"
+              >
+              <div className="flex items-center space-x-2 space-x-reverse flex-row-reverse">
+                <Label htmlFor="hasShelter-yes" className="text-green-600 flex items-center gap-1">כן <span className="text-lg">🏠</span></Label>
+                <RadioGroupItem value="yes" id="hasShelter-yes" />
+              </div>
+              <div className="flex items-center space-x-2 space-x-reverse flex-row-reverse">
+                <Label htmlFor="hasShelter-no" className="text-gray-600">לא</Label>
+                <RadioGroupItem value="no" id="hasShelter-no" />
+              </div>
+            </RadioGroup>
+          </div>
+          <div>
+            <Input
+              type="date"
+              placeholder="תאריך כניסה"
+              value={entryDate}
+              onChange={e => setEntryDate(e.target.value)}
+              className="bg-white/70 border-purple-300 focus:border-purple-500"
+              min={new Date().toISOString().split("T")[0]}
+            />
           </div>
           <div className="md:col-span-2">
             <Textarea

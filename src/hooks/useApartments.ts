@@ -21,6 +21,8 @@ export interface Apartment {
   pets_allowed: 'yes' | 'no' | 'unknown';
   created_at: string;
   updated_at: string;
+  has_shelter: boolean | null;
+  entry_date: string | null;
 }
 
 export const useApartments = () => {

@@ -16,8 +16,10 @@ export type Database = {
           contact_phone: string | null
           created_at: string
           description: string | null
+          entry_date: string | null
           fb_url: string | null
           gabi_rating: number | null
+          has_shelter: boolean | null
           id: string
           image_url: string | null
           location: string | null
@@ -36,8 +38,10 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           description?: string | null
+          entry_date?: string | null
           fb_url?: string | null
           gabi_rating?: number | null
+          has_shelter?: boolean | null
           id?: string
           image_url?: string | null
           location?: string | null
@@ -56,8 +60,10 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           description?: string | null
+          entry_date?: string | null
           fb_url?: string | null
           gabi_rating?: number | null
+          has_shelter?: boolean | null
           id?: string
           image_url?: string | null
           location?: string | null
