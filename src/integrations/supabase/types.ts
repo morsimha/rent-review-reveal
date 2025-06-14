@@ -160,6 +160,10 @@ export type Database = {
           drawing_id: string | null
           id: string
           last_player_device_id: string | null
+          player1_device_id: string | null
+          player1_ready: boolean | null
+          player2_device_id: string | null
+          player2_ready: boolean | null
           session_name: string
           updated_at: string
         }
@@ -170,6 +174,10 @@ export type Database = {
           drawing_id?: string | null
           id?: string
           last_player_device_id?: string | null
+          player1_device_id?: string | null
+          player1_ready?: boolean | null
+          player2_device_id?: string | null
+          player2_ready?: boolean | null
           session_name?: string
           updated_at?: string
         }
@@ -180,6 +188,10 @@ export type Database = {
           drawing_id?: string | null
           id?: string
           last_player_device_id?: string | null
+          player1_device_id?: string | null
+          player1_ready?: boolean | null
+          player2_device_id?: string | null
+          player2_ready?: boolean | null
           session_name?: string
           updated_at?: string
         }

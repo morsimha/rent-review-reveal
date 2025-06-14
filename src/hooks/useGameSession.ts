@@ -32,18 +32,7 @@ export const useGameSession = () => {
     try {
       const { data: existingSession, error: fetchError } = await supabase
         .from('game_sessions')
-        .select(`
-          id,
-          current_turn,
-          last_player_device_id,
-          session_name,
-          drawing_id,
-          draft_canvas_data,
-          player1_ready,
-          player2_ready,
-          player1_device_id,
-          player2_device_id
-        `)
+        .select('*')
         .eq('session_name', 'default_session')
         .single();
 
@@ -66,18 +55,7 @@ export const useGameSession = () => {
           player1_device_id: null,
           player2_device_id: null
         })
-        .select(`
-          id,
-          current_turn,
-          last_player_device_id,
-          session_name,
-          drawing_id,
-          draft_canvas_data,
-          player1_ready,
-          player2_ready,
-          player1_device_id,
-          player2_device_id
-        `)
+        .select('*')
         .single();
 
       if (createError) {
@@ -122,18 +100,7 @@ export const useGameSession = () => {
         .from('game_sessions')
         .update(updateData)
         .eq('id', currentSession.id)
-        .select(`
-          id,
-          current_turn,
-          last_player_device_id,
-          session_name,
-          drawing_id,
-          draft_canvas_data,
-          player1_ready,
-          player2_ready,
-          player1_device_id,
-          player2_device_id
-        `)
+        .select('*')
         .single();
 
       if (error) {
@@ -173,18 +140,7 @@ export const useGameSession = () => {
         .from('game_sessions')
         .update(updateData)
         .eq('id', currentSession.id)
-        .select(`
-          id,
-          current_turn,
-          last_player_device_id,
-          session_name,
-          drawing_id,
-          draft_canvas_data,
-          player1_ready,
-          player2_ready,
-          player1_device_id,
-          player2_device_id
-        `)
+        .select('*')
         .single();
 
       if (error) {
@@ -214,18 +170,7 @@ export const useGameSession = () => {
           last_player_device_id: deviceId
         })
         .eq('id', currentSession.id)
-        .select(`
-          id,
-          current_turn,
-          last_player_device_id,
-          session_name,
-          drawing_id,
-          draft_canvas_data,
-          player1_ready,
-          player2_ready,
-          player1_device_id,
-          player2_device_id
-        `)
+        .select('*')
         .single();
 
       if (error) {
