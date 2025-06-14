@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Trash2, Edit, Phone, Link, House } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -63,20 +64,22 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             )}
             {/* ארנונה */}
             {apartment.arnona != null && !isNaN(Number(apartment.arnona)) && (
-              <div className="bg-yellow-400 text-black px-2 py-1 rounded-full font-bold text-sm" title="מחיר ארנונה">
-                ארנונה ₪{apartment.arnona}
+              <div className="bg-yellow-400 text-black px-2 py-1 rounded-full font-bold text-sm" title="ארנונה">
+                ₪{apartment.arnona}
               </div>
             )}
           </div>
-          {apartment.pets_allowed === 'yes' && (
-            <div className="absolute top-2 left-2 text-xl">🐱</div>
-          )}
-          {apartment.has_shelter && (
-            <div className="absolute top-12 right-2 text-lg bg-white/70 rounded px-2 py-1 flex flex-row-reverse items-center gap-1 shadow z-10">
-              <span className="text-xs text-purple-800">מקלט</span>
-              <House className="w-5 h-5 text-purple-800" />
-            </div>
-          )}
+          <div className="absolute top-2 left-2 flex flex-col items-start gap-2 z-10">
+            {apartment.pets_allowed === 'yes' && (
+              <div className="text-xl" title="מותר בעלי חיים">🐱</div>
+            )}
+            {apartment.has_shelter && (
+              <div className="bg-white/70 rounded px-2 py-1 flex items-center gap-1 shadow">
+                <House className="w-5 h-5 text-purple-800" />
+                <span className="text-xs text-purple-800">מקלט</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="p-4 flex flex-col flex-grow min-h-0">
