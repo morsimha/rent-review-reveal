@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, StopCircle, Eye, ZoomIn, Palette, Trash2 } from 'lucide-react';
+import { X, Send, Save, Eye, Palette, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,91 +25,68 @@ interface SavedDrawing {
 }
 
 const colors = [
-  { name: 'סגול', value: '#8B5CF6' },
-  { name: 'ורוד', value: '#EC4899' },
+  { name: 'שחור', value: '#000000' },
+  { name: 'אדום', value: '#EF4444' },
   { name: 'כחול', value: '#3B82F6' },
   { name: 'ירוק', value: '#10B981' },
-  { name: 'אדום', value: '#EF4444' },
+  { name: 'סגול', value: '#8B5CF6' },
+  { name: 'ורוד', value: '#EC4899' },
   { name: 'כתום', value: '#F97316' },
-  { name: 'צהוב', value: '#EAB308' },
-  { name: 'שחור', value: '#000000' }
+  { name: 'צהוב', value: '#EAB308' }
 ];
 
 const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
   const [isDrawing, setIsDrawing] = useState(false);
-  const [currentPlayer, setCurrentPlayer] = useState<'player1' | 'player2'>('player1');
   const [selectedColor, setSelectedColor] = useState(colors[0].value);
-  const [drawingData, setDrawingData] = useState<string>('');
-  const [gameState, setGameState] = useState<'waiting' | 'drawing' | 'naming' | 'completed'>('waiting');
-  const [drawingName, setDrawingName] = useState('');
-  const [finalDrawing, setFinalDrawing] = useState<string>('');
+  const [currentPlayer, setCurrentPlayer] = useState<'player1' | 'player2'>('player1');
   const [savedDrawings, setSavedDrawings] = useState<SavedDrawing[]>([]);
   const [selectedDrawing, setSelectedDrawing] = useState<SavedDrawing | null>(null);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [drawingName, setDrawingName] = useState('');
   
-  const { saveDrawing, getDrawings, updateDrawingName, deleteDrawing, loading } = useDrawingGame();
+  const { saveDrawing, getDrawings, deleteDrawing, loading } = useDrawingGame();
   const { toast } = useToast();
 
   const getPlayerName = (player: 'player1' | 'player2') => {
     return player === 'player1' ? 'מור' : 'גבי';
   };
 
-  const getPlayerTurnText = (player: 'player1' | 'player2') => {
-    return player === 'player1' ? 'עכשיו תורו של מור' : 'עכשיו תורה של גבי';
-  };
-
-  // Responsive canvas dimensions
-  const getCanvasDimensions = (): { width: number; height: number } => {
-    if (typeof window === 'undefined') return { width: 800, height: 500 };
-    const isMobile = window.innerWidth < 768;
-    if (isMobile) {
-      // ישאיר רווחים מהקצה
-      const width = Math.min(window.innerWidth - 32, 480);
-      return { width, height: Math.round(width * 0.625) }; // 5:8 יחס
-    }
-    return { width: 800, height: 500 };
-  };
-
-  // Set canvas size responsively
+  // Initialize canvas
   const initializeCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const { width, height } = getCanvasDimensions();
+    const isMobile = window.innerWidth < 768;
+    const width = isMobile ? Math.min(window.innerWidth - 32, 480) : 800;
+    const height = isMobile ? Math.round(width * 0.625) : 500;
+    
     canvas.width = width;
     canvas.height = height;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, width, height);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.lineWidth = 3;
     ctx.strokeStyle = selectedColor;
-
-    // Draw previous if exists
-    if (drawingData) {
-      const img = new Image();
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, width, height);
-      };
-      img.src = drawingData;
-    } else {
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, width, height);
-    }
   };
 
-  const loadSavedDrawings = async () => {
-    const result = await getDrawings();
-    if (result.success) {
-      setSavedDrawings(result.data || []);
-    }
+  // Clear canvas
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx || !canvas) return;
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
   };
 
-  const getMousePos = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  // Get mouse/touch position
+  const getCanvasPos = (clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     
@@ -118,40 +95,25 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     const scaleY = canvas.height / rect.height;
     
     return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
     };
   };
 
-  const getTouchPos = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches[0];
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    
-    return {
-      x: (touch.clientX - rect.left) * scaleX,
-      y: (touch.clientY - rect.top) * scaleY
-    };
-  };
-
+  // Drawing functions
   const startDrawing = (point: Point) => {
-    if (gameState !== 'drawing') return;
-    
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!ctx) return;
 
     setIsDrawing(true);
+    ctx.strokeStyle = selectedColor;
     ctx.beginPath();
     ctx.moveTo(point.x, point.y);
   };
 
   const draw = (point: Point) => {
-    if (!isDrawing || gameState !== 'drawing') return;
+    if (!isDrawing) return;
     
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
@@ -165,129 +127,92 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     setIsDrawing(false);
   };
 
+  // Mouse events
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const point = getMousePos(e);
+    const point = getCanvasPos(e.clientX, e.clientY);
     startDrawing(point);
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const point = getMousePos(e);
+    const point = getCanvasPos(e.clientX, e.clientY);
     draw(point);
   };
 
+  // Touch events
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
     e.preventDefault();
-    const point = getTouchPos(e);
+    const touch = e.touches[0];
+    const point = getCanvasPos(touch.clientX, touch.clientY);
     startDrawing(point);
   };
 
   const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
     e.preventDefault();
-    const point = getTouchPos(e);
+    const touch = e.touches[0];
+    const point = getCanvasPos(touch.clientX, touch.clientY);
     draw(point);
   };
 
-  const handleColorChange = (newColor: string) => {
-    setSelectedColor(newColor);
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (ctx) {
-      ctx.strokeStyle = newColor;
+  // Switch player turn
+  const switchTurn = () => {
+    setCurrentPlayer(currentPlayer === 'player1' ? 'player2' : 'player1');
+    toast({
+      title: `עכשיו תורו של ${getPlayerName(currentPlayer === 'player1' ? 'player2' : 'player1')}`,
+      description: "המשיכו לצייר על אותו ציור!",
+    });
+  };
+
+  // Save drawing
+  const handleSaveDrawing = async () => {
+    if (!drawingName.trim()) {
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "אנא הזינו שם לציור",
+      });
+      return;
     }
-  };
 
-  const startGame = () => {
-    setGameState('drawing');
-    setCurrentPlayer('player1');
-    setDrawingData(''); // Reset for new game
-    setSelectedColor(colors[0].value);
-    initializeCanvas();
-  };
-
-  const sendTurn = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Save current drawing state for next player to continue
     const imageData = canvas.toDataURL();
-    setDrawingData(imageData);
+    const result = await saveDrawing(imageData, currentPlayer, true, drawingName.trim());
     
-    // Switch to next player
-    const nextPlayer = currentPlayer === 'player1' ? 'player2' : 'player1';
-    setCurrentPlayer(nextPlayer);
-    
-    // Update canvas stroke color for next player
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.strokeStyle = selectedColor;
-    }
-  };
-
-  const finishDrawing = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const finalDrawingData = canvas.toDataURL();
-    setFinalDrawing(finalDrawingData);
-    setGameState('naming');
-  };
-
-  // Use latest canvas data when saving the drawing
-  const saveWithName = async () => {
-    if (!drawingName.trim()) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    // Always get the latest data from the canvas
-    const actualFinalDrawing = canvas.toDataURL();
-    try {
-      const result = await saveDrawing(actualFinalDrawing, currentPlayer, true, drawingName.trim());
-      if (result.success) {
-        setGameState('completed');
-        loadSavedDrawings();
-        toast({
-          title: "הציור נשמר!",
-          description: `"${drawingName.trim()}" נוסף לגלריה.`,
-          className: "bg-green-100 border-green-300 text-green-800",
-        });
-      } else {
-        console.error('Failed to save drawing:', result.error);
-        toast({
-          variant: "destructive",
-          title: "שגיאה בשמירת הציור",
-          description: "אירעה שגיאה. נסו שוב מאוחר יותר.",
-        });
-      }
-    } catch (error) {
-      console.error('Error saving drawing:', error);
+    if (result.success) {
+      toast({
+        title: "הציור נשמר!",
+        description: `"${drawingName.trim()}" נוסף לגלריה.`,
+        className: "bg-green-100 border-green-300 text-green-800",
+      });
+      setShowSaveDialog(false);
+      setDrawingName('');
+      loadSavedDrawings();
+    } else {
       toast({
         variant: "destructive",
         title: "שגיאה בשמירת הציור",
-        description: "אירעה שגיאה. נסו שוב מאוחר יותר.",
+        description: "נסו שוב מאוחר יותר.",
       });
     }
   };
 
-  const resetGame = () => {
-    setGameState('waiting');
-    setCurrentPlayer('player1');
-    setDrawingData('');
-    setDrawingName('');
-    setFinalDrawing('');
-    setSelectedColor(colors[0].value);
-    initializeCanvas();
+  // Load saved drawings
+  const loadSavedDrawings = async () => {
+    const result = await getDrawings();
+    if (result.success) {
+      setSavedDrawings(result.data || []);
+    }
   };
 
-  const viewDrawing = (drawing: SavedDrawing) => {
-    setSelectedDrawing(drawing);
-  };
-
+  // Delete drawing
   const handleDeleteDrawing = async (drawingId: string) => {
     if (window.confirm('האם אתה בטוח שברצונך למחוק את הציור?')) {
       const result = await deleteDrawing(drawingId);
       if (result.success) {
-        loadSavedDrawings(); // Refresh the gallery
+        loadSavedDrawings();
         if (selectedDrawing?.id === drawingId) {
-          setSelectedDrawing(null); // Close modal if viewing deleted drawing
+          setSelectedDrawing(null);
         }
         toast({
           title: "הציור נמחק",
@@ -297,7 +222,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
         toast({
           variant: "destructive",
           title: "שגיאה במחיקת הציור",
-          description: "לא ניתן היה למחוק את הציור. נסו שוב.",
+          description: "לא ניתן היה למחוק את הציור.",
         });
       }
     }
@@ -308,13 +233,15 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
       initializeCanvas();
       loadSavedDrawings();
     }
-  }, [isOpen, currentPlayer]);
+  }, [isOpen]);
 
   useEffect(() => {
-    if (gameState === 'drawing') {
-      initializeCanvas();
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (ctx) {
+      ctx.strokeStyle = selectedColor;
     }
-  }, [drawingData, selectedColor]);
+  }, [selectedColor]);
 
   if (!isOpen) return null;
 
@@ -322,7 +249,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2" dir="rtl">
       <Card className="w-full h-full max-w-7xl max-h-[95vh] bg-gradient-to-br from-yellow-50 to-orange-50">
         <CardContent className="p-4 md:p-6 h-full flex flex-col lg:flex-row gap-4">
-          {/* Main Game Area */}
+          {/* Main Drawing Area */}
           <div className="flex-1 flex flex-col">
             {/* Header */}
             <div className="flex justify-between items-center mb-4">
@@ -339,151 +266,73 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                 🎨 משחק ציור שיתופי
               </h2>
               <div className="text-lg font-semibold text-orange-600">
-                {gameState === 'drawing' ? getPlayerTurnText(currentPlayer) : ''}
+                תורו של {getPlayerName(currentPlayer)}
               </div>
             </div>
 
-            {/* Game Content */}
-            <div className="flex-1 flex flex-col items-center justify-center">
-              {gameState === 'waiting' && (
-                <div className="text-center">
-                  <div className="text-6xl mb-4">🎨</div>
-                  <h3 className="text-xl font-bold text-orange-800 mb-4">בואו נצייר ביחד!</h3>
-                  <p className="text-orange-600 mb-6">
-                    מור תתחיל לצייר, אחר כך גבי תמשיך על אותו ציור, וכן הלאה...
-                  </p>
-                  <Button 
-                    onClick={startGame}
-                    className="bg-gradient-to-r from-orange-500 to-yellow-600 hover:from-orange-600 hover:to-yellow-700 text-white font-semibold py-3 px-6"
-                  >
-                    התחל לצייר! 🖌️
-                  </Button>
-                </div>
-              )}
-
-              {gameState === 'drawing' && (
-                <div className="flex flex-col items-center w-full">
-                  <div className="mb-4 text-center">
-                    <p className="text-lg font-semibold text-orange-800 mb-2">
-                      {getPlayerTurnText(currentPlayer)}
-                    </p>
-                    
-                    {/* Color Selection */}
-                    <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
-                      <Palette className="w-5 h-5 text-orange-600" />
-                      <div className="flex flex-wrap gap-2">
-                        {colors.map((color) => (
-                          <button
-                            key={color.value}
-                            title={color.name}
-                            className={
-                              `w-7 h-7 rounded-full border-2 transition
-                              flex items-center justify-center
-                              ${selectedColor === color.value
-                                ? 'border-orange-500 ring-2 ring-orange-400'
-                                : 'border-gray-200'
-                              }`
-                            }
-                            style={{ backgroundColor: color.value }}
-                            onClick={() => handleColorChange(color.value)}
-                            aria-label={color.name}
-                          >
-                            {selectedColor === color.value && (
-                              <span className="block w-3 h-3 rounded-full border border-white bg-white bg-opacity-70" />
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="border-4 border-orange-300 rounded-lg mb-4 bg-white">
-                    <canvas
-                      ref={canvasRef}
-                      onMouseDown={handleMouseDown}
-                      onMouseMove={handleMouseMove}
-                      onMouseUp={stopDrawing}
-                      onMouseLeave={stopDrawing}
-                      onTouchStart={handleTouchStart}
-                      onTouchMove={handleTouchMove}
-                      onTouchEnd={stopDrawing}
-                      className="cursor-crosshair touch-none max-w-full h-auto"
-                      style={{ maxWidth: '100%', height: 'auto', display: 'block' }}
-                    />
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button 
-                      onClick={sendTurn}
-                      className="bg-blue-500 hover:bg-blue-600 text-white"
-                    >
-                      <Send className="w-4 h-4 ml-1" />
-                      שלח תור
-                    </Button>
-                    <Button 
-                      onClick={finishDrawing}
-                      className="bg-green-500 hover:bg-green-600 text-white"
-                      disabled={loading}
-                    >
-                      <StopCircle className="w-4 h-4 ml-1" />
-                      סיים ציור
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {gameState === 'naming' && (
-                <div className="text-center w-full max-w-md">
-                  <div className="text-6xl mb-4">🖼️</div>
-                  <h3 className="text-xl font-bold text-orange-800 mb-4">תן שם לציור!</h3>
-                  
-                  <div className="border-4 border-orange-300 rounded-lg mb-4 bg-white">
-                    <img 
-                      src={finalDrawing} 
-                      alt="Final Drawing" 
-                      className="w-full h-auto rounded"
-                    />
-                  </div>
-                  
-                  <div className="mb-4">
-                    <Input
-                      placeholder="שם הציור..."
-                      value={drawingName}
-                      onChange={(e) => setDrawingName(e.target.value)}
-                      className="text-center text-lg"
-                    />
-                  </div>
-                  
-                  <Button 
-                    onClick={saveWithName}
-                    disabled={!drawingName.trim() || loading}
-                    className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold py-3 px-6"
-                  >
-                    {loading ? 'שומר...' : 'שמור ציור! 💾'}
-                  </Button>
-                </div>
-              )}
-
-              {gameState === 'completed' && (
-                <div className="text-center">
-                  <div className="text-6xl mb-4">🎉</div>
-                  <h3 className="text-xl font-bold text-orange-800 mb-4">הציור נשמר בהצלחה!</h3>
-                  <p className="text-orange-600 mb-6">
-                    "{drawingName}" נוסף לגלריה. יפה מאוד! 🎨
-                  </p>
-                  <Button 
-                    onClick={resetGame}
-                    className="bg-gradient-to-r from-orange-500 to-yellow-600 hover:from-orange-600 hover:to-yellow-700 text-white font-semibold py-3 px-6"
-                  >
-                    צייר ציור חדש! 🖌️
-                  </Button>
-                </div>
-              )}
+            {/* Color Selection */}
+            <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
+              <Palette className="w-5 h-5 text-orange-600" />
+              <div className="flex flex-wrap gap-2">
+                {colors.map((color) => (
+                  <button
+                    key={color.value}
+                    title={color.name}
+                    className={`w-8 h-8 rounded-full border-2 transition ${
+                      selectedColor === color.value
+                        ? 'border-orange-500 ring-2 ring-orange-400'
+                        : 'border-gray-300'
+                    }`}
+                    style={{ backgroundColor: color.value }}
+                    onClick={() => setSelectedColor(color.value)}
+                  />
+                ))}
+              </div>
             </div>
 
-            {/* Instructions */}
-            <div className="mt-4 text-center text-xs md:text-sm text-orange-600">
-              משחק ציור שיתופי - מורה וגבוץ' כשרון על חלל!
+            {/* Canvas */}
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <div className="border-4 border-orange-300 rounded-lg mb-4 bg-white">
+                <canvas
+                  ref={canvasRef}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={stopDrawing}
+                  className="cursor-crosshair touch-none rounded"
+                  style={{ maxWidth: '100%', height: 'auto', display: 'block' }}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 flex-wrap justify-center">
+                <Button 
+                  onClick={switchTurn}
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  <Send className="w-4 h-4 ml-1" />
+                  החלף תור
+                </Button>
+                <Button 
+                  onClick={() => setShowSaveDialog(true)}
+                  className="bg-green-500 hover:bg-green-600 text-white"
+                  disabled={loading}
+                >
+                  <Save className="w-4 h-4 ml-1" />
+                  שמור ציור
+                </Button>
+                <Button 
+                  onClick={clearCanvas}
+                  variant="outline"
+                  className="border-red-300 text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4 ml-1" />
+                  נקה
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -500,7 +349,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                         src={drawing.drawing_data} 
                         alt={drawing.drawing_name || 'ציור'} 
                         className="w-full h-24 object-cover rounded border-2 border-gray-200 cursor-pointer hover:border-orange-400 transition-colors"
-                        onClick={() => viewDrawing(drawing)}
+                        onClick={() => setSelectedDrawing(drawing)}
                       />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center gap-2">
                         <Button
@@ -508,11 +357,11 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                           variant="secondary"
                           onClick={(e) => {
                             e.stopPropagation();
-                            viewDrawing(drawing);
+                            setSelectedDrawing(drawing);
                           }}
                           className="bg-white/80 hover:bg-white"
                         >
-                          <ZoomIn className="w-4 h-4" />
+                          <Eye className="w-4 h-4" />
                         </Button>
                         <Button
                           size="sm"
@@ -542,6 +391,40 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Save Dialog */}
+      {showSaveDialog && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-60 p-4" dir="rtl">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold text-orange-800 mb-4">שמור ציור</h3>
+            <Input
+              placeholder="שם הציור..."
+              value={drawingName}
+              onChange={(e) => setDrawingName(e.target.value)}
+              className="mb-4"
+              onKeyPress={(e) => e.key === 'Enter' && handleSaveDrawing()}
+            />
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowSaveDialog(false);
+                  setDrawingName('');
+                }}
+              >
+                ביטול
+              </Button>
+              <Button
+                onClick={handleSaveDrawing}
+                disabled={!drawingName.trim() || loading}
+                className="bg-green-500 hover:bg-green-600 text-white"
+              >
+                {loading ? 'שומר...' : 'שמור'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Drawing Viewer Modal */}
       {selectedDrawing && (
