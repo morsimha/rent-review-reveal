@@ -261,8 +261,7 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
           onClick={handleAddApartment}
           className="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold py-3 transition-all duration-300"
         >
-          <Plus className="w-5 h-5 ml-2" />
-          הוסף דירה
+          + הוסף דירה
         </Button>
       </CardContent>
     </Card>
