@@ -13,13 +13,13 @@ export const useDrawingGame = () => {
   ) => {
     setLoading(true);
     try {
+      // First insert the basic drawing data
       const { data, error } = await supabase
         .from('drawings')
         .insert({
           drawing_data: drawingData,
           current_turn: currentTurn,
-          is_completed: isCompleted,
-          drawing_name: drawingName
+          is_completed: isCompleted
         })
         .select()
         .single();
@@ -27,6 +27,18 @@ export const useDrawingGame = () => {
       if (error) {
         console.error('Error saving drawing:', error);
         throw error;
+      }
+
+      // If there's a drawing name, update the record with it
+      if (drawingName && data) {
+        const { error: updateError } = await supabase
+          .from('drawings')
+          .update({ drawing_name: drawingName } as any)
+          .eq('id', data.id);
+        
+        if (updateError) {
+          console.error('Error updating drawing name:', updateError);
+        }
       }
 
       return { success: true, data };
@@ -66,7 +78,7 @@ export const useDrawingGame = () => {
     try {
       const { data, error } = await supabase
         .from('drawings')
-        .update({ drawing_name: name })
+        .update({ drawing_name: name } as any)
         .eq('id', drawingId)
         .select()
         .single();

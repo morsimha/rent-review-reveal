@@ -1,9 +1,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, StopCircle, Eye, ZoomIn } from 'lucide-react';
+import { X, Send, StopCircle, Eye, ZoomIn, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDrawingGame } from '@/hooks/useDrawingGame';
 
 interface DrawingGameProps {
@@ -23,10 +24,22 @@ interface SavedDrawing {
   drawing_name?: string;
 }
 
+const colors = [
+  { name: 'סגול', value: '#8B5CF6' },
+  { name: 'ורוד', value: '#EC4899' },
+  { name: 'כחול', value: '#3B82F6' },
+  { name: 'ירוק', value: '#10B981' },
+  { name: 'אדום', value: '#EF4444' },
+  { name: 'כתום', value: '#F97316' },
+  { name: 'צהוב', value: '#EAB308' },
+  { name: 'שחור', value: '#000000' }
+];
+
 const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentPlayer, setCurrentPlayer] = useState<'player1' | 'player2'>('player1');
+  const [selectedColor, setSelectedColor] = useState(colors[0].value);
   const [drawingData, setDrawingData] = useState<string>('');
   const [gameState, setGameState] = useState<'waiting' | 'drawing' | 'naming' | 'completed'>('waiting');
   const [drawingName, setDrawingName] = useState('');
@@ -47,15 +60,15 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas size
-    canvas.width = 600;
-    canvas.height = 400;
+    // Set canvas size - larger for better drawing experience
+    canvas.width = 800;
+    canvas.height = 500;
     
     // Set drawing styles
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.lineWidth = 3;
-    ctx.strokeStyle = currentPlayer === 'player1' ? '#8B5CF6' : '#EC4899';
+    ctx.strokeStyle = selectedColor;
     
     // If there's previous drawing data, load it
     if (drawingData) {
@@ -150,10 +163,20 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     draw(point);
   };
 
+  const handleColorChange = (newColor: string) => {
+    setSelectedColor(newColor);
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (ctx) {
+      ctx.strokeStyle = newColor;
+    }
+  };
+
   const startGame = () => {
     setGameState('drawing');
     setCurrentPlayer('player1');
     setDrawingData(''); // Reset for new game
+    setSelectedColor(colors[0].value);
     initializeCanvas();
   };
 
@@ -172,7 +195,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     // Update canvas stroke color for next player
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      ctx.strokeStyle = nextPlayer === 'player1' ? '#8B5CF6' : '#EC4899';
+      ctx.strokeStyle = selectedColor;
     }
   };
 
@@ -186,11 +209,18 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
   };
 
   const saveWithName = async () => {
+    if (!drawingName.trim()) return;
+    
     try {
+      console.log('Saving drawing with name:', drawingName);
       const result = await saveDrawing(finalDrawing, currentPlayer, true, drawingName);
+      console.log('Save result:', result);
+      
       if (result.success) {
         setGameState('completed');
         loadSavedDrawings(); // Refresh the gallery
+      } else {
+        console.error('Failed to save drawing:', result.error);
       }
     } catch (error) {
       console.error('Error saving drawing:', error);
@@ -203,6 +233,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     setDrawingData('');
     setDrawingName('');
     setFinalDrawing('');
+    setSelectedColor(colors[0].value);
     initializeCanvas();
   };
 
@@ -221,7 +252,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     if (gameState === 'drawing') {
       initializeCanvas();
     }
-  }, [drawingData]);
+  }, [drawingData, selectedColor]);
 
   if (!isOpen) return null;
 
@@ -274,9 +305,29 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                     <p className="text-lg font-semibold text-orange-800 mb-2">
                       עכשיו תור של {getPlayerName(currentPlayer)}
                     </p>
-                    <p className="text-orange-600 text-sm">
-                      {currentPlayer === 'player1' ? 'צבע סגול 💜' : 'צבע ורוד 💗'}
-                    </p>
+                    
+                    {/* Color Selection */}
+                    <div className="flex items-center justify-center gap-4 mb-4">
+                      <Palette className="w-5 h-5 text-orange-600" />
+                      <Select value={selectedColor} onValueChange={handleColorChange}>
+                        <SelectTrigger className="w-48">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {colors.map((color) => (
+                            <SelectItem key={color.value} value={color.value}>
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className="w-4 h-4 rounded-full border border-gray-300" 
+                                  style={{ backgroundColor: color.value }}
+                                />
+                                {color.name}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   
                   <div className="border-4 border-orange-300 rounded-lg mb-4 bg-white">
@@ -289,7 +340,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                       onTouchStart={handleTouchStart}
                       onTouchMove={handleTouchMove}
                       onTouchEnd={stopDrawing}
-                      className="cursor-crosshair touch-none"
+                      className="cursor-crosshair touch-none max-w-full h-auto"
                       style={{ maxWidth: '100%', height: 'auto' }}
                     />
                   </div>
@@ -341,7 +392,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                     disabled={!drawingName.trim() || loading}
                     className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold py-3 px-6"
                   >
-                    שמור ציור! 💾
+                    {loading ? 'שומר...' : 'שמור ציור! 💾'}
                   </Button>
                 </div>
               )}
@@ -365,7 +416,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
 
             {/* Instructions */}
             <div className="mt-4 text-center text-xs md:text-sm text-orange-600">
-              משחק ציור שיתופי - מור וגבי מציירות ביחד על אותו קנבס!
+              משחק ציור שיתופי - מורה וגבוץ' כשרון על חלל!
             </div>
           </div>
 
