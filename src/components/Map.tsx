@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -202,7 +201,7 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
                 placeholder="הכנס מפתח Mapbox"
                 value={mapboxToken}
                 onChange={(e) => setMapboxToken(e.target.value)}
-                type="password"
+                type="text"
                 disabled={isLoading}
               />
               <Button 
