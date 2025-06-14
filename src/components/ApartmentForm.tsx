@@ -1,7 +1,6 @@
 
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import ApartmentFormFields from './ApartmentFormFields';
 import type { Apartment } from '@/types/ApartmentTypes';
@@ -94,24 +93,22 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
   };
 
   return (
-    <Card className="mb-8 bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
-      <CardContent className="p-6">
-        <ApartmentFormFields
-          formData={formData}
-          setFormData={setFormData}
-          handleImageUpload={handleImageUpload}
-          uploadingImage={uploadingImage}
-          fileInputRef={fileInputRef}
-          idPrefix="add_"
-        />
-        <Button 
-          onClick={handleAddApartment}
-          className="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold py-3 transition-all duration-300"
-        >
-          + הוסף דירה
-        </Button>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <ApartmentFormFields
+        formData={formData}
+        setFormData={setFormData}
+        handleImageUpload={handleImageUpload}
+        uploadingImage={uploadingImage}
+        fileInputRef={fileInputRef}
+        idPrefix="add_"
+      />
+      <Button 
+        onClick={handleAddApartment}
+        className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold py-3 transition-all duration-300"
+      >
+        + הוסף דירה
+      </Button>
+    </div>
   );
 };
 
