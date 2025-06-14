@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Trash2, Edit, Phone, Link } from 'lucide-react';
+import { Trash2, Edit, Phone, Link, House } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import StarRating from './StarRating';
@@ -34,7 +34,6 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
   // Format entry date as dd/MM if it exists and is parseable
   let formattedEntryDate = '';
   if (apartment.entry_date) {
-    // Try ISO first; fallback to displaying the raw value if parse fails
     try {
       const parsed = parseISO(apartment.entry_date);
       formattedEntryDate = format(parsed, 'dd/MM');
@@ -65,25 +64,25 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             <div className="absolute top-2 left-2 text-xl">🐱</div>
           )}
           {apartment.has_shelter && (
-            <div className="absolute top-12 right-2 text-lg bg-white/70 rounded px-2 py-1 flex items-center gap-1 shadow z-10">
-              <span className="text-xl">🏠</span>
+            <div className="absolute top-12 right-2 text-lg bg-white/70 rounded px-2 py-1 flex flex-row-reverse items-center gap-1 shadow z-10">
               <span className="text-xs text-purple-800">מקלט</span>
+              <House className="w-5 h-5 text-purple-800" />
             </div>
           )}
         </div>
 
         <div className="p-4 flex flex-col flex-grow min-h-0">
-          {/* Title on top right */}
-          <div className="flex w-full mb-0">
-            <h3 className="font-bold text-base text-gray-800 line-clamp-1 text-right w-full" style={{minWidth: 0}}>
+          {/* Title (right) */}
+          <div className="w-full text-right">
+            <h3 className="font-bold text-base text-gray-800 line-clamp-1" style={{ minWidth: 0 }}>
               {apartment.title}
             </h3>
           </div>
-          {/* Entry date below, if exists, on right */}
+          {/* Entry date below title */}
           {formattedEntryDate && (
-            <div className="flex w-full mb-2">
+            <div className="flex w-full mb-2 mt-1">
               <span
-                className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap"
+                className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ml-auto"
                 dir="ltr"
               >
                 {formattedEntryDate}
@@ -126,16 +125,16 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 
           {/* Ratings */}
           <div className="mb-3 space-y-2">
-            {/* מור: label left, stars right */}
-            <div className="flex flex-row items-center gap-2 justify-end text-right">
-              <span className="text-sm font-medium text-purple-600 ml-1">מור:</span>
+            {/* מור: הכי שמאל, כוכבים מימין */}
+            <div className="flex flex-row items-center gap-2 justify-start text-right">
+              <span className="text-sm font-medium text-purple-600">מור:</span>
               <StarRating
                 rating={apartment.mor_rating || 0}
                 onRatingChange={(rating) => onMorRatingChange(apartment.id, rating)}
               />
             </div>
-            <div className="flex flex-row items-center gap-2 justify-end text-right">
-              <span className="text-sm font-medium text-pink-600 ml-1">גבי:</span>
+            <div className="flex flex-row items-center gap-2 justify-start text-right">
+              <span className="text-sm font-medium text-pink-600">גבי:</span>
               <StarRating
                 rating={apartment.gabi_rating || 0}
                 onRatingChange={(rating) => onGabiRatingChange(apartment.id, rating)}
@@ -178,3 +177,4 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 };
 
 export default ApartmentCard;
+
