@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Star, Trash2, Edit, Phone, Link } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { useApartments, type Apartment } from '@/hooks/useApartments';
+import Map from '@/components/Map';
 
 const Index = () => {
   const [title, setTitle] = useState('');
@@ -300,6 +300,12 @@ const Index = () => {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Map Section */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-purple-800 mb-4 text-center">מפת הדירות</h2>
+          <Map apartments={apartments} />
+        </div>
 
         {/* Apartments Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
