@@ -56,7 +56,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
         <div className="p-4 flex flex-col flex-grow min-h-0">
           {/* Title and Description */}
           <h3 className="font-bold text-base mb-2 text-gray-800 line-clamp-1 text-right">{apartment.title}</h3>
-          <div className="mb-3 h-10 flex items-start">
+          <div className="mb-2 h-10 flex items-start">
             <p className="text-gray-600 text-sm line-clamp-2 text-right leading-5">{apartment.description}</p>
           </div>
           
@@ -67,7 +67,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 
           {/* Contact Info */}
           {(apartment.contact_name || apartment.contact_phone) && (
-            <div className="text-sm text-gray-700 mb-3 text-right">
+            <div className="text-sm text-gray-700 mb-2 text-right">
               {apartment.contact_name && <p className="mb-1">{apartment.contact_name}</p>}
               {apartment.contact_phone && <p className="flex items-center gap-1 justify-end"><Phone className="w-4 h-4" />{apartment.contact_phone}</p>}
             </div>
@@ -75,7 +75,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 
           {/* Links */}
           {apartment.apartment_link && (
-            <div className="mb-3 text-right">
+            <div className="mb-2 text-right">
               <a href={apartment.apartment_link} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline flex items-center gap-1 justify-end">
                 <Link className="w-4 h-4" />
                 קישור לדירה
@@ -84,7 +84,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           )}
 
           {/* Ratings (Mor and Gabi only) */}
-          <div className="mb-4 space-y-2">
+          <div className="mb-3 space-y-2">
             <div className="flex items-center gap-2 justify-end">
               <StarRating 
                 rating={apartment.mor_rating || 0} 
@@ -102,7 +102,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           </div>
 
           {/* Note */}
-          <div className="mb-4 flex-grow min-h-0">
+          <div className="mb-3 flex-grow min-h-0">
             <p className="text-sm text-gray-600 text-right break-words overflow-hidden">
               {apartment.note || 'אין הערות'}
             </p>
