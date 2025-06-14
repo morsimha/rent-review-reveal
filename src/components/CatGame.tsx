@@ -20,7 +20,7 @@ interface Cat {
 const CatGame: React.FC<CatGameProps> = ({ isOpen, onClose }) => {
   const [cats, setCats] = useState<Cat[]>([]);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(30);
+  const [timeLeft, setTimeLeft] = useState(10);
   const [gameActive, setGameActive] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [showNameInput, setShowNameInput] = useState(false);
@@ -66,7 +66,7 @@ const CatGame: React.FC<CatGameProps> = ({ isOpen, onClose }) => {
     setGameOver(false);
     setShowNameInput(false);
     setScore(0);
-    setTimeLeft(30);
+    setTimeLeft(10);
     setCats([]);
     catIdRef.current = 0;
   };
@@ -151,7 +151,7 @@ const CatGame: React.FC<CatGameProps> = ({ isOpen, onClose }) => {
                   <div className="text-4xl md:text-6xl mb-4">🐱</div>
                   <h3 className="text-lg md:text-xl font-bold text-purple-800 mb-2 text-center">תפוס כמה שיותר חתולים!</h3>
                   <p className="text-purple-600 mb-6 text-center text-sm md:text-base">
-                    לחץ על החתולים שמופיעים על המסך במשך 30 שניות
+                    לחץ על החתולים שמופיעים על המסך במשך 10 שניות
                   </p>
                   <Button 
                     onClick={startGame}
