@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Trash2, Edit, Phone, Link } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -36,7 +35,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
         {/* Status Bar */}
         <div className={`h-2 w-full rounded-t-lg ${getStatusColor(apartment.status)}`}></div>
 
-        {/* Image */}
+        {/* Image Section */}
         <div className="relative overflow-hidden flex-shrink-0 h-48">
           <img
             src={apartment.image_url || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'}
@@ -60,17 +59,16 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
         </div>
 
         <div className="p-4 flex flex-col flex-grow min-h-0">
-          {/* Title */}
-          <h3 className="font-bold text-base mb-2 text-gray-800 line-clamp-1 text-right">{apartment.title}</h3>
+          {/* Title + Entry Date */}
+          <div className="flex flex-row-reverse items-end gap-2 mb-2">
+            <h3 className="font-bold text-base text-gray-800 line-clamp-1 text-right flex-1">{apartment.title}</h3>
+            {apartment.entry_date && (
+              <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-medium text-right whitespace-nowrap" dir="ltr" style={{direction: 'ltr'}}>
+                {apartment.entry_date}
+              </span>
+            )}
+          </div>
           
-          {/* Entry Date */}
-          {apartment.entry_date && (
-            <div className="flex flex-row-reverse items-center gap-1 mb-2">
-              <span className="text-purple-700 text-xs font-bold">תאריך כניסה:</span>
-              <span className="text-xs text-purple-700 font-normal" dir="ltr" style={{direction: 'ltr'}}>{apartment.entry_date}</span>
-            </div>
-          )}
-
           {/* Location */}
           {apartment.location && (
             <p className="text-purple-600 text-sm mb-2 font-medium text-right">{apartment.location}</p>
@@ -81,7 +79,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             <p className="text-gray-600 text-sm line-clamp-2 text-right leading-5">{apartment.description}</p>
           </div>
 
-          {/* Contact Info - Aligned to right */}
+          {/* Contact Info */}
           {(apartment.contact_name || apartment.contact_phone) && (
             <div className="text-sm text-gray-700 mb-2 text-right">
               {apartment.contact_name && <p className="mb-1 text-right">{apartment.contact_name}</p>}
@@ -94,7 +92,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             </div>
           )}
 
-          {/* Links - Aligned to right */}
+          {/* Links */}
           {apartment.apartment_link && (
             <div className="mb-2 text-right">
               <a href={apartment.apartment_link} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline flex items-center gap-1 justify-end text-right">
@@ -104,7 +102,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             </div>
           )}
 
-          {/* Ratings (Mor and Gabi only) - Aligned to right */}
+          {/* Ratings */}
           <div className="mb-3 space-y-2">
             <div className="flex items-center gap-2 justify-end text-right">
               <StarRating 
@@ -157,4 +155,3 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 };
 
 export default ApartmentCard;
-
