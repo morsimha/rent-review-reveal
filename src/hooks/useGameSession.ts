@@ -32,7 +32,18 @@ export const useGameSession = () => {
     try {
       const { data: existingSession, error: fetchError } = await supabase
         .from('game_sessions')
-        .select('*')
+        .select(`
+          id,
+          current_turn,
+          last_player_device_id,
+          session_name,
+          drawing_id,
+          draft_canvas_data,
+          player1_ready,
+          player2_ready,
+          player1_device_id,
+          player2_device_id
+        `)
         .eq('session_name', 'default_session')
         .single();
 
@@ -41,7 +52,7 @@ export const useGameSession = () => {
         return { success: false, error: fetchError };
       }
       if (existingSession) {
-        setCurrentSession(existingSession);
+        setCurrentSession(existingSession as GameSession);
         return { success: true, data: existingSession };
       }
       const { data: newSession, error: createError } = await supabase
@@ -55,14 +66,25 @@ export const useGameSession = () => {
           player1_device_id: null,
           player2_device_id: null
         })
-        .select()
+        .select(`
+          id,
+          current_turn,
+          last_player_device_id,
+          session_name,
+          drawing_id,
+          draft_canvas_data,
+          player1_ready,
+          player2_ready,
+          player1_device_id,
+          player2_device_id
+        `)
         .single();
 
       if (createError) {
         console.error('Error creating session:', createError);
         return { success: false, error: createError };
       }
-      setCurrentSession(newSession);
+      setCurrentSession(newSession as GameSession);
       return { success: true, data: newSession };
     } catch (error) {
       console.error('Error initializing session:', error);
@@ -100,14 +122,25 @@ export const useGameSession = () => {
         .from('game_sessions')
         .update(updateData)
         .eq('id', currentSession.id)
-        .select()
+        .select(`
+          id,
+          current_turn,
+          last_player_device_id,
+          session_name,
+          drawing_id,
+          draft_canvas_data,
+          player1_ready,
+          player2_ready,
+          player1_device_id,
+          player2_device_id
+        `)
         .single();
 
       if (error) {
         console.error('Error joining game:', error);
         return { success: false, error };
       }
-      setCurrentSession(data);
+      setCurrentSession(data as GameSession);
       return { success: true, data };
     } catch (error) {
       console.error('Error in joinGame:', error);
@@ -140,14 +173,25 @@ export const useGameSession = () => {
         .from('game_sessions')
         .update(updateData)
         .eq('id', currentSession.id)
-        .select()
+        .select(`
+          id,
+          current_turn,
+          last_player_device_id,
+          session_name,
+          drawing_id,
+          draft_canvas_data,
+          player1_ready,
+          player2_ready,
+          player1_device_id,
+          player2_device_id
+        `)
         .single();
 
       if (error) {
         console.error('Error leaving game:', error);
         return { success: false, error };
       }
-      setCurrentSession(data);
+      setCurrentSession(data as GameSession);
       return { success: true, data };
     } catch (error) {
       console.error('Error in leaveGame:', error);
@@ -170,14 +214,25 @@ export const useGameSession = () => {
           last_player_device_id: deviceId
         })
         .eq('id', currentSession.id)
-        .select()
+        .select(`
+          id,
+          current_turn,
+          last_player_device_id,
+          session_name,
+          drawing_id,
+          draft_canvas_data,
+          player1_ready,
+          player2_ready,
+          player1_device_id,
+          player2_device_id
+        `)
         .single();
 
       if (error) {
         console.error('Error switching turn:', error);
         return { success: false, error };
       }
-      setCurrentSession(data);
+      setCurrentSession(data as GameSession);
       return { success: true, data };
     } catch (error) {
       console.error('Error in switchTurn:', error);
@@ -236,7 +291,21 @@ export const useGameSession = () => {
         },
         (payload) => {
           if (payload.new && typeof payload.new === 'object') {
-            setCurrentSession(payload.new as GameSession);
+            // Ensure the payload has all required fields
+            const sessionData = payload.new as any;
+            const completeSession: GameSession = {
+              id: sessionData.id,
+              current_turn: sessionData.current_turn,
+              last_player_device_id: sessionData.last_player_device_id,
+              session_name: sessionData.session_name,
+              drawing_id: sessionData.drawing_id,
+              draft_canvas_data: sessionData.draft_canvas_data,
+              player1_ready: sessionData.player1_ready || false,
+              player2_ready: sessionData.player2_ready || false,
+              player1_device_id: sessionData.player1_device_id || null,
+              player2_device_id: sessionData.player2_device_id || null,
+            };
+            setCurrentSession(completeSession);
           }
         }
       )

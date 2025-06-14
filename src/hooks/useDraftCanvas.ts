@@ -14,13 +14,24 @@ export const useDraftCanvas = (
         .from('game_sessions')
         .update({ draft_canvas_data: draftCanvasData })
         .eq('id', currentSession.id)
-        .select()
+        .select(`
+          id,
+          current_turn,
+          last_player_device_id,
+          session_name,
+          drawing_id,
+          draft_canvas_data,
+          player1_ready,
+          player2_ready,
+          player1_device_id,
+          player2_device_id
+        `)
         .single();
       if (error) {
         console.error('Error saving draft canvas:', error);
         return { success: false, error };
       }
-      setCurrentSession(data);
+      setCurrentSession(data as GameSession);
       return { success: true };
     } catch (error) {
       console.error('Error in saveDraftCanvas:', error);
