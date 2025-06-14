@@ -55,7 +55,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-110 rounded-tr-lg"
           />
           {/* מחירים וארנונה */}
-          <div className="absolute top-2 right-2 flex flex-row-reverse gap-2 z-20">
+          <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-20">
             {apartment.price && (
               <div className="bg-green-500 text-white px-2 py-1 rounded-full font-bold text-sm">
                 ₪{apartment.price}
@@ -64,7 +64,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             {/* ארנונה */}
             {apartment.arnona != null && !isNaN(Number(apartment.arnona)) && (
               <div className="bg-yellow-400 text-black px-2 py-1 rounded-full font-bold text-sm" title="מחיר ארנונה">
-                ₪{apartment.arnona} ארנונה
+                ארנונה ₪{apartment.arnona}
               </div>
             )}
           </div>
