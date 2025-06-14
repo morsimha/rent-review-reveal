@@ -23,6 +23,7 @@ export interface Apartment {
   updated_at: string;
   has_shelter: boolean | null;
   entry_date: string | null;
+  arnona: number | null; // Added field
 }
 
 export const useApartments = () => {
