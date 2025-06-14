@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import type { Apartment } from '@/hooks/useApartments';
+import PasswordPromptDialog from './PasswordPromptDialog';
 
 interface EditApartmentDialogProps {
   isOpen: boolean;
@@ -18,6 +19,8 @@ interface EditApartmentDialogProps {
   uploadImage: (file: File) => Promise<string | null>;
   isAdd?: boolean;
 }
+
+const SECRET = "wika";
 
 const EditApartmentDialog: React.FC<EditApartmentDialogProps> = ({
   isOpen,
@@ -31,6 +34,9 @@ const EditApartmentDialog: React.FC<EditApartmentDialogProps> = ({
   const [editUploadingImage, setEditUploadingImage] = useState(false);
   const editFileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [pendingEditData, setPendingEditData] = useState<Partial<Apartment>|null>(null);
 
   useEffect(() => {
     if (!isAdd && apartment) {
@@ -52,7 +58,7 @@ const EditApartmentDialog: React.FC<EditApartmentDialogProps> = ({
     setEditUploadingImage(false);
   };
 
-  const handleSave = async () => {
+  const handleRequestSave = async () => {
     // בדיקה בסיסית
     if (!(isAdd ? editFormData.title : editFormData.title?.trim())) {
       toast({
@@ -62,12 +68,28 @@ const EditApartmentDialog: React.FC<EditApartmentDialogProps> = ({
       });
       return;
     }
-    
-    // קריאה ישירה ל-onSave ללא בדיקת סיסמה פנימית
-    if (isAdd) {
-      onSave('', editFormData);
-    } else if (apartment) {
-      onSave(apartment.id, editFormData);
+    setPendingEditData(editFormData);
+    setPasswordDialogOpen(true);
+  };
+
+  const handlePasswordPrompt = (password: string) => {
+    if (password.trim() === SECRET) {
+      if (isAdd) {
+        onSave('', editFormData);
+      } else if (apartment) {
+        onSave(apartment.id, editFormData);
+      }
+      setPasswordDialogOpen(false);
+      setPendingEditData(null);
+      onClose();
+    } else {
+      toast({
+        title: "סיסמה שגויה",
+        description: "הפעולה בוטלה.",
+        variant: "destructive"
+      });
+      setPasswordDialogOpen(false);
+      setPendingEditData(null);
     }
   };
 
@@ -230,13 +252,21 @@ const EditApartmentDialog: React.FC<EditApartmentDialogProps> = ({
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-4">
-          <Button onClick={handleSave} className="bg-purple-600 hover:bg-purple-700">
+          <Button onClick={handleRequestSave} className="bg-purple-600 hover:bg-purple-700">
             שמור
           </Button>
           <Button variant="outline" onClick={onClose}>
             ביטול
           </Button>
         </div>
+        {/* דיאלוג לקבלת סיסמה */}
+        <PasswordPromptDialog
+          isOpen={passwordDialogOpen}
+          onConfirm={handlePasswordPrompt}
+          onCancel={() => setPasswordDialogOpen(false)}
+          title="אימות סיסמה"
+          confirmText="אישור"
+        />
       </DialogContent>
     </Dialog>
   );

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useApartments, type Apartment } from '@/hooks/useApartments';
@@ -43,28 +44,7 @@ const Index = () => {
   const handleAddApartment = async (apartmentId: string, apartmentData: Partial<Apartment>) => {
     // אם זה הוספה (apartmentId ריק), הוסף את הדירה
     if (apartmentId === '') {
-      // יצירת אובייקט מלא עם ערכי ברירת מחדל
-      const fullApartmentData = {
-        fb_url: `https://facebook.com/generated-${Date.now()}`,
-        title: apartmentData.title || '',
-        description: apartmentData.description || null,
-        price: apartmentData.price || null,
-        location: apartmentData.location || null,
-        image_url: apartmentData.image_url || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-        rating: 0,
-        mor_rating: apartmentData.mor_rating || 0,
-        gabi_rating: apartmentData.gabi_rating || 0,
-        note: apartmentData.note || null,
-        apartment_link: apartmentData.apartment_link || null,
-        contact_phone: apartmentData.contact_phone || null,
-        contact_name: apartmentData.contact_name || null,
-        status: apartmentData.status || 'not_spoke' as const,
-        pets_allowed: apartmentData.pets_allowed || 'unknown' as const,
-        has_shelter: apartmentData.has_shelter || null,
-        entry_date: apartmentData.entry_date || null,
-      };
-      
-      addApartment(fullApartmentData);
+      addApartment(apartmentData);
       setIsAddDialogOpen(false);
       return true;
     }
@@ -76,58 +56,26 @@ const Index = () => {
     setEditingApartment(apartment);
     setIsEditDialogOpen(true);
   };
-
   const handleSaveEdit = (apartmentId: string, updates: Partial<Apartment>) => {
-    console.log('handleSaveEdit called with:', { apartmentId, updates });
     // אם זה עריכה (apartmentId לא ריק), בקש אימות
     if (apartmentId !== '') {
       setPendingEditData({ id: apartmentId, updates });
       setPendingPasswordAction({ cb: handleEditPassword, action: 'edit' });
     }
   };
-
-  const handleEditPassword = async (ok: boolean) => {
-    console.log('handleEditPassword called with:', { ok, pendingEditData });
+  const handleEditPassword = (ok: boolean) => {
     if (ok && pendingEditData) {
-      try {
-        console.log('Calling updateApartment with:', pendingEditData.id, pendingEditData.updates);
-        const result = await updateApartment(pendingEditData.id, pendingEditData.updates);
-        console.log('updateApartment result:', result);
-        
-        if (result && result.success) {
-          setIsEditDialogOpen(false);
-          setEditingApartment(null);
-          setPendingEditData(null);
-          setPendingPasswordAction(null);
-          toast({
-            title: "הצלחה",
-            description: "הדירה עודכנה בהצלחה",
-          });
-        } else {
-          console.error('Update failed:', result);
-          toast({
-            title: "שגיאה",
-            description: "העדכון נכשל",
-            variant: "destructive"
-          });
-        }
-      } catch (error) {
-        console.error('Error in handleEditPassword:', error);
-        toast({
-          title: "שגיאה",
-          description: "שגיאה בעדכון הדירה",
-          variant: "destructive"
-        });
-      }
+      updateApartment(pendingEditData.id, pendingEditData.updates);
+      setIsEditDialogOpen(false);
     } else if (!ok) {
       toast({
         title: "סיסמה שגויה",
         description: "הפעולה בוטלה.",
         variant: "destructive"
       });
-      setPendingEditData(null);
-      setPendingPasswordAction(null);
     }
+    setPendingEditData(null);
+    setPendingPasswordAction(null);
   };
 
   // *** מחיקת דירה ***
@@ -135,46 +83,18 @@ const Index = () => {
     setPendingDeleteId(apartmentId);
     setPendingPasswordAction({ cb: handleDeletePassword, action: 'delete' });
   };
-
-  const handleDeletePassword = async (ok: boolean) => {
-    console.log('handleDeletePassword called with:', { ok, pendingDeleteId });
+  const handleDeletePassword = (ok: boolean) => {
     if (ok && pendingDeleteId) {
-      try {
-        const result = await deleteApartment(pendingDeleteId);
-        console.log('deleteApartment result:', result);
-        
-        if (result && result.success) {
-          setPendingDeleteId(null);
-          setPendingPasswordAction(null);
-          toast({
-            title: "הצלחה",
-            description: "הדירה נמחקה בהצלחה",
-          });
-        } else {
-          console.error('Delete failed:', result);
-          toast({
-            title: "שגיאה",
-            description: "המחיקה נכשלה",
-            variant: "destructive"
-          });
-        }
-      } catch (error) {
-        console.error('Error in handleDeletePassword:', error);
-        toast({
-          title: "שגיאה",
-          description: "שגיאה במחיקת הדירה",
-          variant: "destructive"
-        });
-      }
+      deleteApartment(pendingDeleteId);
     } else if (!ok) {
       toast({
         title: "סיסמה שגויה",
         description: "המחיקה בוטלה.",
         variant: "destructive"
       });
-      setPendingDeleteId(null);
-      setPendingPasswordAction(null);
     }
+    setPendingDeleteId(null);
+    setPendingPasswordAction(null);
   };
 
   // הצגת דיאלוג סיסמה
@@ -183,10 +103,6 @@ const Index = () => {
     if (pendingPasswordAction) {
       pendingPasswordAction.cb(ok);
     }
-    // איפוס תמידי אחרי כל ניסיון
-    setPendingPasswordAction(null);
-    setPendingEditData(null);
-    setPendingDeleteId(null);
   };
 
   if (loading) {
@@ -350,12 +266,7 @@ const Index = () => {
       <PasswordPromptDialog
         isOpen={!!pendingPasswordAction}
         onConfirm={handlePasswordPrompt}
-        onCancel={() => {
-          // איפוס גם כאן כדי שביטול לא יגרום לדיאלוג להמשיך להופיע
-          setPendingPasswordAction(null);
-          setPendingEditData(null);
-          setPendingDeleteId(null);
-        }}
+        onCancel={() => setPendingPasswordAction(null)}
         title="אימות סיסמה"
         confirmText="אישור"
       />
