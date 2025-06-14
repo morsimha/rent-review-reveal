@@ -183,6 +183,10 @@ const Index = () => {
     if (pendingPasswordAction) {
       pendingPasswordAction.cb(ok);
     }
+    // איפוס תמידי אחרי כל ניסיון
+    setPendingPasswordAction(null);
+    setPendingEditData(null);
+    setPendingDeleteId(null);
   };
 
   if (loading) {
@@ -346,7 +350,12 @@ const Index = () => {
       <PasswordPromptDialog
         isOpen={!!pendingPasswordAction}
         onConfirm={handlePasswordPrompt}
-        onCancel={() => setPendingPasswordAction(null)}
+        onCancel={() => {
+          // איפוס גם כאן כדי שביטול לא יגרום לדיאלוג להמשיך להופיע
+          setPendingPasswordAction(null);
+          setPendingEditData(null);
+          setPendingDeleteId(null);
+        }}
         title="אימות סיסמה"
         confirmText="אישור"
       />
