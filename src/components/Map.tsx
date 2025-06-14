@@ -17,6 +17,7 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapboxToken, setMapboxToken] = useState('');
   const [tokenEntered, setTokenEntered] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   // Geocoding function to convert address to coordinates
@@ -24,10 +25,18 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
     if (!location || !token) return null;
     
     try {
+      console.log('Geocoding address:', location);
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(location)}.json?access_token=${token}&country=IL&limit=1`
       );
+      
+      if (!response.ok) {
+        console.error('Geocoding API error:', response.status, response.statusText);
+        return null;
+      }
+      
       const data = await response.json();
+      console.log('Geocoding response:', data);
       
       if (data.features && data.features.length > 0) {
         return data.features[0].center;
@@ -42,9 +51,20 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
   const initializeMap = async () => {
     if (!mapContainer.current || !mapboxToken) return;
 
+    console.log('Initializing map with token:', mapboxToken.substring(0, 10) + '...');
+    setIsLoading(true);
+
     try {
+      // Set the access token
       mapboxgl.accessToken = mapboxToken;
       
+      // Test the token by making a simple API call
+      const testResponse = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/test.json?access_token=${mapboxToken}&limit=1`);
+      if (!testResponse.ok) {
+        throw new Error('Invalid Mapbox token');
+      }
+
+      // Initialize the map
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v11',
@@ -52,85 +72,102 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
         zoom: 11,
       });
 
+      console.log('Map created successfully');
+
+      // Add navigation controls
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-      // Add apartment markers
-      for (const apartment of apartments) {
-        if (apartment.location) {
-          const coordinates = await geocodeAddress(apartment.location, mapboxToken);
-          
-          if (coordinates) {
-            // Create a custom marker element
-            const markerElement = document.createElement('div');
-            markerElement.className = 'custom-marker';
-            markerElement.style.width = '30px';
-            markerElement.style.height = '30px';
-            markerElement.style.borderRadius = '50%';
-            markerElement.style.cursor = 'pointer';
-            markerElement.style.display = 'flex';
-            markerElement.style.alignItems = 'center';
-            markerElement.style.justifyContent = 'center';
-            markerElement.style.fontSize = '16px';
-            markerElement.style.fontWeight = 'bold';
-            markerElement.style.color = 'white';
-            markerElement.style.border = '2px solid white';
-            markerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+      // Wait for map to load before adding markers
+      map.current.on('load', async () => {
+        console.log('Map loaded, adding apartment markers');
+        
+        // Add apartment markers
+        for (const apartment of apartments) {
+          if (apartment.location) {
+            console.log('Processing apartment:', apartment.title, 'at', apartment.location);
+            const coordinates = await geocodeAddress(apartment.location, mapboxToken);
             
-            // Set color based on status
-            switch (apartment.status) {
-              case 'spoke':
-                markerElement.style.backgroundColor = '#10b981'; // green
-                break;
-              case 'not_spoke':
-                markerElement.style.backgroundColor = '#f59e0b'; // yellow
-                break;
-              case 'no_answer':
-                markerElement.style.backgroundColor = '#ef4444'; // red
-                break;
-              default:
-                markerElement.style.backgroundColor = '#6b7280'; // gray
-            }
-            
-            markerElement.innerHTML = '🏠';
+            if (coordinates) {
+              console.log('Adding marker at coordinates:', coordinates);
+              
+              // Create a custom marker element
+              const markerElement = document.createElement('div');
+              markerElement.className = 'custom-marker';
+              markerElement.style.width = '30px';
+              markerElement.style.height = '30px';
+              markerElement.style.borderRadius = '50%';
+              markerElement.style.cursor = 'pointer';
+              markerElement.style.display = 'flex';
+              markerElement.style.alignItems = 'center';
+              markerElement.style.justifyContent = 'center';
+              markerElement.style.fontSize = '16px';
+              markerElement.style.fontWeight = 'bold';
+              markerElement.style.color = 'white';
+              markerElement.style.border = '2px solid white';
+              markerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+              
+              // Set color based on status
+              switch (apartment.status) {
+                case 'spoke':
+                  markerElement.style.backgroundColor = '#10b981'; // green
+                  break;
+                case 'not_spoke':
+                  markerElement.style.backgroundColor = '#f59e0b'; // yellow
+                  break;
+                case 'no_answer':
+                  markerElement.style.backgroundColor = '#ef4444'; // red
+                  break;
+                default:
+                  markerElement.style.backgroundColor = '#6b7280'; // gray
+              }
+              
+              markerElement.innerHTML = '🏠';
 
-            // Create popup content
-            const popupContent = `
-              <div style="text-align: right; direction: rtl;">
-                <h3 style="font-weight: bold; margin-bottom: 8px;">${apartment.title}</h3>
-                ${apartment.price ? `<p style="color: #10b981; font-weight: bold;">₪${apartment.price}</p>` : ''}
-                ${apartment.description ? `<p style="margin: 4px 0;">${apartment.description}</p>` : ''}
-                ${apartment.contact_name ? `<p style="margin: 4px 0;"><strong>איש קשר:</strong> ${apartment.contact_name}</p>` : ''}
-                ${apartment.contact_phone ? `<p style="margin: 4px 0;"><strong>טלפון:</strong> ${apartment.contact_phone}</p>` : ''}
-                <div style="margin-top: 8px;">
-                  ${'★'.repeat(apartment.rating)}${'☆'.repeat(5 - apartment.rating)}
+              // Create popup content
+              const popupContent = `
+                <div style="text-align: right; direction: rtl;">
+                  <h3 style="font-weight: bold; margin-bottom: 8px;">${apartment.title}</h3>
+                  ${apartment.price ? `<p style="color: #10b981; font-weight: bold;">₪${apartment.price}</p>` : ''}
+                  ${apartment.description ? `<p style="margin: 4px 0;">${apartment.description}</p>` : ''}
+                  ${apartment.contact_name ? `<p style="margin: 4px 0;"><strong>איש קשר:</strong> ${apartment.contact_name}</p>` : ''}
+                  ${apartment.contact_phone ? `<p style="margin: 4px 0;"><strong>טלפון:</strong> ${apartment.contact_phone}</p>` : ''}
+                  <div style="margin-top: 8px;">
+                    ${'★'.repeat(apartment.rating)}${'☆'.repeat(5 - apartment.rating)}
+                  </div>
                 </div>
-              </div>
-            `;
+              `;
 
-            const popup = new mapboxgl.Popup({
-              offset: 25,
-              closeButton: true,
-              closeOnClick: false
-            }).setHTML(popupContent);
+              const popup = new mapboxgl.Popup({
+                offset: 25,
+                closeButton: true,
+                closeOnClick: false
+              }).setHTML(popupContent);
 
-            new mapboxgl.Marker(markerElement)
-              .setLngLat(coordinates)
-              .setPopup(popup)
-              .addTo(map.current!);
+              new mapboxgl.Marker(markerElement)
+                .setLngLat(coordinates)
+                .setPopup(popup)
+                .addTo(map.current!);
+            } else {
+              console.log('Could not geocode location:', apartment.location);
+            }
           }
         }
-      }
-
-      setTokenEntered(true);
-      toast({
-        title: "המפה נטענה בהצלחה",
-        description: "כעת תוכל לראות את כל הדירות על המפה",
+        
+        setTokenEntered(true);
+        setIsLoading(false);
+        
+        toast({
+          title: "המפה נטענה בהצלחה",
+          description: `נוספו ${apartments.length} דירות למפה`,
+        });
       });
+
     } catch (error) {
       console.error('Map initialization error:', error);
+      setIsLoading(false);
       toast({
         title: "שגיאה בטעינת המפה",
-        description: "אנא בדוק את המפתח של Mapbox",
+        description: "אנא בדוק את המפתח של Mapbox ונסה שוב",
         variant: "destructive"
       });
     }
@@ -145,6 +182,8 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
       });
       return;
     }
+    
+    console.log('Token submitted, initializing map...');
     initializeMap();
   };
 
@@ -177,9 +216,14 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
                 value={mapboxToken}
                 onChange={(e) => setMapboxToken(e.target.value)}
                 type="password"
+                disabled={isLoading}
               />
-              <Button onClick={handleTokenSubmit} className="bg-purple-600 hover:bg-purple-700">
-                הצג מפה
+              <Button 
+                onClick={handleTokenSubmit} 
+                className="bg-purple-600 hover:bg-purple-700"
+                disabled={isLoading}
+              >
+                {isLoading ? 'טוען...' : 'הצג מפה'}
               </Button>
             </div>
           </div>
