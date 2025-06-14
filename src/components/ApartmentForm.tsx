@@ -28,6 +28,7 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
   const [uploadingImage, setUploadingImage] = useState(false);
   const [hasShelter, setHasShelter] = useState<boolean | null>(null);
   const [entryDate, setEntryDate] = useState('');
+  const formRef = useRef<HTMLFormElement>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -53,7 +54,6 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
       });
       return;
     }
-
     const apartmentData = {
       fb_url: `https://facebook.com/generated-${Date.now()}`,
       title,
@@ -73,9 +73,7 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
       has_shelter: hasShelter,
       entry_date: entryDate ? entryDate : null,
     };
-
     await onAddApartment(apartmentData);
-
     // Reset form
     setTitle('');
     setDescription('');
@@ -93,179 +91,184 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    if (formRef.current) {
+      formRef.current.reset();
+    }
   };
 
   return (
-    <Card className="mb-8 bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
-      <CardContent className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Input
-              placeholder="כותרת הדירה *"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500"
-            />
-          </div>
-          <div>
-            <Input
-              placeholder="מיקום"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500"
-            />
-          </div>
-          <div>
-            <Input
-              placeholder="מחיר (₪)"
-              type="number"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500"
-            />
-          </div>
-          <div className="flex gap-2">
-            <Input
-              placeholder="קישור לתמונה"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500 flex-1"
-            />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-              ref={fileInputRef}
-            />
-            <Button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadingImage}
-              className="bg-purple-500 hover:bg-purple-600"
-            >
-              <Upload className="w-4 h-4" />
-              {uploadingImage ? "מעלה..." : "העלה"}
-            </Button>
-          </div>
-          <div>
-            <Input
-              placeholder="קישור לדירה"
-              value={apartmentLink}
-              onChange={(e) => setApartmentLink(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500"
-            />
-          </div>
-          <div>
-            <Input
-              placeholder="מספר טלפון"
-              value={contactPhone}
-              onChange={(e) => setContactPhone(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500"
-            />
-          </div>
-          <div>
-            <Input
-              placeholder="שם איש קשר"
-              value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500"
-            />
-          </div>
-          {/* שדה דיברנו/לא דיברנו - יישור נכון */}
-          <div className="text-right">
-            <RadioGroup value={status} onValueChange={(value: 'spoke' | 'not_spoke' | 'no_answer') => setStatus(value)}>
-              <Label className="text-sm font-medium block mb-1 text-right">סטטוס</Label>
-              <div className="flex flex-col gap-2 items-end">
-                <div className="flex flex-row-reverse items-center gap-2">
-                  <RadioGroupItem value="spoke" id="spoke" />
-                  <Label htmlFor="spoke" className="text-green-600">דיברנו</Label>
-                </div>
-                <div className="flex flex-row-reverse items-center gap-2">
-                  <RadioGroupItem value="not_spoke" id="not_spoke" />
-                  <Label htmlFor="not_spoke" className="text-yellow-600">לא דיברנו</Label>
-                </div>
-                <div className="flex flex-row-reverse items-center gap-2">
-                  <RadioGroupItem value="no_answer" id="no_answer" />
-                  <Label htmlFor="no_answer" className="text-red-600">לא ענו</Label>
-                </div>
-              </div>
-            </RadioGroup>
-          </div>
-          {/* שדה בעלי חיים - יישור נכון */}
-          <div className="text-right">
-            <RadioGroup value={petsAllowed} onValueChange={(value: 'yes' | 'no' | 'unknown') => setPetsAllowed(value)}>
-              <Label className="text-sm font-medium block mb-1 text-right">בעלי חיים מותרים?</Label>
-              <div className="flex flex-col gap-2 items-end">
-                <div className="flex flex-row-reverse items-center gap-2">
-                  <RadioGroupItem value="yes" id="pets_yes" />
-                  <Label htmlFor="pets_yes">כן 🐱</Label>
-                </div>
-                <div className="flex flex-row-reverse items-center gap-2">
-                  <RadioGroupItem value="no" id="pets_no" />
-                  <Label htmlFor="pets_no">לא 🚫</Label>
-                </div>
-                <div className="flex flex-row-reverse items-center gap-2">
-                  <RadioGroupItem value="unknown" id="pets_unknown" />
-                  <Label htmlFor="pets_unknown">לא יודע</Label>
-                </div>
-              </div>
-            </RadioGroup>
-          </div>
-          <div className="text-right">
-            <Label className="mr-2 text-right block">יש מקלט?</Label>
-            <RadioGroup value={hasShelter === null ? "" : hasShelter ? "yes" : "no"} 
-              onValueChange={v => setHasShelter(v === "yes" ? true : v === "no" ? false : null)} 
-              className="flex flex-row gap-2 justify-end"
+    <form ref={formRef} onSubmit={e => { e.preventDefault(); handleAddApartment(); }}>
+      <Card className="mb-8 bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Input
+                placeholder="כותרת הדירה *"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="bg-white/70 border-purple-300 focus:border-purple-500"
+              />
+            </div>
+            <div>
+              <Input
+                placeholder="מיקום"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="bg-white/70 border-purple-300 focus:border-purple-500"
+              />
+            </div>
+            <div>
+              <Input
+                placeholder="מחיר (₪)"
+                type="number"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="bg-white/70 border-purple-300 focus:border-purple-500"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="קישור לתמונה"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                className="bg-white/70 border-purple-300 focus:border-purple-500 flex-1"
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                ref={fileInputRef}
+              />
+              <Button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingImage}
+                className="bg-purple-500 hover:bg-purple-600"
               >
-              <div className="flex items-center space-x-2 space-x-reverse flex-row-reverse">
-                <Label htmlFor="hasShelter-yes" className="text-green-600 flex items-center gap-1">כן <span className="text-lg">🏠</span></Label>
-                <RadioGroupItem value="yes" id="hasShelter-yes" />
-              </div>
-              <div className="flex items-center space-x-2 space-x-reverse flex-row-reverse">
-                <Label htmlFor="hasShelter-no" className="text-gray-600">לא</Label>
-                <RadioGroupItem value="no" id="hasShelter-no" />
-              </div>
-            </RadioGroup>
+                <Upload className="w-4 h-4" />
+                {uploadingImage ? "מעלה..." : "העלה"}
+              </Button>
+            </div>
+            <div>
+              <Input
+                placeholder="קישור לדירה"
+                value={apartmentLink}
+                onChange={(e) => setApartmentLink(e.target.value)}
+                className="bg-white/70 border-purple-300 focus:border-purple-500"
+              />
+            </div>
+            <div>
+              <Input
+                placeholder="מספר טלפון"
+                value={contactPhone}
+                onChange={(e) => setContactPhone(e.target.value)}
+                className="bg-white/70 border-purple-300 focus:border-purple-500"
+              />
+            </div>
+            <div>
+              <Input
+                placeholder="שם איש קשר"
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
+                className="bg-white/70 border-purple-300 focus:border-purple-500"
+              />
+            </div>
+            {/* שדה דיברנו/לא דיברנו - יישור נכון */}
+            <div className="text-right">
+              <RadioGroup value={status} onValueChange={(value: 'spoke' | 'not_spoke' | 'no_answer') => setStatus(value)}>
+                <Label className="text-sm font-medium block mb-1 text-right">סטטוס</Label>
+                <div className="flex flex-col gap-2 items-end">
+                  <div className="flex flex-row-reverse items-center gap-2">
+                    <RadioGroupItem value="spoke" id="spoke" />
+                    <Label htmlFor="spoke" className="text-green-600">דיברנו</Label>
+                  </div>
+                  <div className="flex flex-row-reverse items-center gap-2">
+                    <RadioGroupItem value="not_spoke" id="not_spoke" />
+                    <Label htmlFor="not_spoke" className="text-yellow-600">לא דיברנו</Label>
+                  </div>
+                  <div className="flex flex-row-reverse items-center gap-2">
+                    <RadioGroupItem value="no_answer" id="no_answer" />
+                    <Label htmlFor="no_answer" className="text-red-600">לא ענו</Label>
+                  </div>
+                </div>
+              </RadioGroup>
+            </div>
+            {/* שדה בעלי חיים - יישור נכון */}
+            <div className="text-right">
+              <RadioGroup value={petsAllowed} onValueChange={(value: 'yes' | 'no' | 'unknown') => setPetsAllowed(value)}>
+                <Label className="text-sm font-medium block mb-1 text-right">בעלי חיים מותרים?</Label>
+                <div className="flex flex-col gap-2 items-end">
+                  <div className="flex flex-row-reverse items-center gap-2">
+                    <RadioGroupItem value="yes" id="pets_yes" />
+                    <Label htmlFor="pets_yes">כן 🐱</Label>
+                  </div>
+                  <div className="flex flex-row-reverse items-center gap-2">
+                    <RadioGroupItem value="no" id="pets_no" />
+                    <Label htmlFor="pets_no">לא 🚫</Label>
+                  </div>
+                  <div className="flex flex-row-reverse items-center gap-2">
+                    <RadioGroupItem value="unknown" id="pets_unknown" />
+                    <Label htmlFor="pets_unknown">לא יודע</Label>
+                  </div>
+                </div>
+              </RadioGroup>
+            </div>
+            <div className="text-right">
+              <Label className="mr-2 text-right block">יש מקלט?</Label>
+              <RadioGroup value={hasShelter === null ? "" : hasShelter ? "yes" : "no"} 
+                onValueChange={v => setHasShelter(v === "yes" ? true : v === "no" ? false : null)} 
+                className="flex flex-row gap-2 justify-end"
+                >
+                <div className="flex items-center space-x-2 space-x-reverse flex-row-reverse">
+                  <Label htmlFor="hasShelter-yes" className="text-green-600 flex items-center gap-1">כן <span className="text-lg">🏠</span></Label>
+                  <RadioGroupItem value="yes" id="hasShelter-yes" />
+                </div>
+                <div className="flex items-center space-x-2 space-x-reverse flex-row-reverse">
+                  <Label htmlFor="hasShelter-no" className="text-gray-600">לא</Label>
+                  <RadioGroupItem value="no" id="hasShelter-no" />
+                </div>
+              </RadioGroup>
+            </div>
+            <div>
+              <Input
+                type="date"
+                placeholder="תאריך כניסה"
+                value={entryDate}
+                onChange={e => setEntryDate(e.target.value)}
+                className="bg-white/70 border-purple-300 focus:border-purple-500"
+                min={new Date().toISOString().split("T")[0]}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Textarea
+                placeholder="תיאור הדירה"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="bg-white/70 border-purple-300 focus:border-purple-500 resize-none"
+                rows={3}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Textarea
+                placeholder="הערה אישית"
+                value={initialNote}
+                onChange={(e) => setInitialNote(e.target.value)}
+                className="bg-white/70 border-purple-300 focus:border-purple-500 resize-none"
+                rows={2}
+              />
+            </div>
           </div>
-          <div>
-            <Input
-              type="date"
-              placeholder="תאריך כניסה"
-              value={entryDate}
-              onChange={e => setEntryDate(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500"
-              min={new Date().toISOString().split("T")[0]}
-            />
-          </div>
-          <div className="md:col-span-2">
-            <Textarea
-              placeholder="תיאור הדירה"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500 resize-none"
-              rows={3}
-            />
-          </div>
-          <div className="md:col-span-2">
-            <Textarea
-              placeholder="הערה אישית"
-              value={initialNote}
-              onChange={(e) => setInitialNote(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500 resize-none"
-              rows={2}
-            />
-          </div>
-        </div>
-        <Button 
-          onClick={handleAddApartment}
-          className="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold py-3 transition-all duration-300"
-        >
-          <Plus className="w-5 h-5 ml-2" />
-          הוסף דירה
-        </Button>
-      </CardContent>
-    </Card>
+          <Button 
+            type="submit"
+            className="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold py-3 transition-all duration-300"
+          >
+            <Plus className="w-5 h-5 ml-2" />
+            הוסף דירה
+          </Button>
+        </CardContent>
+      </Card>
+    </form>
   );
 };
 

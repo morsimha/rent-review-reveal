@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useApartments, type Apartment } from '@/hooks/useApartments';
@@ -7,6 +8,10 @@ import DrawingGame from '@/components/DrawingGame';
 import ApartmentForm from '@/components/ApartmentForm';
 import ApartmentCard from '@/components/ApartmentCard';
 import EditApartmentDialog from '@/components/EditApartmentDialog';
+import PasswordPromptDialog from '@/components/PasswordPromptDialog';
+import { useToast } from '@/hooks/use-toast';
+
+const SECRET = "wika";
 
 const Index = () => {
   const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
@@ -15,6 +20,13 @@ const Index = () => {
   const [isDrawingGameOpen, setIsDrawingGameOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"rating" | "entry_date" | "created_at">("rating");
   const [showWithShelter, setShowWithShelter] = useState<null | boolean>(null);
+
+  // דיאלוגים ותצוגה להוספה ולסיסמה
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [pendingPasswordAction, setPendingPasswordAction] = useState<null | { cb: (ok: boolean) => void; action: 'add' | 'edit' | 'delete'; }>(null);
+  const [pendingApartmentData, setPendingApartmentData] = useState<any>(null);
+  const [pendingEditData, setPendingEditData] = useState<{ id: string, updates: Partial<Apartment> } | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const { 
     apartments, 
@@ -27,34 +39,83 @@ const Index = () => {
     uploadImage
   } = useApartments();
 
+  const { toast } = useToast();
+
+  const handleAddApartmentIntent = (apartmentData: any) => {
+    setPendingApartmentData(apartmentData);
+    setPendingPasswordAction({ cb: handleAddApartmentPassword, action: 'add' });
+  };
+
+  const handleAddApartmentPassword = (ok: boolean) => {
+    if (ok && pendingApartmentData) {
+      addApartment(pendingApartmentData);
+      setIsAddDialogOpen(false);
+    } else if (!ok) {
+      toast({
+        title: "סיסמה שגויה",
+        description: "הוספה בוטלה.",
+        variant: "destructive"
+      });
+    }
+    setPendingApartmentData(null);
+    setPendingPasswordAction(null);
+  };
+
   const handleAddApartment = async (apartmentData: any) => {
-    const result = await addApartment(apartmentData);
-    return result.success;
+    // מופעל מתוך ApartmentForm: במקום להוסיף מיד, תפתח בקשת סיסמה
+    handleAddApartmentIntent(apartmentData);
+    return true;
   };
 
-  const handleMorRatingChange = async (apartmentId: string, newRating: number) => {
-    await updateMorRating(apartmentId, newRating);
-  };
-
-  const handleGabiRatingChange = async (apartmentId: string, newRating: number) => {
-    await updateGabiRating(apartmentId, newRating);
-  };
-
+  // *** עריכת דירה ***
   const handleEditApartment = (apartment: Apartment) => {
     setEditingApartment(apartment);
     setIsEditDialogOpen(true);
   };
-
-  const handleSaveEdit = async (apartmentId: string, editFormData: Partial<Apartment>) => {
-    const result = await updateApartment(apartmentId, editFormData);
-    if (result.success) {
-      setEditingApartment(null);
+  const handleSaveEdit = (apartmentId: string, updates: Partial<Apartment>) => {
+    setPendingEditData({ id: apartmentId, updates });
+    setPendingPasswordAction({ cb: handleEditPassword, action: 'edit' });
+  };
+  const handleEditPassword = (ok: boolean) => {
+    if (ok && pendingEditData) {
+      updateApartment(pendingEditData.id, pendingEditData.updates);
       setIsEditDialogOpen(false);
+    } else if (!ok) {
+      toast({
+        title: "סיסמה שגויה",
+        description: "הפעולה בוטלה.",
+        variant: "destructive"
+      });
     }
+    setPendingEditData(null);
+    setPendingPasswordAction(null);
   };
 
-  const handleDelete = async (apartmentId: string) => {
-    await deleteApartment(apartmentId);
+  // *** מחיקת דירה ***
+  const handleRequestDelete = (apartmentId: string) => {
+    setPendingDeleteId(apartmentId);
+    setPendingPasswordAction({ cb: handleDeletePassword, action: 'delete' });
+  };
+  const handleDeletePassword = (ok: boolean) => {
+    if (ok && pendingDeleteId) {
+      deleteApartment(pendingDeleteId);
+    } else if (!ok) {
+      toast({
+        title: "סיסמה שגויה",
+        description: "המחיקה בוטלה.",
+        variant: "destructive"
+      });
+    }
+    setPendingDeleteId(null);
+    setPendingPasswordAction(null);
+  };
+
+  // הצגת דיאלוג סיסמה
+  const handlePasswordPrompt = (password: string) => {
+    const ok = password.trim() === SECRET;
+    if (pendingPasswordAction) {
+      pendingPasswordAction.cb(ok);
+    }
   };
 
   if (loading) {
@@ -157,8 +218,25 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Add Apartment Form */}
-        <ApartmentForm onAddApartment={handleAddApartment} uploadImage={uploadImage} />
+        {/* כפתור בלבד להוספת דירה */}
+        <div className="flex justify-center mb-7">
+          <Button
+            className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 shadow-lg text-xl"
+            onClick={() => setIsAddDialogOpen(true)}
+          >
+            הוסף דירה
+          </Button>
+        </div>
+
+        {/* דיאלוג הוספת דירה */}
+        <EditApartmentDialog
+          isOpen={isAddDialogOpen}
+          onClose={() => setIsAddDialogOpen(false)}
+          apartment={null}
+          onSave={handleAddApartment}
+          uploadImage={uploadImage}
+          isAdd={true}
+        />
 
         {/* Map Section */}
         <div className="mb-8">
@@ -173,9 +251,9 @@ const Index = () => {
               key={apartment.id}
               apartment={apartment}
               onEdit={handleEditApartment}
-              onDelete={handleDelete}
-              onMorRatingChange={handleMorRatingChange}
-              onGabiRatingChange={handleGabiRatingChange}
+              onDelete={handleRequestDelete}
+              onMorRatingChange={updateMorRating}
+              onGabiRatingChange={updateGabiRating}
             />
           ))}
         </div>
@@ -194,6 +272,16 @@ const Index = () => {
         apartment={editingApartment}
         onSave={handleSaveEdit}
         uploadImage={uploadImage}
+        isAdd={false}
+      />
+
+      {/* דיאלוג להזנת סיסמה */}
+      <PasswordPromptDialog
+        isOpen={!!pendingPasswordAction}
+        onConfirm={handlePasswordPrompt}
+        onCancel={() => setPendingPasswordAction(null)}
+        title="אימות סיסמה"
+        confirmText="אישור"
       />
 
       {/* Drawing Game Modal */}
