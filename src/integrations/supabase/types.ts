@@ -93,6 +93,33 @@ export type Database = {
         }
         Relationships: []
       }
+      drawings: {
+        Row: {
+          created_at: string
+          current_turn: string
+          drawing_data: string
+          id: string
+          is_completed: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_turn?: string
+          drawing_data: string
+          id?: string
+          is_completed?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_turn?: string
+          drawing_data?: string
+          id?: string
+          is_completed?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

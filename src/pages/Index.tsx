@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useApartments, type Apartment } from '@/hooks/useApartments';
 import Map from '@/components/Map';
 import CatGame from '@/components/CatGame';
+import DrawingGame from '@/components/DrawingGame';
 import ApartmentForm from '@/components/ApartmentForm';
 import ApartmentCard from '@/components/ApartmentCard';
 import EditApartmentDialog from '@/components/EditApartmentDialog';
@@ -12,6 +12,7 @@ const Index = () => {
   const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCatGameOpen, setIsCatGameOpen] = useState(false);
+  const [isDrawingGameOpen, setIsDrawingGameOpen] = useState(false);
 
   const { 
     apartments, 
@@ -86,6 +87,13 @@ const Index = () => {
           <div className="flex items-center justify-center gap-4 mt-2">
             <p className="text-sm text-purple-500">מי שמוסיף הכי פחות דירות עושה כלים לשבוע בבית החדש</p>
             <Button
+              onClick={() => setIsDrawingGameOpen(true)}
+              className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white text-2xl p-3 rounded-full animate-pulse"
+              title="משחק ציור שיתופי!"
+            >
+              🎨
+            </Button>
+            <Button
               onClick={() => setIsCatGameOpen(true)}
               className="bg-gradient-to-r from-orange-400 to-pink-500 hover:from-orange-500 hover:to-pink-600 text-white text-2xl p-3 rounded-full animate-bounce"
               title="תפוס את החתול!"
@@ -133,6 +141,9 @@ const Index = () => {
         onSave={handleSaveEdit}
         uploadImage={uploadImage}
       />
+
+      {/* Drawing Game Modal */}
+      <DrawingGame isOpen={isDrawingGameOpen} onClose={() => setIsDrawingGameOpen(false)} />
 
       {/* Cat Game Modal */}
       <CatGame isOpen={isCatGameOpen} onClose={() => setIsCatGameOpen(false)} />
