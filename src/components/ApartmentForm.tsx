@@ -1,37 +1,39 @@
+
 import React, { useState, useRef } from 'react';
-import { Plus, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
+import ApartmentFormFields from './ApartmentFormFields';
+import type { Apartment } from '@/types/ApartmentTypes';
 
 interface ApartmentFormProps {
   onAddApartment: (apartmentData: any) => Promise<boolean>;
   uploadImage: (file: File) => Promise<string | null>;
 }
 
-const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadImage }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [price, setPrice] = useState('');
-  const [location, setLocation] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [initialNote, setInitialNote] = useState('');
-  const [apartmentLink, setApartmentLink] = useState('');
-  const [contactPhone, setContactPhone] = useState('');
-  const [contactName, setContactName] = useState('');
-  const [status, setStatus] = useState<'spoke' | 'not_spoke' | 'no_answer'>('not_spoke');
-  const [petsAllowed, setPetsAllowed] = useState<'yes' | 'no' | 'unknown'>('unknown');
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [hasShelter, setHasShelter] = useState<boolean | null>(null);
-  const [entryDate, setEntryDate] = useState('');
-  const [arnona, setArnona] = useState('');
-  const [squareMeters, setSquareMeters] = useState('');
-  const [floor, setFloor] = useState('');
+const INITIAL_STATE: Partial<Apartment> = {
+  title: '',
+  description: '',
+  price: null,
+  location: '',
+  image_url: '',
+  note: '',
+  apartment_link: '',
+  contact_phone: '',
+  contact_name: '',
+  status: 'not_spoke',
+  pets_allowed: 'unknown',
+  has_shelter: null,
+  entry_date: '',
+  arnona: null,
+  square_meters: null,
+  floor: null,
+};
 
+
+const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadImage }) => {
+  const [formData, setFormData] = useState<Partial<Apartment>>(INITIAL_STATE);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -42,13 +44,13 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
     setUploadingImage(true);
     const uploadedUrl = await uploadImage(file);
     if (uploadedUrl) {
-      setImageUrl(uploadedUrl);
+      setFormData(prev => ({...prev, image_url: uploadedUrl}));
     }
     setUploadingImage(false);
   };
 
   const handleAddApartment = async () => {
-    if (!title.trim()) {
+    if (!formData.title?.trim()) {
       toast({
         title: "שגיאה",
         description: "אנא מלא את שדה הכותרת",
@@ -59,240 +61,49 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
 
     const apartmentData = {
       fb_url: `https://facebook.com/generated-${Date.now()}`,
-      title,
-      description,
-      price: price ? parseInt(price) : null,
-      arnona: arnona ? parseInt(arnona) : null,
-      square_meters: squareMeters ? parseInt(squareMeters) : null,
-      floor: floor ? parseInt(floor) : null,
-      location,
-      image_url: imageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2070&q=80',
+      title: formData.title,
+      description: formData.description,
+      price: formData.price,
+      arnona: formData.arnona,
+      square_meters: formData.square_meters,
+      floor: formData.floor,
+      location: formData.location,
+      image_url: formData.image_url || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2070&q=80',
       rating: 0,
       mor_rating: 0,
       gabi_rating: 0,
-      note: initialNote,
-      apartment_link: apartmentLink,
-      contact_phone: contactPhone,
-      contact_name: contactName,
-      status,
-      pets_allowed: petsAllowed,
-      has_shelter: hasShelter,
-      entry_date: entryDate ? entryDate : null,
+      note: formData.note,
+      apartment_link: formData.apartment_link,
+      contact_phone: formData.contact_phone,
+      contact_name: formData.contact_name,
+      status: formData.status,
+      pets_allowed: formData.pets_allowed,
+      has_shelter: formData.has_shelter,
+      entry_date: formData.entry_date ? formData.entry_date : null,
     };
 
-    await onAddApartment(apartmentData);
+    const success = await onAddApartment(apartmentData);
 
-    // Reset form
-    setTitle('');
-    setDescription('');
-    setPrice('');
-    setArnona('');
-    setSquareMeters('');
-    setFloor('');
-    setLocation('');
-    setImageUrl('');
-    setInitialNote('');
-    setApartmentLink('');
-    setContactPhone('');
-    setContactName('');
-    setStatus('not_spoke');
-    setPetsAllowed('unknown');
-    setHasShelter(null);
-    setEntryDate('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    if (success) {
+      // Reset form
+      setFormData(INITIAL_STATE);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
   return (
     <Card className="mb-8 bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
       <CardContent className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Input
-              placeholder="כותרת הדירה *"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500"
-            />
-          </div>
-          <div>
-            <Input
-              placeholder="מיקום"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500"
-            />
-          </div>
-          <div>
-            <Input
-              placeholder="מחיר (₪)"
-              type="number"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500"
-            />
-          </div>
-          <div>
-            <Input
-              placeholder="מחיר ארנונה (₪)"
-              type="number"
-              value={arnona}
-              onChange={e => setArnona(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500"
-            />
-          </div>
-          <div>
-            <Input
-              placeholder="מטר מרובע (מ״ר)"
-              type="number"
-              value={squareMeters}
-              onChange={(e) => setSquareMeters(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500"
-            />
-          </div>
-          <div>
-            <Input
-              placeholder="קומה"
-              type="number"
-              value={floor}
-              onChange={(e) => setFloor(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500"
-            />
-          </div>
-          <div className="flex gap-2">
-            <Input
-              placeholder="קישור לתמונה"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500 flex-1"
-            />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-              ref={fileInputRef}
-            />
-            <Button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadingImage}
-              className="bg-purple-500 hover:bg-purple-600"
-            >
-              <Upload className="w-4 h-4" />
-              {uploadingImage ? "מעלה..." : "העלה"}
-            </Button>
-          </div>
-          <div>
-            <Input
-              placeholder="קישור לדירה"
-              value={apartmentLink}
-              onChange={(e) => setApartmentLink(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500"
-            />
-          </div>
-          <div>
-            <Input
-              placeholder="מספר טלפון"
-              value={contactPhone}
-              onChange={(e) => setContactPhone(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500"
-            />
-          </div>
-          <div>
-            <Input
-              placeholder="שם איש קשר"
-              value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500"
-            />
-          </div>
-          {/* שדה דיברנו/לא דיברנו - יישור נכון */}
-          <div className="text-right">
-            <RadioGroup value={status} onValueChange={(value: 'spoke' | 'not_spoke' | 'no_answer') => setStatus(value)}>
-              <Label className="text-sm font-medium block mb-1 text-right">סטטוס</Label>
-              <div className="flex flex-col gap-2 items-end">
-                <div className="flex flex-row-reverse items-center gap-2">
-                  <RadioGroupItem value="spoke" id="spoke" />
-                  <Label htmlFor="spoke" className="text-green-600">דיברנו</Label>
-                </div>
-                <div className="flex flex-row-reverse items-center gap-2">
-                  <RadioGroupItem value="not_spoke" id="not_spoke" />
-                  <Label htmlFor="not_spoke" className="text-yellow-600">לא דיברנו</Label>
-                </div>
-                <div className="flex flex-row-reverse items-center gap-2">
-                  <RadioGroupItem value="no_answer" id="no_answer" />
-                  <Label htmlFor="no_answer" className="text-red-600">לא ענו</Label>
-                </div>
-              </div>
-            </RadioGroup>
-          </div>
-          {/* שדה בעלי חיים - יישור נכון */}
-          <div className="text-right">
-            <RadioGroup value={petsAllowed} onValueChange={(value: 'yes' | 'no' | 'unknown') => setPetsAllowed(value)}>
-              <Label className="text-sm font-medium block mb-1 text-right">בעלי חיים מותרים?</Label>
-              <div className="flex flex-col gap-2 items-end">
-                <div className="flex flex-row-reverse items-center gap-2">
-                  <RadioGroupItem value="yes" id="pets_yes" />
-                  <Label htmlFor="pets_yes">כן 🐱</Label>
-                </div>
-                <div className="flex flex-row-reverse items-center gap-2">
-                  <RadioGroupItem value="no" id="pets_no" />
-                  <Label htmlFor="pets_no">לא 🚫</Label>
-                </div>
-                <div className="flex flex-row-reverse items-center gap-2">
-                  <RadioGroupItem value="unknown" id="pets_unknown" />
-                  <Label htmlFor="pets_unknown">לא יודע</Label>
-                </div>
-              </div>
-            </RadioGroup>
-          </div>
-          <div className="text-right">
-            <Label className="mr-2 text-right block">יש מקלט?</Label>
-            <RadioGroup value={hasShelter === null ? "" : hasShelter ? "yes" : "no"} 
-              onValueChange={v => setHasShelter(v === "yes" ? true : v === "no" ? false : null)} 
-              className="flex flex-row gap-2 justify-end"
-              >
-              <div className="flex items-center space-x-2 space-x-reverse flex-row-reverse">
-                <Label htmlFor="hasShelter-yes" className="text-green-600 flex items-center gap-1">כן <span className="text-lg">🏠</span></Label>
-                <RadioGroupItem value="yes" id="hasShelter-yes" />
-              </div>
-              <div className="flex items-center space-x-2 space-x-reverse flex-row-reverse">
-                <Label htmlFor="hasShelter-no" className="text-gray-600">לא</Label>
-                <RadioGroupItem value="no" id="hasShelter-no" />
-              </div>
-            </RadioGroup>
-          </div>
-          <div>
-            <Input
-              type="date"
-              placeholder="תאריך כניסה"
-              value={entryDate}
-              onChange={e => setEntryDate(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500"
-              min={new Date().toISOString().split("T")[0]}
-            />
-          </div>
-          <div className="md:col-span-2">
-            <Textarea
-              placeholder="תיאור הדירה"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500 resize-none"
-              rows={3}
-            />
-          </div>
-          <div className="md:col-span-2">
-            <Textarea
-              placeholder="הערה אישית"
-              value={initialNote}
-              onChange={(e) => setInitialNote(e.target.value)}
-              className="bg-white/70 border-purple-300 focus:border-purple-500 resize-none"
-              rows={2}
-            />
-          </div>
-        </div>
+        <ApartmentFormFields
+          formData={formData}
+          setFormData={setFormData}
+          handleImageUpload={handleImageUpload}
+          uploadingImage={uploadingImage}
+          fileInputRef={fileInputRef}
+          idPrefix="add_"
+        />
         <Button 
           onClick={handleAddApartment}
           className="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold py-3 transition-all duration-300"
