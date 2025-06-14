@@ -31,7 +31,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
   };
 
   return (
-    <Card className="bg-white/90 backdrop-blur-sm border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 h-[500px] flex flex-col">
+    <Card className="bg-white/90 backdrop-blur-sm border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 h-[550px] flex flex-col">
       <CardContent className="p-0 flex flex-col h-full">
         {/* Status Bar */}
         <div className={`h-2 w-full rounded-t-lg ${getStatusColor(apartment.status)}`}></div>
@@ -53,10 +53,12 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           )}
         </div>
 
-        <div className="p-4 flex flex-col flex-grow">
+        <div className="p-4 flex flex-col flex-grow min-h-0">
           {/* Title and Description */}
           <h3 className="font-bold text-base mb-2 text-gray-800 line-clamp-1 text-right">{apartment.title}</h3>
-          <p className="text-gray-600 text-sm mb-3 line-clamp-2 text-right">{apartment.description}</p>
+          <div className="mb-3 h-10 flex items-start">
+            <p className="text-gray-600 text-sm line-clamp-2 text-right leading-5">{apartment.description}</p>
+          </div>
           
           {/* Location */}
           {apartment.location && (
@@ -100,14 +102,14 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           </div>
 
           {/* Note */}
-          <div className="mb-4 flex-grow">
-            <p className="text-sm text-gray-600 text-right break-words">
+          <div className="mb-4 flex-grow min-h-0">
+            <p className="text-sm text-gray-600 text-right break-words overflow-hidden">
               {apartment.note || 'אין הערות'}
             </p>
           </div>
 
           {/* Actions */}
-          <div className="flex justify-between items-center mt-auto">
+          <div className="flex justify-between items-center mt-auto pt-2">
             <Button
               size="sm"
               variant="destructive"

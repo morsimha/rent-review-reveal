@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -34,11 +33,18 @@ export const useApartments = () => {
       const { data, error } = await supabase
         .from('apartments')
         .select('*')
-        .order('rating', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setApartments((data || []) as Apartment[]);
+      
+      // Sort by combined rating (mor_rating + gabi_rating) in descending order
+      const sortedData = (data || []).sort((a, b) => {
+        const totalRatingA = (a.mor_rating || 0) + (a.gabi_rating || 0);
+        const totalRatingB = (b.mor_rating || 0) + (b.gabi_rating || 0);
+        return totalRatingB - totalRatingA;
+      });
+      
+      setApartments(sortedData as Apartment[]);
     } catch (error) {
       console.error('Error fetching apartments:', error);
       toast({
