@@ -77,7 +77,7 @@ const Index = () => {
     setEditingApartment(apartment);
     setIsEditDialogOpen(true);
   };
-  
+
   const handleSaveEdit = (apartmentId: string, updates: Partial<Apartment>) => {
     // אם זה עריכה (apartmentId לא ריק), בקש אימות
     if (apartmentId !== '') {
@@ -85,10 +85,10 @@ const Index = () => {
       setPendingPasswordAction({ cb: handleEditPassword, action: 'edit' });
     }
   };
-  
-  const handleEditPassword = (ok: boolean) => {
+
+  const handleEditPassword = async (ok: boolean) => {
     if (ok && pendingEditData) {
-      updateApartment(pendingEditData.id, pendingEditData.updates);
+      await updateApartment(pendingEditData.id, pendingEditData.updates);
       setIsEditDialogOpen(false);
       setEditingApartment(null);
     } else if (!ok) {
@@ -107,10 +107,10 @@ const Index = () => {
     setPendingDeleteId(apartmentId);
     setPendingPasswordAction({ cb: handleDeletePassword, action: 'delete' });
   };
-  
-  const handleDeletePassword = (ok: boolean) => {
+
+  const handleDeletePassword = async (ok: boolean) => {
     if (ok && pendingDeleteId) {
-      deleteApartment(pendingDeleteId);
+      await deleteApartment(pendingDeleteId);
     } else if (!ok) {
       toast({
         title: "סיסמה שגויה",
