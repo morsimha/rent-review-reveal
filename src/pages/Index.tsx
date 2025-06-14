@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useApartments, type Apartment } from '@/hooks/useApartments';
@@ -76,6 +77,7 @@ const Index = () => {
     setEditingApartment(apartment);
     setIsEditDialogOpen(true);
   };
+  
   const handleSaveEdit = (apartmentId: string, updates: Partial<Apartment>) => {
     // אם זה עריכה (apartmentId לא ריק), בקש אימות
     if (apartmentId !== '') {
@@ -83,10 +85,12 @@ const Index = () => {
       setPendingPasswordAction({ cb: handleEditPassword, action: 'edit' });
     }
   };
+  
   const handleEditPassword = (ok: boolean) => {
     if (ok && pendingEditData) {
       updateApartment(pendingEditData.id, pendingEditData.updates);
       setIsEditDialogOpen(false);
+      setEditingApartment(null);
     } else if (!ok) {
       toast({
         title: "סיסמה שגויה",
@@ -103,6 +107,7 @@ const Index = () => {
     setPendingDeleteId(apartmentId);
     setPendingPasswordAction({ cb: handleDeletePassword, action: 'delete' });
   };
+  
   const handleDeletePassword = (ok: boolean) => {
     if (ok && pendingDeleteId) {
       deleteApartment(pendingDeleteId);
