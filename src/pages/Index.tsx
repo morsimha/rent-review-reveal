@@ -21,7 +21,11 @@ interface Apartment {
 }
 
 const Index = () => {
-  const [fbUrl, setFbUrl] = useState('');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
+  const [location, setLocation] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [initialNote, setInitialNote] = useState('');
   const [apartments, setApartments] = useState<Apartment[]>([
     {
@@ -66,22 +70,41 @@ const Index = () => {
   const { toast } = useToast();
 
   const handleAddApartment = async () => {
-    if (!fbUrl.trim()) {
+    if (!title.trim() || !location.trim()) {
       toast({
-        title: "Error",
-        description: "Please enter a Facebook post URL",
+        title: "שגיאה",
+        description: "אנא מלא לפחות את שדות הכותרת והמיקום",
         variant: "destructive"
       });
       return;
     }
 
+    const newApartment: Apartment = {
+      id: Math.random().toString(36).substr(2, 9),
+      fb_url: `https://facebook.com/generated-${Date.now()}`,
+      title,
+      description,
+      price: price ? parseInt(price) : undefined,
+      location,
+      image_url: imageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+      rating: 0,
+      note: initialNote,
+      created_at: new Date().toISOString()
+    };
+
+    setApartments(prev => [newApartment, ...prev]);
+
     toast({
-      title: "Info",
-      description: "To scrape Facebook posts and store data, please connect to Supabase first using the green button in the top right.",
+      title: "הצלחה",
+      description: "הדירה נוספה בהצלחה!",
     });
 
     // Reset form
-    setFbUrl('');
+    setTitle('');
+    setDescription('');
+    setPrice('');
+    setLocation('');
+    setImageUrl('');
     setInitialNote('');
   };
 
@@ -93,8 +116,8 @@ const Index = () => {
     );
     
     toast({
-      title: "Rating updated",
-      description: `Apartment rated ${newRating} stars`,
+      title: "הדירוג עודכן",
+      description: `דירוג הדירה: ${newRating} כוכבים`,
     });
   };
 
@@ -113,8 +136,8 @@ const Index = () => {
     setEditNoteValue('');
     
     toast({
-      title: "Note updated",
-      description: "Your note has been saved",
+      title: "ההערה עודכנה",
+      description: "ההערה נשמרה בהצלחה",
     });
   };
 
@@ -122,8 +145,8 @@ const Index = () => {
     setApartments(prev => prev.filter(apt => apt.id !== apartmentId));
     
     toast({
-      title: "Apartment deleted",
-      description: "The apartment has been removed from your list",
+      title: "הדירה נמחקה",
+      description: "הדירה הוסרה מהרשימה",
     });
   };
 
@@ -158,114 +181,151 @@ const Index = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">Rental Ranker</h1>
-          <p className="text-blue-200 text-lg">Find and rank your perfect apartment</p>
+          <p className="text-blue-200 text-lg">מצא ודרג את הדירה המושלמת</p>
         </div>
 
         {/* Add Apartment Form */}
         <Card className="mb-8 bg-white/10 backdrop-blur-sm border-white/20">
           <CardContent className="p-6">
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Input
-                  placeholder="Paste Facebook post link..."
-                  value={fbUrl}
-                  onChange={(e) => setFbUrl(e.target.value)}
+                  placeholder="כותרת הדירה *"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
                   className="bg-white/20 border-white/30 text-white placeholder:text-gray-300"
                 />
               </div>
               <div>
+                <Input
+                  placeholder="מיקום *"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="bg-white/20 border-white/30 text-white placeholder:text-gray-300"
+                />
+              </div>
+              <div>
+                <Input
+                  placeholder="מחיר (₪)"
+                  type="number"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  className="bg-white/20 border-white/30 text-white placeholder:text-gray-300"
+                />
+              </div>
+              <div>
+                <Input
+                  placeholder="קישור לתמונה (אופציונלי)"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  className="bg-white/20 border-white/30 text-white placeholder:text-gray-300"
+                />
+              </div>
+              <div className="md:col-span-2">
                 <Textarea
-                  placeholder="Initial note (optional)"
-                  value={initialNote}
-                  onChange={(e) => setInitialNote(e.target.value)}
+                  placeholder="תיאור הדירה"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   className="bg-white/20 border-white/30 text-white placeholder:text-gray-300 resize-none"
                   rows={3}
                 />
               </div>
-              <Button 
-                onClick={handleAddApartment}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 transition-all duration-300"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Add Apartment
-              </Button>
+              <div className="md:col-span-2">
+                <Textarea
+                  placeholder="הערה אישית (אופציונלי)"
+                  value={initialNote}
+                  onChange={(e) => setInitialNote(e.target.value)}
+                  className="bg-white/20 border-white/30 text-white placeholder:text-gray-300 resize-none"
+                  rows={2}
+                />
+              </div>
             </div>
+            <Button 
+              onClick={handleAddApartment}
+              className="w-full mt-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 transition-all duration-300"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              הוסף דירה
+            </Button>
           </CardContent>
         </Card>
 
         {/* Apartments Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {sortedApartments.map((apartment) => (
-            <Card key={apartment.id} className="bg-white/95 backdrop-blur-sm border-white/20 hover:shadow-2xl transition-all duration-300 hover:scale-105">
-              <CardContent className="p-0">
+            <Card key={apartment.id} className="bg-white/95 backdrop-blur-sm border-white/20 hover:shadow-2xl transition-all duration-300 hover:scale-105 aspect-square flex flex-col">
+              <CardContent className="p-0 flex flex-col h-full">
                 {/* Image */}
-                <div className="relative overflow-hidden rounded-t-lg">
+                <div className="relative overflow-hidden rounded-t-lg flex-shrink-0" style={{height: '40%'}}>
                   <img
                     src={apartment.image_url}
                     alt={apartment.title}
-                    className="w-full h-48 object-cover transition-transform duration-300 hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
                   />
                   {apartment.price && (
-                    <div className="absolute top-3 right-3 bg-green-500 text-white px-3 py-1 rounded-full font-bold text-sm">
-                      ${apartment.price}
+                    <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full font-bold text-xs">
+                      ₪{apartment.price}
                     </div>
                   )}
                 </div>
 
-                <div className="p-6">
+                <div className="p-4 flex flex-col flex-grow">
                   {/* Title and Description */}
-                  <h3 className="font-bold text-lg mb-2 text-gray-800">{apartment.title}</h3>
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{apartment.description}</p>
+                  <h3 className="font-bold text-sm mb-1 text-gray-800 line-clamp-1">{apartment.title}</h3>
+                  <p className="text-gray-600 text-xs mb-2 line-clamp-2 flex-grow">{apartment.description}</p>
                   
                   {/* Location */}
-                  <p className="text-blue-600 text-sm mb-4 font-medium">{apartment.location}</p>
+                  <p className="text-blue-600 text-xs mb-2 font-medium">{apartment.location}</p>
 
                   {/* Rating */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-sm font-medium text-gray-700">Rating:</span>
-                    <StarRating 
-                      rating={apartment.rating} 
-                      onRatingChange={(rating) => handleRatingChange(apartment.id, rating)}
-                    />
+                  <div className="flex items-center gap-1 mb-2">
+                    <span className="text-xs font-medium text-gray-700">דירוג:</span>
+                    <div className="scale-75">
+                      <StarRating 
+                        rating={apartment.rating} 
+                        onRatingChange={(rating) => handleRatingChange(apartment.id, rating)}
+                      />
+                    </div>
                   </div>
 
                   {/* Note Section */}
-                  <div className="mb-4">
+                  <div className="mb-2 min-h-[2rem]">
                     {editingNote === apartment.id ? (
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <Textarea
                           value={editNoteValue}
                           onChange={(e) => setEditNoteValue(e.target.value)}
-                          className="w-full text-sm"
+                          className="w-full text-xs h-12"
                           rows={2}
                         />
-                        <div className="flex gap-2">
+                        <div className="flex gap-1">
                           <Button
                             size="sm"
                             onClick={() => handleNoteSave(apartment.id)}
-                            className="bg-green-500 hover:bg-green-600"
+                            className="bg-green-500 hover:bg-green-600 text-xs px-2 py-1 h-6"
                           >
-                            Save
+                            שמור
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => setEditingNote(null)}
+                            className="text-xs px-2 py-1 h-6"
                           >
-                            Cancel
+                            ביטול
                           </Button>
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-start gap-2">
-                        <p className="text-sm text-gray-600 flex-1 min-h-[1.25rem]">
-                          {apartment.note || 'No notes yet'}
+                      <div className="flex items-start gap-1">
+                        <p className="text-xs text-gray-600 flex-1 min-h-[1rem] line-clamp-2">
+                          {apartment.note || 'אין הערות'}
                         </p>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => handleNoteEdit(apartment.id, apartment.note)}
-                          className="p-1 h-6 w-6"
+                          className="p-0 h-4 w-4 min-w-0"
                         >
                           <Edit className="w-3 h-3" />
                         </Button>
@@ -274,14 +334,14 @@ const Index = () => {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex justify-end">
+                  <div className="flex justify-end mt-auto">
                     <Button
                       size="sm"
                       variant="destructive"
                       onClick={() => handleDelete(apartment.id)}
-                      className="bg-red-500 hover:bg-red-600"
+                      className="bg-red-500 hover:bg-red-600 h-6 w-6 p-0"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3 h-3" />
                     </Button>
                   </div>
                 </div>
@@ -292,7 +352,7 @@ const Index = () => {
 
         {apartments.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-white/70 text-lg">No apartments added yet. Start by pasting a Facebook post link above!</p>
+            <p className="text-white/70 text-lg">עדיין לא נוספו דירות. התחל על ידי מילוי הטופס למעלה!</p>
           </div>
         )}
       </div>
