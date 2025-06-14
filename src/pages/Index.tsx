@@ -23,8 +23,7 @@ const Index = () => {
 
   // דיאלוגים ותצוגה להוספה ולסיסמה
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [pendingPasswordAction, setPendingPasswordAction] = useState<null | { cb: (ok: boolean) => void; action: 'add' | 'edit' | 'delete'; }>(null);
-  const [pendingApartmentData, setPendingApartmentData] = useState<any>(null);
+  const [pendingPasswordAction, setPendingPasswordAction] = useState<null | { cb: (ok: boolean) => void; action: 'edit' | 'delete'; }>(null);
   const [pendingEditData, setPendingEditData] = useState<{ id: string, updates: Partial<Apartment> } | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
@@ -41,30 +40,15 @@ const Index = () => {
 
   const { toast } = useToast();
 
-  const handleAddApartmentIntent = (apartmentData: any) => {
-    setPendingApartmentData(apartmentData);
-    setPendingPasswordAction({ cb: handleAddApartmentPassword, action: 'add' });
-  };
-
-  const handleAddApartmentPassword = (ok: boolean) => {
-    if (ok && pendingApartmentData) {
-      addApartment(pendingApartmentData);
+  // *** הוספת דירה - ללא אימות נוסף כי הדיאלוג מטפל בזה ***
+  const handleAddApartment = async (apartmentId: string, apartmentData: Partial<Apartment>) => {
+    // אם זה הוספה (apartmentId ריק), הוסף את הדירה
+    if (apartmentId === '') {
+      addApartment(apartmentData);
       setIsAddDialogOpen(false);
-    } else if (!ok) {
-      toast({
-        title: "סיסמה שגויה",
-        description: "הוספה בוטלה.",
-        variant: "destructive"
-      });
+      return true;
     }
-    setPendingApartmentData(null);
-    setPendingPasswordAction(null);
-  };
-
-  const handleAddApartment = async (apartmentData: any) => {
-    // מופעל מתוך ApartmentForm: במקום להוסיף מיד, תפתח בקשת סיסמה
-    handleAddApartmentIntent(apartmentData);
-    return true;
+    return false;
   };
 
   // *** עריכת דירה ***
@@ -73,8 +57,11 @@ const Index = () => {
     setIsEditDialogOpen(true);
   };
   const handleSaveEdit = (apartmentId: string, updates: Partial<Apartment>) => {
-    setPendingEditData({ id: apartmentId, updates });
-    setPendingPasswordAction({ cb: handleEditPassword, action: 'edit' });
+    // אם זה עריכה (apartmentId לא ריק), בקש אימות
+    if (apartmentId !== '') {
+      setPendingEditData({ id: apartmentId, updates });
+      setPendingPasswordAction({ cb: handleEditPassword, action: 'edit' });
+    }
   };
   const handleEditPassword = (ok: boolean) => {
     if (ok && pendingEditData) {
