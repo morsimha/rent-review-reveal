@@ -20,77 +20,72 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  // We'll track error state to show feedback
+  const [error, setError] = useState<string | null>(null);
+
   // Geocoding function to convert address to coordinates
   const geocodeAddress = async (location: string, token: string): Promise<[number, number] | null> => {
     if (!location || !token) return null;
     
     try {
-      console.log('Geocoding address:', location);
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(location)}.json?access_token=${token}&country=IL&limit=1`
       );
       
       if (!response.ok) {
-        console.error('Geocoding API error:', response.status, response.statusText);
         return null;
       }
       
       const data = await response.json();
-      console.log('Geocoding response:', data);
-      
       if (data.features && data.features.length > 0) {
         return data.features[0].center;
       }
-    } catch (error) {
-      console.error('Geocoding error:', error);
+    } catch {
+      // Ignore
     }
     
     return null;
   };
 
   const initializeMap = async () => {
-    if (!mapContainer.current || !mapboxToken) return;
+    if (!mapContainer.current || !mapboxToken) {
+      setError("אנא הכנס מפתח Mapbox תקין");
+      setIsLoading(false);
+      return;
+    }
 
-    console.log('Initializing map with token:', mapboxToken.substring(0, 10) + '...');
     setIsLoading(true);
+    setError(null);
 
     try {
       // Set the access token
       mapboxgl.accessToken = mapboxToken;
-      
-      // Test the token by making a simple API call
+      // Test token
       const testResponse = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/test.json?access_token=${mapboxToken}&limit=1`);
       if (!testResponse.ok) {
         throw new Error('Invalid Mapbox token');
       }
 
-      // Initialize the map
+      // Clean up map if exists
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v11',
-        center: [34.7818, 32.0853], // Tel Aviv center
+        center: [34.7818, 32.0853],
         zoom: 11,
       });
 
-      console.log('Map created successfully');
-
-      // Add navigation controls
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-      // Wait for map to load before adding markers
       map.current.on('load', async () => {
-        console.log('Map loaded, adding apartment markers');
-        
         // Add apartment markers
         for (const apartment of apartments) {
           if (apartment.location) {
-            console.log('Processing apartment:', apartment.title, 'at', apartment.location);
             const coordinates = await geocodeAddress(apartment.location, mapboxToken);
-            
             if (coordinates) {
-              console.log('Adding marker at coordinates:', coordinates);
-              
-              // Create a custom marker element
               const markerElement = document.createElement('div');
               markerElement.className = 'custom-marker';
               markerElement.style.width = '30px';
@@ -105,8 +100,6 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
               markerElement.style.color = 'white';
               markerElement.style.border = '2px solid white';
               markerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-              
-              // Set color based on status
               switch (apartment.status) {
                 case 'spoke':
                   markerElement.style.backgroundColor = '#10b981'; // green
@@ -118,12 +111,10 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
                   markerElement.style.backgroundColor = '#ef4444'; // red
                   break;
                 default:
-                  markerElement.style.backgroundColor = '#6b7280'; // gray
+                  markerElement.style.backgroundColor = '#6b7280';
               }
-              
               markerElement.innerHTML = '🏠';
 
-              // Create popup content
               const popupContent = `
                 <div style="text-align: right; direction: rtl;">
                   <h3 style="font-weight: bold; margin-bottom: 8px;">${apartment.title}</h3>
@@ -136,7 +127,6 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
                   </div>
                 </div>
               `;
-
               const popup = new mapboxgl.Popup({
                 offset: 25,
                 closeButton: true,
@@ -147,15 +137,11 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
                 .setLngLat(coordinates)
                 .setPopup(popup)
                 .addTo(map.current!);
-            } else {
-              console.log('Could not geocode location:', apartment.location);
             }
           }
         }
-        
         setTokenEntered(true);
         setIsLoading(false);
-        
         toast({
           title: "המפה נטענה בהצלחה",
           description: `נוספו ${apartments.length} דירות למפה`,
@@ -163,11 +149,11 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
       });
 
     } catch (error) {
-      console.error('Map initialization error:', error);
       setIsLoading(false);
+      setError("מפתח Mapbox לא תקין או תקלה בעת טעינת המפה. נסה שנית.");
       toast({
         title: "שגיאה בטעינת המפה",
-        description: "אנא בדוק את המפתח של Mapbox ונסה שוב",
+        description: "אנא בדוק את מפתח ה-Mapbox ונסה שוב.",
         variant: "destructive"
       });
     }
@@ -175,6 +161,7 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
 
   const handleTokenSubmit = () => {
     if (!mapboxToken.trim()) {
+      setError("אנא הכנס מפתח Mapbox");
       toast({
         title: "שגיאה",
         description: "אנא הכנס מפתח Mapbox",
@@ -182,8 +169,8 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
       });
       return;
     }
-    
-    console.log('Token submitted, initializing map...');
+    setIsLoading(true);
+    setError(null);
     initializeMap();
   };
 
@@ -226,6 +213,9 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
                 {isLoading ? 'טוען...' : 'הצג מפה'}
               </Button>
             </div>
+            {error && (
+              <p className="text-red-600 font-semibold mt-4">{error}</p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -251,6 +241,11 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
               <span>לא ענו</span>
             </div>
           </div>
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-lg z-30">
+              <div className="text-purple-600">טוען מפה...</div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
