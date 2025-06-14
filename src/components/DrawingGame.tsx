@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Save, Eye, Palette, Trash2 } from 'lucide-react';
+import { X, Send, Save, Eye, Palette, Trash2, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -39,18 +39,24 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [selectedColor, setSelectedColor] = useState(colors[0].value);
-  const [currentPlayer, setCurrentPlayer] = useState<'player1' | 'player2'>('player1');
   const [savedDrawings, setSavedDrawings] = useState<SavedDrawing[]>([]);
   const [selectedDrawing, setSelectedDrawing] = useState<SavedDrawing | null>(null);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [drawingName, setDrawingName] = useState('');
   
-  const { saveDrawing, getDrawings, deleteDrawing, loading } = useDrawingGame();
+  const { 
+    saveDrawing, 
+    getDrawings, 
+    deleteDrawing, 
+    loading,
+    deviceId,
+    currentSession,
+    initializeSession,
+    switchTurn,
+    isMyTurn,
+    getCurrentPlayerName
+  } = useDrawingGame();
   const { toast } = useToast();
-
-  const getPlayerName = (player: 'player1' | 'player2') => {
-    return player === 'player1' ? 'מור' : 'גבי';
-  };
 
   // Initialize canvas
   const initializeCanvas = () => {
@@ -102,6 +108,16 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
 
   // Drawing functions
   const startDrawing = (point: Point) => {
+    // Check if it's the player's turn
+    if (!isMyTurn()) {
+      toast({
+        variant: "destructive",
+        title: "לא התורו שלך!",
+        description: `כרגע התורו של ${getCurrentPlayerName()}`,
+      });
+      return;
+    }
+
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!ctx) return;
@@ -113,7 +129,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
   };
 
   const draw = (point: Point) => {
-    if (!isDrawing) return;
+    if (!isDrawing || !isMyTurn()) return;
     
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
@@ -154,12 +170,29 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
   };
 
   // Switch player turn
-  const switchTurn = () => {
-    setCurrentPlayer(currentPlayer === 'player1' ? 'player2' : 'player1');
-    toast({
-      title: `עכשיו תורו של ${getPlayerName(currentPlayer === 'player1' ? 'player2' : 'player1')}`,
-      description: "המשיכו לצייר על אותו ציור!",
-    });
+  const handleSwitchTurn = async () => {
+    if (!isMyTurn()) {
+      toast({
+        variant: "destructive",
+        title: "לא יכול להחליף תור",
+        description: "רק השחקן שהתור שלו יכול להחליף תור",
+      });
+      return;
+    }
+
+    const result = await switchTurn();
+    if (result.success) {
+      toast({
+        title: `התור עבר ל${getCurrentPlayerName()}`,
+        description: "עכשיו השחקן השני יכול לצייר!",
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "שגיאה בהחלפת תור",
+        description: "נסו שוב מאוחר יותר",
+      });
+    }
   };
 
   // Save drawing
@@ -177,7 +210,8 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     if (!canvas) return;
 
     const imageData = canvas.toDataURL();
-    const result = await saveDrawing(imageData, currentPlayer, true, drawingName.trim());
+    const currentTurn = currentSession?.current_turn as 'player1' | 'player2' || 'player1';
+    const result = await saveDrawing(imageData, currentTurn, true, drawingName.trim());
     
     if (result.success) {
       toast({
@@ -231,6 +265,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (isOpen) {
       initializeCanvas();
+      initializeSession();
       loadSavedDrawings();
     }
   }, [isOpen]);
@@ -244,6 +279,9 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
   }, [selectedColor]);
 
   if (!isOpen) return null;
+
+  const myTurn = isMyTurn();
+  const currentPlayerName = getCurrentPlayerName();
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2" dir="rtl">
@@ -265,10 +303,19 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
               <h2 className="text-xl md:text-2xl font-bold text-orange-800 flex items-center gap-2">
                 🎨 משחק ציור שיתופי
               </h2>
-              <div className="text-lg font-semibold text-orange-600">
-                תורו של {getPlayerName(currentPlayer)}
+              <div className={`text-lg font-semibold flex items-center gap-2 ${myTurn ? 'text-green-600' : 'text-orange-600'}`}>
+                {!myTurn && <Lock className="w-4 h-4" />}
+                {myTurn ? 'התורו שלך!' : `תורו של ${currentPlayerName}`}
               </div>
             </div>
+
+            {/* Turn Status */}
+            {!myTurn && (
+              <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-4 text-center">
+                <p className="text-orange-800">🔒 ממתין ל{currentPlayerName} לסיים את התור...</p>
+                <p className="text-sm text-orange-600">המכשיר שלך: {deviceId}</p>
+              </div>
+            )}
 
             {/* Color Selection */}
             <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
@@ -278,11 +325,12 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                   <button
                     key={color.value}
                     title={color.name}
+                    disabled={!myTurn}
                     className={`w-8 h-8 rounded-full border-2 transition ${
                       selectedColor === color.value
                         ? 'border-orange-500 ring-2 ring-orange-400'
                         : 'border-gray-300'
-                    }`}
+                    } ${!myTurn ? 'opacity-50 cursor-not-allowed' : ''}`}
                     style={{ backgroundColor: color.value }}
                     onClick={() => setSelectedColor(color.value)}
                   />
@@ -292,7 +340,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
 
             {/* Canvas */}
             <div className="flex-1 flex flex-col items-center justify-center">
-              <div className="border-4 border-orange-300 rounded-lg mb-4 bg-white">
+              <div className={`border-4 border-orange-300 rounded-lg mb-4 bg-white ${!myTurn ? 'opacity-70' : ''}`}>
                 <canvas
                   ref={canvasRef}
                   onMouseDown={handleMouseDown}
@@ -302,7 +350,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                   onTouchStart={handleTouchStart}
                   onTouchMove={handleTouchMove}
                   onTouchEnd={stopDrawing}
-                  className="cursor-crosshair touch-none rounded"
+                  className={`${myTurn ? 'cursor-crosshair' : 'cursor-not-allowed'} touch-none rounded`}
                   style={{ maxWidth: '100%', height: 'auto', display: 'block' }}
                 />
               </div>
@@ -310,11 +358,12 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
               {/* Action Buttons */}
               <div className="flex gap-3 flex-wrap justify-center">
                 <Button 
-                  onClick={switchTurn}
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                  onClick={handleSwitchTurn}
+                  disabled={!myTurn || loading}
+                  className="bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50"
                 >
                   <Send className="w-4 h-4 ml-1" />
-                  החלף תור
+                  סיים תור
                 </Button>
                 <Button 
                   onClick={() => setShowSaveDialog(true)}
@@ -326,8 +375,9 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                 </Button>
                 <Button 
                   onClick={clearCanvas}
+                  disabled={!myTurn}
                   variant="outline"
-                  className="border-red-300 text-red-600 hover:bg-red-50"
+                  className="border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50"
                 >
                   <Trash2 className="w-4 h-4 ml-1" />
                   נקה

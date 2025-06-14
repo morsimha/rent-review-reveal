@@ -97,31 +97,83 @@ export type Database = {
         Row: {
           created_at: string
           current_turn: string
+          device_id: string | null
           drawing_data: string
           drawing_name: string | null
           id: string
           is_completed: boolean
+          session_id: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           current_turn?: string
+          device_id?: string | null
           drawing_data: string
           drawing_name?: string | null
           id?: string
           is_completed?: boolean
+          session_id?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           current_turn?: string
+          device_id?: string | null
           drawing_data?: string
           drawing_name?: string | null
           id?: string
           is_completed?: boolean
+          session_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "drawings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "game_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      game_sessions: {
+        Row: {
+          created_at: string
+          current_turn: string
+          drawing_id: string | null
+          id: string
+          last_player_device_id: string | null
+          session_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_turn?: string
+          drawing_id?: string | null
+          id?: string
+          last_player_device_id?: string | null
+          session_name?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_turn?: string
+          drawing_id?: string | null
+          id?: string
+          last_player_device_id?: string | null
+          session_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_sessions_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
