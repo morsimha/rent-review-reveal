@@ -19,6 +19,21 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
   // Mapbox token embedded directly
   const mapboxToken = 'pk.eyJ1IjoibW9yb3k5IiwiYSI6ImNtYndnN2s5YzBrMm4ycXNkMGw3bDRtMW0ifQ.TfWPfMMUQfcjEy4OzGR9XA';
 
+  // Store markers to clean them up when needed
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
+
+  // Clear all existing markers
+  const clearMarkers = () => {
+    markersRef.current.forEach(marker => {
+      try {
+        marker.remove();
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+    });
+    markersRef.current = [];
+  };
+
   // Geocoding function to convert address to coordinates
   const geocodeAddress = async (location: string, token: string): Promise<[number, number] | null> => {
     if (!location || !token) return null;
@@ -57,6 +72,7 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
 
       // Clean up map if exists
       if (map.current) {
+        clearMarkers();
         map.current.remove();
         map.current = null;
       }
@@ -69,66 +85,9 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
       });
 
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      
       map.current.on('load', async () => {
-        // Add apartment markers
-        for (const apartment of apartments) {
-          if (apartment.location) {
-            const coordinates = await geocodeAddress(apartment.location, mapboxToken);
-            if (coordinates) {
-              const markerElement = document.createElement('div');
-              markerElement.className = 'custom-marker';
-              markerElement.style.width = '30px';
-              markerElement.style.height = '30px';
-              markerElement.style.borderRadius = '50%';
-              markerElement.style.cursor = 'pointer';
-              markerElement.style.display = 'flex';
-              markerElement.style.alignItems = 'center';
-              markerElement.style.justifyContent = 'center';
-              markerElement.style.fontSize = '16px';
-              markerElement.style.fontWeight = 'bold';
-              markerElement.style.color = 'white';
-              markerElement.style.border = '2px solid white';
-              markerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-              switch (apartment.status) {
-                case 'spoke':
-                  markerElement.style.backgroundColor = '#10b981'; // green
-                  break;
-                case 'not_spoke':
-                  markerElement.style.backgroundColor = '#f59e0b'; // yellow
-                  break;
-                case 'no_answer':
-                  markerElement.style.backgroundColor = '#ef4444'; // red
-                  break;
-                default:
-                  markerElement.style.backgroundColor = '#6b7280';
-              }
-              markerElement.innerHTML = '🏠';
-
-              const popupContent = `
-                <div style="text-align: right; direction: rtl;">
-                  <h3 style="font-weight: bold; margin-bottom: 8px;">${apartment.title}</h3>
-                  ${apartment.price ? `<p style="color: #10b981; font-weight: bold;">₪${apartment.price}</p>` : ''}
-                  ${apartment.description ? `<p style="margin: 4px 0;">${apartment.description}</p>` : ''}
-                  ${apartment.contact_name ? `<p style="margin: 4px 0;"><strong>איש קשר:</strong> ${apartment.contact_name}</p>` : ''}
-                  ${apartment.contact_phone ? `<p style="margin: 4px 0;"><strong>טלפון:</strong> ${apartment.contact_phone}</p>` : ''}
-                  <div style="margin-top: 8px;">
-                    ${'★'.repeat(apartment.rating)}${'☆'.repeat(5 - apartment.rating)}
-                  </div>
-                </div>
-              `;
-              const popup = new mapboxgl.Popup({
-                offset: 25,
-                closeButton: true,
-                closeOnClick: false
-              }).setHTML(popupContent);
-
-              new mapboxgl.Marker(markerElement)
-                .setLngLat(coordinates)
-                .setPopup(popup)
-                .addTo(map.current!);
-            }
-          }
-        }
+        await addApartmentMarkers();
         setIsLoading(false);
         toast({
           title: "המפה נטענה בהצלחה",
@@ -146,14 +105,97 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
     }
   };
 
+  const addApartmentMarkers = async () => {
+    if (!map.current) return;
+    
+    // Clear existing markers first
+    clearMarkers();
+
+    // Add apartment markers
+    for (const apartment of apartments) {
+      if (apartment.location) {
+        const coordinates = await geocodeAddress(apartment.location, mapboxToken);
+        if (coordinates) {
+          const markerElement = document.createElement('div');
+          markerElement.className = 'custom-marker';
+          markerElement.style.width = '30px';
+          markerElement.style.height = '30px';
+          markerElement.style.borderRadius = '50%';
+          markerElement.style.cursor = 'pointer';
+          markerElement.style.display = 'flex';
+          markerElement.style.alignItems = 'center';
+          markerElement.style.justifyContent = 'center';
+          markerElement.style.fontSize = '16px';
+          markerElement.style.fontWeight = 'bold';
+          markerElement.style.color = 'white';
+          markerElement.style.border = '2px solid white';
+          markerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+          switch (apartment.status) {
+            case 'spoke':
+              markerElement.style.backgroundColor = '#10b981'; // green
+              break;
+            case 'not_spoke':
+              markerElement.style.backgroundColor = '#f59e0b'; // yellow
+              break;
+            case 'no_answer':
+              markerElement.style.backgroundColor = '#ef4444'; // red
+              break;
+            default:
+              markerElement.style.backgroundColor = '#6b7280';
+          }
+          markerElement.innerHTML = '🏠';
+
+          const popupContent = `
+            <div style="text-align: right; direction: rtl;">
+              <h3 style="font-weight: bold; margin-bottom: 8px;">${apartment.title}</h3>
+              ${apartment.price ? `<p style="color: #10b981; font-weight: bold;">₪${apartment.price}</p>` : ''}
+              ${apartment.description ? `<p style="margin: 4px 0;">${apartment.description}</p>` : ''}
+              ${apartment.contact_name ? `<p style="margin: 4px 0;"><strong>איש קשר:</strong> ${apartment.contact_name}</p>` : ''}
+              ${apartment.contact_phone ? `<p style="margin: 4px 0;"><strong>טלפון:</strong> ${apartment.contact_phone}</p>` : ''}
+              <div style="margin-top: 8px;">
+                ${'★'.repeat(apartment.rating)}${'☆'.repeat(5 - apartment.rating)}
+              </div>
+            </div>
+          `;
+          const popup = new mapboxgl.Popup({
+            offset: 25,
+            closeButton: true,
+            closeOnClick: false
+          }).setHTML(popupContent);
+
+          const marker = new mapboxgl.Marker(markerElement)
+            .setLngLat(coordinates)
+            .setPopup(popup)
+            .addTo(map.current!);
+
+          // Store marker reference for cleanup
+          markersRef.current.push(marker);
+        }
+      }
+    }
+  };
+
   useEffect(() => {
     initializeMap();
     
     return () => {
+      clearMarkers();
       if (map.current) {
-        map.current.remove();
+        try {
+          map.current.remove();
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+        map.current = null;
       }
     };
+  }, []);
+
+  // Update markers when apartments change
+  useEffect(() => {
+    if (map.current && map.current.isStyleLoaded()) {
+      addApartmentMarkers();
+    }
   }, [apartments]);
 
   return (
