@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 
 interface ApartmentFormProps {
-  onAddApartment: (apartmentData: any) => Promise<void>;
+  onAddApartment: (apartmentData: any) => Promise<boolean>;
   uploadImage: (file: File) => Promise<string | null>;
 }
 
