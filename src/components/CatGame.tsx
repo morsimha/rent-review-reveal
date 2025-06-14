@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,15 +9,16 @@ interface CatGameProps {
   onClose: () => void;
 }
 
-interface Cat {
+interface Animal {
   id: number;
   x: number;
   y: number;
   emoji: string;
+  type: 'cat' | 'dog';
 }
 
 const CatGame: React.FC<CatGameProps> = ({ isOpen, onClose }) => {
-  const [cats, setCats] = useState<Cat[]>([]);
+  const [animals, setAnimals] = useState<Animal[]>([]);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(10);
   const [gameActive, setGameActive] = useState(false);
@@ -26,39 +26,71 @@ const CatGame: React.FC<CatGameProps> = ({ isOpen, onClose }) => {
   const [showNameInput, setShowNameInput] = useState(false);
   const [playerName, setPlayerName] = useState('');
   const gameAreaRef = useRef<HTMLDivElement>(null);
-  const catIdRef = useRef(0);
+  const animalIdRef = useRef(0);
 
   const { scores, loading, saveScore } = useCatGameScores();
 
   const catEmojis = ['😸', '😺', '😻', '🙀', '😿', '😾', '🐱', '🐈'];
+  const dogEmojis = ['🐶', '🐕', '🦮', '🐕‍🦺', '🐩'];
 
   const getRandomCatEmoji = () => catEmojis[Math.floor(Math.random() * catEmojis.length)];
+  const getRandomDogEmoji = () => dogEmojis[Math.floor(Math.random() * dogEmojis.length)];
 
-  const spawnCat = () => {
+  const spawnAnimals = () => {
     if (!gameAreaRef.current) return;
     
     const gameArea = gameAreaRef.current;
     const maxX = gameArea.clientWidth - 60;
     const maxY = gameArea.clientHeight - 60;
     
-    const newCat: Cat = {
-      id: catIdRef.current++,
-      x: Math.random() * maxX,
-      y: Math.random() * maxY,
-      emoji: getRandomCatEmoji()
-    };
+    // Spawn 3-5 cats at once
+    const numCats = Math.floor(Math.random() * 3) + 3;
+    // Spawn 1-2 dogs at once
+    const numDogs = Math.floor(Math.random() * 2) + 1;
     
-    setCats(prev => [...prev, newCat]);
+    const newAnimals: Animal[] = [];
     
-    // Remove cat after 2 seconds if not caught
+    // Add cats
+    for (let i = 0; i < numCats; i++) {
+      newAnimals.push({
+        id: animalIdRef.current++,
+        x: Math.random() * maxX,
+        y: Math.random() * maxY,
+        emoji: getRandomCatEmoji(),
+        type: 'cat'
+      });
+    }
+    
+    // Add dogs
+    for (let i = 0; i < numDogs; i++) {
+      newAnimals.push({
+        id: animalIdRef.current++,
+        x: Math.random() * maxX,
+        y: Math.random() * maxY,
+        emoji: getRandomDogEmoji(),
+        type: 'dog'
+      });
+    }
+    
+    setAnimals(prev => [...prev, ...newAnimals]);
+    
+    // Remove animals after 2.5 seconds if not caught
     setTimeout(() => {
-      setCats(prev => prev.filter(cat => cat.id !== newCat.id));
-    }, 2000);
+      setAnimals(prev => prev.filter(animal => !newAnimals.some(newAnimal => newAnimal.id === animal.id)));
+    }, 2500);
   };
 
-  const catchCat = (catId: number) => {
-    setCats(prev => prev.filter(cat => cat.id !== catId));
-    setScore(prev => prev + 1);
+  const catchAnimal = (animalId: number) => {
+    const animal = animals.find(a => a.id === animalId);
+    if (!animal) return;
+    
+    setAnimals(prev => prev.filter(a => a.id !== animalId));
+    
+    if (animal.type === 'cat') {
+      setScore(prev => prev + 1);
+    } else if (animal.type === 'dog') {
+      setScore(prev => Math.max(0, prev - 1)); // Don't go below 0
+    }
   };
 
   const startGame = () => {
@@ -67,14 +99,14 @@ const CatGame: React.FC<CatGameProps> = ({ isOpen, onClose }) => {
     setShowNameInput(false);
     setScore(0);
     setTimeLeft(10);
-    setCats([]);
-    catIdRef.current = 0;
+    setAnimals([]);
+    animalIdRef.current = 0;
   };
 
   const endGame = () => {
     setGameActive(false);
     setGameOver(true);
-    setCats([]);
+    setAnimals([]);
     setShowNameInput(true);
   };
 
@@ -105,13 +137,13 @@ const CatGame: React.FC<CatGameProps> = ({ isOpen, onClose }) => {
     return () => clearInterval(timer);
   }, [gameActive, timeLeft]);
 
-  // Cat spawning
+  // Animal spawning - more frequent spawning
   useEffect(() => {
     if (!gameActive) return;
     
     const spawnInterval = setInterval(() => {
-      spawnCat();
-    }, 800);
+      spawnAnimals();
+    }, 1200); // Spawn every 1.2 seconds
     
     return () => clearInterval(spawnInterval);
   }, [gameActive]);
@@ -133,7 +165,7 @@ const CatGame: React.FC<CatGameProps> = ({ isOpen, onClose }) => {
               <X className="w-4 h-4" />
               סגור
             </Button>
-            <h2 className="text-xl md:text-2xl font-bold text-purple-800">תפוס את החתול! 🐱</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-purple-800">תפוס את החתולים! 🐱</h2>
             <div className="flex gap-2 md:gap-4 text-sm md:text-lg font-semibold">
               <span className="text-green-600">ניקוד: {score}</span>
               <span className="text-orange-600">זמן: {timeLeft}</span>
@@ -150,8 +182,11 @@ const CatGame: React.FC<CatGameProps> = ({ isOpen, onClose }) => {
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
                   <div className="text-4xl md:text-6xl mb-4">🐱</div>
                   <h3 className="text-lg md:text-xl font-bold text-purple-800 mb-2 text-center">תפוס כמה שיותר חתולים!</h3>
-                  <p className="text-purple-600 mb-6 text-center text-sm md:text-base">
-                    לחץ על החתולים שמופיעים על המסך במשך 10 שניות
+                  <p className="text-purple-600 mb-4 text-center text-sm md:text-base">
+                    לחץ על החתולים 🐱 כדי לקבל נקודות
+                  </p>
+                  <p className="text-red-600 mb-6 text-center text-sm md:text-base font-semibold">
+                    זהירות! כלבים 🐶 נותנים מינוס נקודה!
                   </p>
                   <Button 
                     onClick={startGame}
@@ -222,18 +257,21 @@ const CatGame: React.FC<CatGameProps> = ({ isOpen, onClose }) => {
                 </div>
               )}
 
-              {/* Cats */}
-              {cats.map(cat => (
+              {/* Animals */}
+              {animals.map(animal => (
                 <button
-                  key={cat.id}
-                  onClick={() => catchCat(cat.id)}
-                  className="absolute text-2xl md:text-4xl hover:scale-110 transition-transform duration-200 cursor-pointer animate-bounce"
+                  key={animal.id}
+                  onClick={() => catchAnimal(animal.id)}
+                  className={`absolute text-2xl md:text-4xl hover:scale-110 transition-transform duration-200 cursor-pointer ${
+                    animal.type === 'cat' ? 'animate-bounce' : 'animate-pulse'
+                  }`}
                   style={{
-                    left: `${cat.x}px`,
-                    top: `${cat.y}px`,
+                    left: `${animal.x}px`,
+                    top: `${animal.y}px`,
                   }}
+                  title={animal.type === 'cat' ? '+1 נקודה' : '-1 נקודה'}
                 >
-                  {cat.emoji}
+                  {animal.emoji}
                 </button>
               ))}
             </div>
@@ -278,7 +316,7 @@ const CatGame: React.FC<CatGameProps> = ({ isOpen, onClose }) => {
 
           {/* Instructions */}
           <div className="mt-4 text-center text-xs md:text-sm text-purple-600">
-            לחץ על החתולים כדי לתפוס אותם! כל חתול נעלם אחרי 2 שניות
+            לחץ על החתולים 🐱 (+1) וזהירות מהכלבים 🐶 (-1)! כל חיה נעלמת אחרי 2.5 שניות
           </div>
         </CardContent>
       </Card>
