@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, StopCircle, Eye, ZoomIn, Palette, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -37,6 +36,8 @@ const colors = [
 
 const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentPlayer, setCurrentPlayer] = useState<'player1' | 'player2'>('player1');
   const [selectedColor, setSelectedColor] = useState(colors[0].value);
@@ -57,34 +58,45 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     return player === 'player1' ? 'עכשיו תורו של מור' : 'עכשיו תורה של גבי';
   };
 
+  // Responsive canvas dimensions
+  const getCanvasDimensions = (): { width: number; height: number } => {
+    if (typeof window === 'undefined') return { width: 800, height: 500 };
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+      // ישאיר רווחים מהקצה
+      const width = Math.min(window.innerWidth - 32, 480);
+      return { width, height: Math.round(width * 0.625) }; // 5:8 יחס
+    }
+    return { width: 800, height: 500 };
+  };
+
+  // Set canvas size responsively
   const initializeCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const { width, height } = getCanvasDimensions();
+    canvas.width = width;
+    canvas.height = height;
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas size - larger for better drawing experience
-    canvas.width = 800;
-    canvas.height = 500;
-    
-    // Set drawing styles
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.lineWidth = 3;
     ctx.strokeStyle = selectedColor;
-    
-    // If there's previous drawing data, load it
+
+    // Draw previous if exists
     if (drawingData) {
       const img = new Image();
       img.onload = () => {
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img, 0, 0, width, height);
       };
       img.src = drawingData;
     } else {
-      // Clear canvas only if no previous drawing
       ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, width, height);
     }
   };
 
@@ -218,17 +230,18 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     setGameState('naming');
   };
 
+  // Use latest canvas data when saving the drawing
   const saveWithName = async () => {
     if (!drawingName.trim()) return;
-    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    // Always get the latest data from the canvas
+    const actualFinalDrawing = canvas.toDataURL();
     try {
-      console.log('Saving drawing with name:', drawingName);
-      const result = await saveDrawing(finalDrawing, currentPlayer, true, drawingName.trim());
-      console.log('Save result:', result);
-      
+      const result = await saveDrawing(actualFinalDrawing, currentPlayer, true, drawingName.trim());
       if (result.success) {
         setGameState('completed');
-        loadSavedDrawings(); // Refresh the gallery
+        loadSavedDrawings();
       } else {
         console.error('Failed to save drawing:', result.error);
       }
