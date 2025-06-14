@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Plus, Star, Trash2, Edit, Phone, Link, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -43,7 +42,6 @@ const Index = () => {
     addApartment, 
     updateApartment, 
     deleteApartment, 
-    updateRating,
     updateMorRating,
     updateGabiRating,
     uploadImage
@@ -120,10 +118,6 @@ const Index = () => {
         fileInputRef.current.value = '';
       }
     }
-  };
-
-  const handleRatingChange = async (apartmentId: string, newRating: number) => {
-    await updateRating(apartmentId, newRating);
   };
 
   const handleMorRatingChange = async (apartmentId: string, newRating: number) => {
@@ -436,17 +430,8 @@ const Index = () => {
                     </div>
                   )}
 
-                  {/* Ratings */}
+                  {/* Ratings (Mor and Gabi only) */}
                   <div className="mb-4 space-y-1">
-                    <div className="flex items-center gap-2 justify-end">
-                      <div className="scale-75">
-                        <StarRating 
-                          rating={apartment.rating} 
-                          onRatingChange={(rating) => handleRatingChange(apartment.id, rating)}
-                        />
-                      </div>
-                      <span className="text-xs font-medium text-gray-700">:כללי</span>
-                    </div>
                     <div className="flex items-center gap-2 justify-end">
                       <div className="scale-75">
                         <StarRating 
