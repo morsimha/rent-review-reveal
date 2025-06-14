@@ -8,7 +8,8 @@ export const useDrawingGame = () => {
   const saveDrawing = async (
     drawingData: string,
     currentTurn: 'player1' | 'player2',
-    isCompleted: boolean = false
+    isCompleted: boolean = false,
+    drawingName?: string
   ) => {
     setLoading(true);
     try {
@@ -17,7 +18,8 @@ export const useDrawingGame = () => {
         .insert({
           drawing_data: drawingData,
           current_turn: currentTurn,
-          is_completed: isCompleted
+          is_completed: isCompleted,
+          drawing_name: drawingName
         })
         .select()
         .single();
@@ -42,6 +44,7 @@ export const useDrawingGame = () => {
       const { data, error } = await supabase
         .from('drawings')
         .select('*')
+        .eq('is_completed', true)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -58,9 +61,34 @@ export const useDrawingGame = () => {
     }
   };
 
+  const updateDrawingName = async (drawingId: string, name: string) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('drawings')
+        .update({ drawing_name: name })
+        .eq('id', drawingId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating drawing name:', error);
+        throw error;
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error in updateDrawingName:', error);
+      return { success: false, error };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     saveDrawing,
-    getDrawings
+    getDrawings,
+    updateDrawingName
   };
 };
