@@ -65,34 +65,39 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             <p className="text-purple-600 text-sm mb-2 font-medium text-right">{apartment.location}</p>
           )}
 
-          {/* Contact Info */}
+          {/* Contact Info - Aligned to right */}
           {(apartment.contact_name || apartment.contact_phone) && (
             <div className="text-sm text-gray-700 mb-2 text-right">
-              {apartment.contact_name && <p className="mb-1">{apartment.contact_name}</p>}
-              {apartment.contact_phone && <p className="flex items-center gap-1 justify-end"><Phone className="w-4 h-4" />{apartment.contact_phone}</p>}
+              {apartment.contact_name && <p className="mb-1 text-right">{apartment.contact_name}</p>}
+              {apartment.contact_phone && (
+                <p className="flex items-center gap-1 justify-end text-right">
+                  <span>{apartment.contact_phone}</span>
+                  <Phone className="w-4 h-4" />
+                </p>
+              )}
             </div>
           )}
 
-          {/* Links */}
+          {/* Links - Aligned to right */}
           {apartment.apartment_link && (
             <div className="mb-2 text-right">
-              <a href={apartment.apartment_link} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline flex items-center gap-1 justify-end">
+              <a href={apartment.apartment_link} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline flex items-center gap-1 justify-end text-right">
+                <span>קישור לדירה</span>
                 <Link className="w-4 h-4" />
-                קישור לדירה
               </a>
             </div>
           )}
 
-          {/* Ratings (Mor and Gabi only) */}
+          {/* Ratings (Mor and Gabi only) - Aligned to right */}
           <div className="mb-3 space-y-2">
-            <div className="flex items-center gap-2 justify-end">
+            <div className="flex items-center gap-2 justify-end text-right">
               <StarRating 
                 rating={apartment.mor_rating || 0} 
                 onRatingChange={(rating) => onMorRatingChange(apartment.id, rating)}
               />
               <span className="text-sm font-medium text-purple-600">:מור</span>
             </div>
-            <div className="flex items-center gap-2 justify-end">
+            <div className="flex items-center gap-2 justify-end text-right">
               <StarRating 
                 rating={apartment.gabi_rating || 0} 
                 onRatingChange={(rating) => onGabiRatingChange(apartment.id, rating)}

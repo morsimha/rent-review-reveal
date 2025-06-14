@@ -167,36 +167,36 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
               className="bg-white/70 border-purple-300 focus:border-purple-500"
             />
           </div>
-          <div>
+          <div className="text-right">
             <RadioGroup value={status} onValueChange={(value: 'spoke' | 'not_spoke' | 'no_answer') => setStatus(value)}>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <RadioGroupItem value="spoke" id="spoke" />
+              <div className="flex items-center space-x-2 space-x-reverse justify-end">
                 <Label htmlFor="spoke" className="text-green-600">דיברנו</Label>
+                <RadioGroupItem value="spoke" id="spoke" />
               </div>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <RadioGroupItem value="not_spoke" id="not_spoke" />
+              <div className="flex items-center space-x-2 space-x-reverse justify-end">
                 <Label htmlFor="not_spoke" className="text-yellow-600">לא דיברנו</Label>
+                <RadioGroupItem value="not_spoke" id="not_spoke" />
               </div>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <RadioGroupItem value="no_answer" id="no_answer" />
+              <div className="flex items-center space-x-2 space-x-reverse justify-end">
                 <Label htmlFor="no_answer" className="text-red-600">לא ענו</Label>
+                <RadioGroupItem value="no_answer" id="no_answer" />
               </div>
             </RadioGroup>
           </div>
-          <div>
+          <div className="text-right">
             <RadioGroup value={petsAllowed} onValueChange={(value: 'yes' | 'no' | 'unknown') => setPetsAllowed(value)}>
               <Label className="text-sm font-medium">בעלי חיים מותרים?</Label>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <RadioGroupItem value="yes" id="pets_yes" />
+              <div className="flex items-center space-x-2 space-x-reverse justify-end">
                 <Label htmlFor="pets_yes">כן 🐱</Label>
+                <RadioGroupItem value="yes" id="pets_yes" />
               </div>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <RadioGroupItem value="no" id="pets_no" />
+              <div className="flex items-center space-x-2 space-x-reverse justify-end">
                 <Label htmlFor="pets_no">לא 🚫</Label>
+                <RadioGroupItem value="no" id="pets_no" />
               </div>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <RadioGroupItem value="unknown" id="pets_unknown" />
+              <div className="flex items-center space-x-2 space-x-reverse justify-end">
                 <Label htmlFor="pets_unknown">לא יודע</Label>
+                <RadioGroupItem value="unknown" id="pets_unknown" />
               </div>
             </RadioGroup>
           </div>
