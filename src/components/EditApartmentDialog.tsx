@@ -94,6 +94,23 @@ const EditApartmentDialog: React.FC<EditApartmentDialogProps> = ({
             />
           </div>
           <div>
+            <Label className="text-right">מחיר ארנונה</Label>
+            <Input
+              type="number"
+              value={editFormData.arnona ?? ''}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  arnona:
+                    e.target.value === ''
+                      ? null
+                      : parseInt(e.target.value)
+                })
+              }
+              placeholder="מחיר ארנונה"
+            />
+          </div>
+          <div>
             <Label className="text-right">תמונה</Label>
             <div className="flex gap-2">
               <Input
