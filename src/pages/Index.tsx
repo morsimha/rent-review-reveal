@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useApartments, type Apartment } from '@/hooks/useApartments';
@@ -79,6 +78,7 @@ const Index = () => {
   };
 
   const handleSaveEdit = (apartmentId: string, updates: Partial<Apartment>) => {
+    console.log('handleSaveEdit called with:', { apartmentId, updates });
     // אם זה עריכה (apartmentId לא ריק), בקש אימות
     if (apartmentId !== '') {
       setPendingEditData({ id: apartmentId, updates });
@@ -87,19 +87,47 @@ const Index = () => {
   };
 
   const handleEditPassword = async (ok: boolean) => {
+    console.log('handleEditPassword called with:', { ok, pendingEditData });
     if (ok && pendingEditData) {
-      await updateApartment(pendingEditData.id, pendingEditData.updates);
-      setIsEditDialogOpen(false);
-      setEditingApartment(null);
+      try {
+        console.log('Calling updateApartment with:', pendingEditData.id, pendingEditData.updates);
+        const result = await updateApartment(pendingEditData.id, pendingEditData.updates);
+        console.log('updateApartment result:', result);
+        
+        if (result && result.success) {
+          setIsEditDialogOpen(false);
+          setEditingApartment(null);
+          setPendingEditData(null);
+          setPendingPasswordAction(null);
+          toast({
+            title: "הצלחה",
+            description: "הדירה עודכנה בהצלחה",
+          });
+        } else {
+          console.error('Update failed:', result);
+          toast({
+            title: "שגיאה",
+            description: "העדכון נכשל",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Error in handleEditPassword:', error);
+        toast({
+          title: "שגיאה",
+          description: "שגיאה בעדכון הדירה",
+          variant: "destructive"
+        });
+      }
     } else if (!ok) {
       toast({
         title: "סיסמה שגויה",
         description: "הפעולה בוטלה.",
         variant: "destructive"
       });
+      setPendingEditData(null);
+      setPendingPasswordAction(null);
     }
-    setPendingEditData(null);
-    setPendingPasswordAction(null);
   };
 
   // *** מחיקת דירה ***
@@ -109,17 +137,44 @@ const Index = () => {
   };
 
   const handleDeletePassword = async (ok: boolean) => {
+    console.log('handleDeletePassword called with:', { ok, pendingDeleteId });
     if (ok && pendingDeleteId) {
-      await deleteApartment(pendingDeleteId);
+      try {
+        const result = await deleteApartment(pendingDeleteId);
+        console.log('deleteApartment result:', result);
+        
+        if (result && result.success) {
+          setPendingDeleteId(null);
+          setPendingPasswordAction(null);
+          toast({
+            title: "הצלחה",
+            description: "הדירה נמחקה בהצלחה",
+          });
+        } else {
+          console.error('Delete failed:', result);
+          toast({
+            title: "שגיאה",
+            description: "המחיקה נכשלה",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Error in handleDeletePassword:', error);
+        toast({
+          title: "שגיאה",
+          description: "שגיאה במחיקת הדירה",
+          variant: "destructive"
+        });
+      }
     } else if (!ok) {
       toast({
         title: "סיסמה שגויה",
         description: "המחיקה בוטלה.",
         variant: "destructive"
       });
+      setPendingDeleteId(null);
+      setPendingPasswordAction(null);
     }
-    setPendingDeleteId(null);
-    setPendingPasswordAction(null);
   };
 
   // הצגת דיאלוג סיסמה
