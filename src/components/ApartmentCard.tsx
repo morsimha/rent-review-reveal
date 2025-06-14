@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Trash2, Edit, Phone, Link, House } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ interface ApartmentCardProps {
   onDelete: (apartmentId: string) => void;
   onMorRatingChange: (apartmentId: string, rating: number) => void;
   onGabiRatingChange: (apartmentId: string, rating: number) => void;
+  isAuthenticated: boolean;
 }
 
 const ApartmentCard: React.FC<ApartmentCardProps> = ({
@@ -19,7 +21,8 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
   onEdit,
   onDelete,
   onMorRatingChange,
-  onGabiRatingChange
+  onGabiRatingChange,
+  isAuthenticated
 }) => {
   const getStatusColor = (status: 'spoke' | 'not_spoke' | 'no_answer') => {
     switch (status) {
@@ -161,26 +164,28 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           </div>
 
           {/* Actions */}
-          <div className="flex justify-between items-center mt-auto pt-2">
-            {/* Edit button (right), then Delete (left) */}
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onEdit(apartment)}
-              className="h-8 px-3 text-sm"
-            >
-              <Edit className="w-4 h-4 ml-1" />
-              ערוך
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => onDelete(apartment.id)}
-              className="bg-red-500 hover:bg-red-600 h-8 w-8 p-0"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
+          {isAuthenticated && (
+            <div className="flex justify-between items-center mt-auto pt-2">
+              {/* Edit button (right), then Delete (left) */}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onEdit(apartment)}
+                className="h-8 px-3 text-sm"
+              >
+                <Edit className="w-4 h-4 ml-1" />
+                ערוך
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => onDelete(apartment.id)}
+                className="bg-red-500 hover:bg-red-600 h-8 w-8 p-0"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

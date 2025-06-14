@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useApartments } from '@/hooks/useApartments';
@@ -9,6 +10,9 @@ import DrawingGame from '@/components/DrawingGame';
 import ApartmentForm from '@/components/ApartmentForm';
 import ApartmentCard from '@/components/ApartmentCard';
 import EditApartmentDialog from '@/components/EditApartmentDialog';
+import { useAuth } from '@/contexts/AuthContext';
+import PasswordDialog from '@/components/PasswordDialog';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
@@ -17,9 +21,23 @@ const Index = () => {
   const [isDrawingGameOpen, setIsDrawingGameOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"rating" | "entry_date" | "created_at">("rating");
   const [showWithShelter, setShowWithShelter] = useState<null | boolean>(null);
-
-  // state for the new add-apartment dialog:
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
+  const { isAuthenticated, login } = useAuth();
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [authAttempted, setAuthAttempted] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!isAuthenticated && !authAttempted) {
+      // Use timeout to prevent dialog from opening before AuthProvider initializes
+      setTimeout(() => {
+        if (!sessionStorage.getItem('isAuthenticated')) {
+          setIsPasswordDialogOpen(true);
+        }
+      }, 100);
+    }
+  }, [isAuthenticated, authAttempted]);
 
   const {
     apartments,
@@ -40,10 +58,12 @@ const Index = () => {
   };
 
   const handleMorRatingChange = async (apartmentId: string, newRating: number) => {
+    if (!isAuthenticated) return;
     await updateMorRating(apartmentId, newRating);
   };
 
   const handleGabiRatingChange = async (apartmentId: string, newRating: number) => {
+    if (!isAuthenticated) return;
     await updateGabiRating(apartmentId, newRating);
   };
 
@@ -62,6 +82,37 @@ const Index = () => {
 
   const handleDelete = async (apartmentId: string) => {
     await deleteApartment(apartmentId);
+  };
+
+  const handlePasswordSubmit = (password: string) => {
+    setAuthAttempted(true);
+    const success = login(password);
+    if (success) {
+      setIsPasswordDialogOpen(false);
+      toast({
+        title: "התחברת בהצלחה!",
+        description: "כעת באפשרותך לערוך את רשימת הדירות.",
+      });
+    } else {
+      toast({
+        title: "סיסמא שגויה",
+        description: "הסיסמא שהזנת אינה נכונה. הנך במצב צפייה בלבד.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const onPasswordDialogChange = (open: boolean) => {
+    setIsPasswordDialogOpen(open);
+    if (!open) {
+      setAuthAttempted(true);
+      if (!isAuthenticated) {
+        toast({
+          title: "מצב צפייה בלבד",
+          description: "לא הוזנה סיסמא. לא ניתן לבצע שינויים.",
+        });
+      }
+    }
   };
 
   if (loading) {
@@ -137,6 +188,7 @@ const Index = () => {
           <Button
             onClick={() => setIsAddDialogOpen(true)}
             className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-lg px-6 py-3 rounded shadow hover:from-purple-600 hover:to-pink-600 transition"
+            disabled={!isAuthenticated}
           >
             + הוסף דירה חדשה
           </Button>
@@ -207,6 +259,7 @@ const Index = () => {
               onDelete={handleDelete}
               onMorRatingChange={handleMorRatingChange}
               onGabiRatingChange={handleGabiRatingChange}
+              isAuthenticated={isAuthenticated}
             />
           ))}
         </div>
@@ -232,6 +285,12 @@ const Index = () => {
 
       {/* Cat Game Modal */}
       <CatGame isOpen={isCatGameOpen} onClose={() => setIsCatGameOpen(false)} />
+
+      <PasswordDialog
+        open={isPasswordDialogOpen}
+        onOpenChange={onPasswordDialogChange}
+        onPasswordSubmit={handlePasswordSubmit}
+      />
     </div>
   );
 };
