@@ -1,5 +1,7 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useApartments, type Apartment } from '@/hooks/useApartments';
 import Map from '@/components/Map';
 import CatGame from '@/components/CatGame';
@@ -16,12 +18,15 @@ const Index = () => {
   const [sortBy, setSortBy] = useState<"rating" | "entry_date" | "created_at">("rating");
   const [showWithShelter, setShowWithShelter] = useState<null | boolean>(null);
 
-  const { 
-    apartments, 
-    loading, 
-    addApartment, 
-    updateApartment, 
-    deleteApartment, 
+  // state for the new add-apartment dialog:
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
+  const {
+    apartments,
+    loading,
+    addApartment,
+    updateApartment,
+    deleteApartment,
     updateMorRating,
     updateGabiRating,
     uploadImage
@@ -76,7 +81,7 @@ const Index = () => {
     filteredApartments = [...filteredApartments].sort((a, b) => {
       if (!a.entry_date) return 1;
       if (!b.entry_date) return -1;
-      return a.entry_date.localeCompare(b.entry_date); // מוקדם קודם
+      return a.entry_date.localeCompare(b.entry_date);
     });
   } else if (sortBy === "rating") {
     filteredApartments = [...filteredApartments].sort((a, b) => {
@@ -125,6 +130,16 @@ const Index = () => {
           </div>
         </div>
 
+        {/* כפתור הוסף דירה */}
+        <div className="flex justify-center mb-8">
+          <Button
+            onClick={() => setIsAddDialogOpen(true)}
+            className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-lg px-6 py-3 rounded shadow hover:from-purple-600 hover:to-pink-600 transition"
+          >
+            הוסף דירה חדשה +
+          </Button>
+        </div>
+
         {/* תפריט מיון ופילטור */}
         <div className="flex flex-wrap justify-center items-center gap-3 mb-7">
           <div className="flex items-center gap-2">
@@ -157,8 +172,22 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Add Apartment Form */}
-        <ApartmentForm onAddApartment={handleAddApartment} uploadImage={uploadImage} />
+        {/* Modal להוספת דירה */}
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogContent className="max-w-2xl" dir="rtl">
+            <DialogHeader>
+              <DialogTitle className="text-right">הוסף דירה חדשה</DialogTitle>
+            </DialogHeader>
+            <ApartmentForm
+              onAddApartment={async (data) => {
+                const success = await handleAddApartment(data);
+                if (success) setIsAddDialogOpen(false);
+                return success;
+              }}
+              uploadImage={uploadImage}
+            />
+          </DialogContent>
+        </Dialog>
 
         {/* Map Section */}
         <div className="mb-8">
@@ -206,3 +235,4 @@ const Index = () => {
 };
 
 export default Index;
+
