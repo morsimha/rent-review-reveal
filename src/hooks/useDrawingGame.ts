@@ -10,10 +10,15 @@ export const useDrawingGame = () => {
     deviceId,
     currentSession,
     initializeSession,
+    joinGame,
+    leaveGame,
     switchTurn,
     isMyTurn,
     getCurrentPlayerName,
-    setCurrentSession
+    setCurrentSession,
+    isGameReady,
+    isPlayer,
+    isReady
   } = useGameSession();
 
   // Drawing CRUD logic
@@ -36,6 +41,8 @@ export const useDrawingGame = () => {
     deviceId,
     currentSession,
     initializeSession,
+    joinGame,
+    leaveGame,
     switchTurn,
     isMyTurn,
     getCurrentPlayerName,
@@ -44,6 +51,9 @@ export const useDrawingGame = () => {
     updateDrawingName,
     deleteDrawing,
     saveDraftCanvas,
-    getDraftCanvasData
+    getDraftCanvasData,
+    isGameReady,
+    isPlayer,
+    isReady
   };
 };

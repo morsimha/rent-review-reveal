@@ -9,6 +9,10 @@ export interface GameSession {
   session_name: string;
   drawing_id: string | null;
   draft_canvas_data: string | null;
+  player1_ready: boolean;
+  player2_ready: boolean;
+  player1_device_id: string | null;
+  player2_device_id: string | null;
 }
 
 export const useGameSession = () => {
@@ -45,7 +49,11 @@ export const useGameSession = () => {
         .insert({
           session_name: 'default_session',
           current_turn: 'player1',
-          last_player_device_id: null
+          last_player_device_id: null,
+          player1_ready: false,
+          player2_ready: false,
+          player1_device_id: null,
+          player2_device_id: null
         })
         .select()
         .single();
@@ -59,6 +67,93 @@ export const useGameSession = () => {
     } catch (error) {
       console.error('Error initializing session:', error);
       return { success: false, error };
+    }
+  };
+
+  // Join game as a player
+  const joinGame = async () => {
+    if (!currentSession) return { success: false, error: 'No active session' };
+    setLoading(true);
+    try {
+      let updateData: any = {};
+      
+      // Determine which player slot to take
+      if (!currentSession.player1_device_id) {
+        updateData = {
+          player1_device_id: deviceId,
+          player1_ready: true
+        };
+      } else if (!currentSession.player2_device_id && currentSession.player1_device_id !== deviceId) {
+        updateData = {
+          player2_device_id: deviceId,
+          player2_ready: true
+        };
+      } else if (currentSession.player1_device_id === deviceId) {
+        updateData = { player1_ready: true };
+      } else if (currentSession.player2_device_id === deviceId) {
+        updateData = { player2_ready: true };
+      } else {
+        return { success: false, error: 'Game is full' };
+      }
+
+      const { data, error } = await supabase
+        .from('game_sessions')
+        .update(updateData)
+        .eq('id', currentSession.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error joining game:', error);
+        return { success: false, error };
+      }
+      setCurrentSession(data);
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error in joinGame:', error);
+      return { success: false, error };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Leave game
+  const leaveGame = async () => {
+    if (!currentSession) return { success: false, error: 'No active session' };
+    setLoading(true);
+    try {
+      let updateData: any = {};
+      
+      if (currentSession.player1_device_id === deviceId) {
+        updateData = {
+          player1_device_id: null,
+          player1_ready: false
+        };
+      } else if (currentSession.player2_device_id === deviceId) {
+        updateData = {
+          player2_device_id: null,
+          player2_ready: false
+        };
+      }
+
+      const { data, error } = await supabase
+        .from('game_sessions')
+        .update(updateData)
+        .eq('id', currentSession.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error leaving game:', error);
+        return { success: false, error };
+      }
+      setCurrentSession(data);
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error in leaveGame:', error);
+      return { success: false, error };
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -92,9 +187,30 @@ export const useGameSession = () => {
     }
   };
 
+  // Check if game is ready (both players joined)
+  const isGameReady = () => {
+    return currentSession?.player1_ready && currentSession?.player2_ready;
+  };
+
+  // Check if current device is a player
+  const isPlayer = () => {
+    return currentSession?.player1_device_id === deviceId || currentSession?.player2_device_id === deviceId;
+  };
+
+  // Check if current device is ready
+  const isReady = () => {
+    if (currentSession?.player1_device_id === deviceId) {
+      return currentSession?.player1_ready;
+    }
+    if (currentSession?.player2_device_id === deviceId) {
+      return currentSession?.player2_ready;
+    }
+    return false;
+  };
+
   // Whose turn?
   const isMyTurn = () => {
-    if (!currentSession) return false;
+    if (!currentSession || !isGameReady()) return false;
     if (!currentSession.last_player_device_id) {
       return currentSession.current_turn === 'player1';
     }
@@ -136,9 +252,14 @@ export const useGameSession = () => {
     deviceId,
     currentSession,
     initializeSession,
+    joinGame,
+    leaveGame,
     switchTurn,
     isMyTurn,
     getCurrentPlayerName,
-    setCurrentSession
+    setCurrentSession,
+    isGameReady,
+    isPlayer,
+    isReady
   };
 };

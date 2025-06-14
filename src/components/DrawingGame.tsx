@@ -1,5 +1,6 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Save, Eye, Palette, Trash2, Lock, Users, User } from 'lucide-react';
+import { X, Send, Save, Eye, Palette, Trash2, Lock, Users, User, UserPlus, UserMinus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -54,16 +55,49 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     deviceId,
     currentSession,
     initializeSession,
+    joinGame,
+    leaveGame,
     switchTurn,
     isMyTurn,
     getCurrentPlayerName,
     saveDraftCanvas,
     getDraftCanvasData,
+    isGameReady,
+    isPlayer,
+    isReady
   } = useDrawingGame();
   const { toast } = useToast();
 
   // החזקת תוכן אחרון של ציור (רק למצב multi)
   const [lastDrawingData, setLastDrawingData] = useState<string | null>(null);
+
+  // Handle joining/leaving game
+  const handleJoinGame = async () => {
+    const result = await joinGame();
+    if (result.success) {
+      toast({
+        title: "הצטרפת למשחק!",
+        description: "ממתין לשחקן נוסף...",
+        className: "bg-green-100 border-green-300 text-green-800",
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "שגיאה בהצטרפות למשחק",
+        description: result.error?.toString() || "נסו שוב מאוחר יותר",
+      });
+    }
+  };
+
+  const handleLeaveGame = async () => {
+    const result = await leaveGame();
+    if (result.success) {
+      toast({
+        title: "עזבת את המשחק",
+        description: "ניתן להצטרף שוב בכל עת",
+      });
+    }
+  };
 
   // יצירת קנבס
   const initializeCanvas = (imgSrc?: string) => {
@@ -133,13 +167,21 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
 
   // Drawing functions
   const startDrawing = (point: Point) => {
-    // Multi only: Check if player's turn
-    if (gameMode === 'multi' && !isMyTurn()) {
-      toast({
-        variant: "destructive",
-        title: "לא התורו שלך!",
-        description: `כרגע התורו של ${getCurrentPlayerName()}`,
-      });
+    // Multi only: Check if player's turn and game is ready
+    if (gameMode === 'multi' && (!isGameReady() || !isMyTurn())) {
+      if (!isGameReady()) {
+        toast({
+          variant: "destructive",
+          title: "המשחק לא מוכן!",
+          description: "ממתינים לשני שחקנים",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "לא התורו שלך!",
+          description: `כרגע התורו של ${getCurrentPlayerName()}`,
+        });
+      }
       return;
     }
 
@@ -154,7 +196,8 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
   };
 
   const draw = (point: Point) => {
-    if (!isDrawing || !isMyTurn()) return;
+    if (!isDrawing) return;
+    if (gameMode === 'multi' && (!isGameReady() || !isMyTurn())) return;
     
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
@@ -197,11 +240,11 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
   // Switch player turn
   const handleSwitchTurn = async () => {
     if (gameMode === 'single') return; // disable
-    if (!isMyTurn()) {
+    if (!isMyTurn() || !isGameReady()) {
       toast({
         variant: "destructive",
         title: "לא ניתן להחליף תור",
-        description: "רק השחקן שבתורו יכול להחליף תור",
+        description: !isGameReady() ? "המשחק לא מוכן" : "רק השחקן שבתורו יכול להחליף תור",
       });
       return;
     }
@@ -343,7 +386,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   // עדכון הפונקציה לזיהוי סטטוס תור בעברית תקינה
-  const myTurn = gameMode === 'single' ? true : isMyTurn();
+  const myTurn = gameMode === 'single' ? true : (isGameReady() && isMyTurn());
 
   // במקום שם שחקן, ממירים לטקסט "התור שלך" או "התור שלהם"
   const turnLabel = myTurn ? 'התור שלך' : 'התור שלהם';
@@ -371,7 +414,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
               {/* כאן תצוגת סטטוס התור */}
               <div className={`text-lg font-semibold flex items-center gap-2 ${myTurn ? 'text-green-600' : 'text-orange-600'}`}>
                 {!myTurn && <Lock className="w-4 h-4" />}
-                {turnLabel}
+                {gameMode === 'multi' && !isGameReady() ? 'ממתין לשחקנים' : turnLabel}
               </div>
             </div>
 
@@ -397,11 +440,53 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
               </Button>
             </div>
 
+            {/* Player Status for Multi Mode */}
+            {gameMode === 'multi' && (
+              <div className="bg-purple-100 border border-purple-300 rounded-lg p-3 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-purple-800 font-medium">סטטוס שחקנים:</span>
+                  <span className="text-sm text-purple-600">המכשיר שלך: {deviceId}</span>
+                </div>
+                <div className="flex items-center justify-center gap-4">
+                  {!isPlayer() ? (
+                    <Button
+                      onClick={handleJoinGame}
+                      disabled={loading}
+                      className="bg-green-500 hover:bg-green-600 text-white"
+                    >
+                      <UserPlus className="w-4 h-4 ml-1" />
+                      אני רוצה לשחק
+                    </Button>
+                  ) : (
+                    <div className="flex items-center gap-4">
+                      <span className="text-green-700 font-medium">✓ הצטרפת למשחק</span>
+                      <Button
+                        onClick={handleLeaveGame}
+                        disabled={loading}
+                        variant="outline"
+                        className="border-red-300 text-red-600 hover:bg-red-50"
+                      >
+                        <UserMinus className="w-4 h-4 ml-1" />
+                        עזוב משחק
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <div className="text-center mt-2">
+                  <span className="text-purple-700">
+                    {isGameReady() ? '✓ שני שחקנים מוכנים!' : 
+                     `ממתין ל${currentSession?.player1_ready && currentSession?.player2_ready ? '' : 
+                     (!currentSession?.player1_ready && !currentSession?.player2_ready) ? 'שני שחקנים' :
+                     'שחקן נוסף'}`}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Turn Status */}
-            {gameMode === 'multi' && !myTurn && (
+            {gameMode === 'multi' && isGameReady() && !myTurn && (
               <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-4 text-center">
                 <p className="text-orange-800">🔒 ממתין לסיום התור שלהם...</p>
-                <p className="text-sm text-orange-600">המכשיר שלך: {deviceId}</p>
               </div>
             )}
 
@@ -413,12 +498,12 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                   <button
                     key={color.value}
                     title={color.name}
-                    disabled={!myTurn}
+                    disabled={gameMode === 'multi' && (!isGameReady() || !myTurn)}
                     className={`w-8 h-8 rounded-full border-2 transition ${
                       selectedColor === color.value
                         ? 'border-orange-500 ring-2 ring-orange-400'
                         : 'border-gray-300'
-                    } ${!myTurn ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    } ${(gameMode === 'multi' && (!isGameReady() || !myTurn)) ? 'opacity-50 cursor-not-allowed' : ''}`}
                     style={{ backgroundColor: color.value }}
                     onClick={() => setSelectedColor(color.value)}
                   />
@@ -428,7 +513,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
 
             {/* Canvas */}
             <div className="flex-1 flex flex-col items-center justify-center">
-              <div className={`border-4 border-orange-300 rounded-lg mb-4 bg-white ${!myTurn ? 'opacity-70' : ''}`}>
+              <div className={`border-4 border-orange-300 rounded-lg mb-4 bg-white ${(gameMode === 'multi' && (!isGameReady() || !myTurn)) ? 'opacity-70' : ''}`}>
                 <canvas
                   ref={canvasRef}
                   onMouseDown={handleMouseDown}
@@ -438,7 +523,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                   onTouchStart={handleTouchStart}
                   onTouchMove={handleTouchMove}
                   onTouchEnd={stopDrawing}
-                  className={`${myTurn ? 'cursor-crosshair' : 'cursor-not-allowed'} touch-none rounded`}
+                  className={`${(gameMode === 'single' || (isGameReady() && myTurn)) ? 'cursor-crosshair' : 'cursor-not-allowed'} touch-none rounded`}
                   style={{ maxWidth: '100%', height: 'auto', display: 'block' }}
                 />
               </div>
@@ -447,7 +532,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
               <div className="flex gap-3 flex-wrap justify-center">
                 <Button 
                   onClick={handleSwitchTurn}
-                  disabled={gameMode === 'single' || !myTurn || loading}
+                  disabled={gameMode === 'single' || !isGameReady() || !myTurn || loading}
                   className="bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50"
                 >
                   <Send className="w-4 h-4 ml-1" />
@@ -463,7 +548,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                 </Button>
                 <Button 
                   onClick={() => clearCanvas()}
-                  disabled={!myTurn}
+                  disabled={gameMode === 'multi' && (!isGameReady() || !myTurn)}
                   variant="outline"
                   className="border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50"
                 >
