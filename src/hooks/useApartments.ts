@@ -36,7 +36,7 @@ export const useApartments = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setApartments(data || []);
+      setApartments((data || []) as Apartment[]);
     } catch (error) {
       console.error('Error fetching apartments:', error);
       toast({
