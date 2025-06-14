@@ -441,38 +441,40 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
 
             {/* Player Status for Multi Mode */}
             {gameMode === 'multi' && (
-              <div className="bg-purple-100 border border-purple-300 rounded-lg p-3 mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-purple-800 font-medium">סטטוס שחקנים:</span>
-                  <span className="text-sm text-purple-600">המכשיר שלך: {deviceId}</span>
+              <div className="bg-purple-100 border border-purple-300 rounded-lg p-2 mb-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-purple-800 font-medium text-sm">סטטוס:</span>
+                  <span className="text-xs text-purple-600">ID: {deviceId?.substring(0, 8)}...</span>
                 </div>
-                <div className="flex items-center justify-center gap-4">
+                <div className="flex items-center justify-center gap-2">
                   {!isPlayer() ? (
                     <Button
                       onClick={handleJoinGame}
                       disabled={loading}
-                      className="bg-green-500 hover:bg-green-600 text-white"
+                      size="sm"
+                      className="bg-green-500 hover:bg-green-600 text-white flex-1"
                     >
-                      <UserPlus className="w-4 h-4 ml-1" />
-                      אני רוצה לשחק
+                      <UserPlus className="w-4 h-4" />
+                      הצטרף למשחק
                     </Button>
                   ) : (
-                    <div className="flex items-center gap-4">
-                      <span className="text-green-700 font-medium">✓ הצטרפת למשחק</span>
+                    <div className="flex items-center gap-2 w-full">
+                      <span className="text-green-700 font-medium text-sm whitespace-nowrap">✓ אתה במשחק</span>
                       <Button
                         onClick={handleLeaveGame}
                         disabled={loading}
                         variant="outline"
-                        className="border-red-300 text-red-600 hover:bg-red-50"
+                        size="sm"
+                        className="border-red-300 text-red-600 hover:bg-red-50 flex-1"
                       >
-                        <UserMinus className="w-4 h-4 ml-1" />
-                        עזוב משחק
+                        <UserMinus className="w-4 h-4" />
+                        עזוב
                       </Button>
                     </div>
                   )}
                 </div>
-                <div className="text-center mt-2">
-                  <span className="text-purple-700">
+                <div className="text-center mt-1">
+                  <span className="text-purple-700 text-xs">
                     {isGameReady() ? '✓ שני שחקנים מוכנים!' : 
                      `ממתין ל${currentSession?.player1_ready && currentSession?.player2_ready ? '' : 
                      (!currentSession?.player1_ready && !currentSession?.player2_ready) ? 'שני שחקנים' :
