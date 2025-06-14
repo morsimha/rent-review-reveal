@@ -73,11 +73,20 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     const isMobile = window.innerWidth < 768;
     const width = isMobile ? Math.min(window.innerWidth - 32, 480) : 800;
     const height = isMobile ? Math.round(width * 0.625) : 500;
-    canvas.width = width;
-    canvas.height = height;
+
+    // התאמה ל-devicePixelRatio
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // תקן סקיילינג כדי שכל השרבוטים יהיו חדים
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // מחזיר לscale 1,1 כדי להימנע מחשבון כפול
+    ctx.scale(dpr, dpr);
 
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, width, height);
