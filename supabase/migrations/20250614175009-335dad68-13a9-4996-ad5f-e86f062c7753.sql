@@ -5,6 +5,7 @@ CREATE TABLE public.drawings (
   drawing_data TEXT NOT NULL, -- JSON string of the drawing data
   current_turn TEXT NOT NULL DEFAULT 'player1', -- whose turn it is (player1 or player2)
   is_completed BOOLEAN NOT NULL DEFAULT false,
+  drawing_name TEXT, -- Add the drawing_name column that was missing
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );

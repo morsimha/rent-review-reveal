@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, StopCircle, Eye, ZoomIn, Palette } from 'lucide-react';
+import { X, Send, StopCircle, Eye, ZoomIn, Palette, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -47,7 +46,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
   const [savedDrawings, setSavedDrawings] = useState<SavedDrawing[]>([]);
   const [selectedDrawing, setSelectedDrawing] = useState<SavedDrawing | null>(null);
   
-  const { saveDrawing, getDrawings, updateDrawingName, loading } = useDrawingGame();
+  const { saveDrawing, getDrawings, updateDrawingName, deleteDrawing, loading } = useDrawingGame();
 
   const getPlayerName = (player: 'player1' | 'player2') => {
     return player === 'player1' ? 'מור' : 'גבי';
@@ -213,7 +212,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
     
     try {
       console.log('Saving drawing with name:', drawingName);
-      const result = await saveDrawing(finalDrawing, currentPlayer, true, drawingName);
+      const result = await saveDrawing(finalDrawing, currentPlayer, true, drawingName.trim());
       console.log('Save result:', result);
       
       if (result.success) {
@@ -239,6 +238,18 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
 
   const viewDrawing = (drawing: SavedDrawing) => {
     setSelectedDrawing(drawing);
+  };
+
+  const handleDeleteDrawing = async (drawingId: string) => {
+    if (window.confirm('האם אתה בטוח שברצונך למחוק את הציור?')) {
+      const result = await deleteDrawing(drawingId);
+      if (result.success) {
+        loadSavedDrawings(); // Refresh the gallery
+        if (selectedDrawing?.id === drawingId) {
+          setSelectedDrawing(null); // Close modal if viewing deleted drawing
+        }
+      }
+    }
   };
 
   useEffect(() => {
@@ -435,8 +446,29 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
                         className="w-full h-24 object-cover rounded border-2 border-gray-200 cursor-pointer hover:border-orange-400 transition-colors"
                         onClick={() => viewDrawing(drawing)}
                       />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
-                        <ZoomIn className="w-6 h-6 text-white" />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            viewDrawing(drawing);
+                          }}
+                          className="bg-white/80 hover:bg-white"
+                        >
+                          <ZoomIn className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteDrawing(drawing.id);
+                          }}
+                          className="bg-red-500/80 hover:bg-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                       <p className="text-xs text-center mt-1 text-orange-700 truncate">
                         {drawing.drawing_name || 'ללא שם'}
@@ -463,13 +495,23 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
               <h3 className="text-xl font-bold text-orange-800">
                 {selectedDrawing.drawing_name || 'ציור ללא שם'}
               </h3>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedDrawing(null)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDeleteDrawing(selectedDrawing.id)}
+                >
+                  <Trash2 className="w-4 h-4 ml-1" />
+                  מחק
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedDrawing(null)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
             <img 
               src={selectedDrawing.drawing_data} 

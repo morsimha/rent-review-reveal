@@ -13,13 +13,15 @@ export const useDrawingGame = () => {
   ) => {
     setLoading(true);
     try {
-      // First insert the basic drawing data
+      console.log('Saving drawing with data:', { drawingData: drawingData.substring(0, 50) + '...', currentTurn, isCompleted, drawingName });
+
       const { data, error } = await supabase
         .from('drawings')
         .insert({
           drawing_data: drawingData,
           current_turn: currentTurn,
-          is_completed: isCompleted
+          is_completed: isCompleted,
+          drawing_name: drawingName || null
         })
         .select()
         .single();
@@ -29,18 +31,7 @@ export const useDrawingGame = () => {
         throw error;
       }
 
-      // If there's a drawing name, update the record with it
-      if (drawingName && data) {
-        const { error: updateError } = await supabase
-          .from('drawings')
-          .update({ drawing_name: drawingName } as any)
-          .eq('id', data.id);
-        
-        if (updateError) {
-          console.error('Error updating drawing name:', updateError);
-        }
-      }
-
+      console.log('Drawing saved successfully:', data);
       return { success: true, data };
     } catch (error) {
       console.error('Error in saveDrawing:', error);
@@ -64,6 +55,7 @@ export const useDrawingGame = () => {
         throw error;
       }
 
+      console.log('Fetched drawings:', data);
       return { success: true, data };
     } catch (error) {
       console.error('Error in getDrawings:', error);
@@ -78,7 +70,7 @@ export const useDrawingGame = () => {
     try {
       const { data, error } = await supabase
         .from('drawings')
-        .update({ drawing_name: name } as any)
+        .update({ drawing_name: name })
         .eq('id', drawingId)
         .select()
         .single();
@@ -97,10 +89,33 @@ export const useDrawingGame = () => {
     }
   };
 
+  const deleteDrawing = async (drawingId: string) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('drawings')
+        .delete()
+        .eq('id', drawingId);
+
+      if (error) {
+        console.error('Error deleting drawing:', error);
+        throw error;
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error in deleteDrawing:', error);
+      return { success: false, error };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     saveDrawing,
     getDrawings,
-    updateDrawingName
+    updateDrawingName,
+    deleteDrawing
   };
 };
