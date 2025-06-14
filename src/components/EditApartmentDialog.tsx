@@ -111,6 +111,40 @@ const EditApartmentDialog: React.FC<EditApartmentDialogProps> = ({
             />
           </div>
           <div>
+            <Label className="text-right">מ"ר</Label>
+            <Input
+              type="number"
+              value={editFormData.square_meters ?? ''}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  square_meters:
+                    e.target.value === ''
+                      ? null
+                      : parseInt(e.target.value)
+                })
+              }
+              placeholder="מטר מרובע"
+            />
+          </div>
+          <div>
+            <Label className="text-right">קומה</Label>
+            <Input
+              type="number"
+              value={editFormData.floor ?? ''}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  floor:
+                    e.target.value === ''
+                      ? null
+                      : parseInt(e.target.value)
+                })
+              }
+              placeholder="קומה"
+            />
+          </div>
+          <div>
             <Label className="text-right">תמונה</Label>
             <div className="flex gap-2">
               <Input

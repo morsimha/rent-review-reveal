@@ -19,6 +19,7 @@ export type Database = {
           description: string | null
           entry_date: string | null
           fb_url: string | null
+          floor: number | null
           gabi_rating: number | null
           has_shelter: boolean | null
           id: string
@@ -29,6 +30,7 @@ export type Database = {
           pets_allowed: string | null
           price: number | null
           rating: number | null
+          square_meters: number | null
           status: string | null
           title: string
           updated_at: string
@@ -42,6 +44,7 @@ export type Database = {
           description?: string | null
           entry_date?: string | null
           fb_url?: string | null
+          floor?: number | null
           gabi_rating?: number | null
           has_shelter?: boolean | null
           id?: string
@@ -52,6 +55,7 @@ export type Database = {
           pets_allowed?: string | null
           price?: number | null
           rating?: number | null
+          square_meters?: number | null
           status?: string | null
           title: string
           updated_at?: string
@@ -65,6 +69,7 @@ export type Database = {
           description?: string | null
           entry_date?: string | null
           fb_url?: string | null
+          floor?: number | null
           gabi_rating?: number | null
           has_shelter?: boolean | null
           id?: string
@@ -75,6 +80,7 @@ export type Database = {
           pets_allowed?: string | null
           price?: number | null
           rating?: number | null
+          square_meters?: number | null
           status?: string | null
           title?: string
           updated_at?: string

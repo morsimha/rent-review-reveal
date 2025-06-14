@@ -29,6 +29,8 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
   const [hasShelter, setHasShelter] = useState<boolean | null>(null);
   const [entryDate, setEntryDate] = useState('');
   const [arnona, setArnona] = useState('');
+  const [squareMeters, setSquareMeters] = useState('');
+  const [floor, setFloor] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -61,6 +63,8 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
       description,
       price: price ? parseInt(price) : null,
       arnona: arnona ? parseInt(arnona) : null,
+      square_meters: squareMeters ? parseInt(squareMeters) : null,
+      floor: floor ? parseInt(floor) : null,
       location,
       image_url: imageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2070&q=80',
       rating: 0,
@@ -83,6 +87,8 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
     setDescription('');
     setPrice('');
     setArnona('');
+    setSquareMeters('');
+    setFloor('');
     setLocation('');
     setImageUrl('');
     setInitialNote('');
@@ -133,6 +139,24 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
               type="number"
               value={arnona}
               onChange={e => setArnona(e.target.value)}
+              className="bg-white/70 border-purple-300 focus:border-purple-500"
+            />
+          </div>
+          <div>
+            <Input
+              placeholder="מטר מרובע (מ״ר)"
+              type="number"
+              value={squareMeters}
+              onChange={(e) => setSquareMeters(e.target.value)}
+              className="bg-white/70 border-purple-300 focus:border-purple-500"
+            />
+          </div>
+          <div>
+            <Input
+              placeholder="קומה"
+              type="number"
+              value={floor}
+              onChange={(e) => setFloor(e.target.value)}
               className="bg-white/70 border-purple-300 focus:border-purple-500"
             />
           </div>

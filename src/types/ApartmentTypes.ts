@@ -21,4 +21,6 @@ export interface Apartment {
   has_shelter: boolean | null;
   entry_date: string | null;
   arnona: number | null;
+  square_meters: number | null;
+  floor: number | null;
 }

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Trash2, Edit, Phone, Link, House } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import type { Apartment } from '@/types/ApartmentTypes';
 import { format, parseISO } from 'date-fns';
 
 interface ApartmentCardProps {
-  apartment: Apartment & { arnona?: number | null };
+  apartment: Apartment;
   onEdit: (apartment: Apartment) => void;
   onDelete: (apartmentId: string) => void;
   onMorRatingChange: (apartmentId: string, rating: number) => void;
@@ -61,7 +60,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-20">
             {apartment.price && (
               <div className="bg-green-500 text-white px-2 py-1 rounded-full font-bold text-sm">
-                {apartment.price}₪
+                ₪{apartment.price}
               </div>
             )}
             {/* ארנונה */}
@@ -74,15 +73,25 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
               <div className="text-xl" title="מותר בעלי חיים">🐱</div>
             )}
           </div>
-          {/* Shelter Icon */}
-          {apartment.has_shelter && (
-            <div className="absolute top-2 left-2 z-10">
+          {/* Shelter, Floor, and Sq Meters Icons */}
+          <div className="absolute top-2 left-2 z-10 flex flex-col items-start gap-1">
+            {apartment.has_shelter && (
               <div className="bg-white/70 rounded px-2 py-1 flex items-center gap-1 shadow">
                 <House className="w-5 h-5 text-purple-800" />
                 <span className="text-xs text-purple-800">מקלט</span>
               </div>
-            </div>
-          )}
+            )}
+            {apartment.floor != null && (
+              <div className="bg-white/70 rounded px-2 py-1 flex items-center gap-1 shadow text-purple-800 text-xs">
+                <span>קומה: </span><span className="font-bold">{apartment.floor}</span>
+              </div>
+            )}
+            {apartment.square_meters != null && (
+              <div className="bg-white/70 rounded px-2 py-1 flex items-center gap-1 shadow text-purple-800 text-xs">
+                <span>מ"ר: </span><span className="font-bold">{apartment.square_meters}</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="p-4 flex flex-col flex-grow min-h-0">
