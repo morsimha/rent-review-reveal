@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -15,21 +14,14 @@ export const useDrawingGame = () => {
     try {
       console.log('Saving drawing with data:', { drawingData: drawingData.substring(0, 50) + '...', currentTurn, isCompleted, drawingName });
 
-      // Use a type assertion to bypass the TypeScript error since we know the column exists
-      const insertData: any = {
-        drawing_data: drawingData,
-        current_turn: currentTurn,
-        is_completed: isCompleted
-      };
-
-      // Add drawing_name if provided
-      if (drawingName) {
-        insertData.drawing_name = drawingName;
-      }
-
       const { data, error } = await supabase
         .from('drawings')
-        .insert(insertData)
+        .insert({
+          drawing_data: drawingData,
+          current_turn: currentTurn,
+          is_completed: isCompleted,
+          drawing_name: drawingName || null,
+        })
         .select()
         .single();
 
@@ -75,10 +67,9 @@ export const useDrawingGame = () => {
   const updateDrawingName = async (drawingId: string, name: string) => {
     setLoading(true);
     try {
-      // Use type assertion for the update operation as well
       const { data, error } = await supabase
         .from('drawings')
-        .update({ drawing_name: name } as any)
+        .update({ drawing_name: name })
         .eq('id', drawingId)
         .select()
         .single();

@@ -98,6 +98,7 @@ export type Database = {
           created_at: string
           current_turn: string
           drawing_data: string
+          drawing_name: string | null
           id: string
           is_completed: boolean
           updated_at: string
@@ -106,6 +107,7 @@ export type Database = {
           created_at?: string
           current_turn?: string
           drawing_data: string
+          drawing_name?: string | null
           id?: string
           is_completed?: boolean
           updated_at?: string
@@ -114,6 +116,7 @@ export type Database = {
           created_at?: string
           current_turn?: string
           drawing_data?: string
+          drawing_name?: string | null
           id?: string
           is_completed?: boolean
           updated_at?: string

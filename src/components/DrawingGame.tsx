@@ -1,10 +1,11 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, StopCircle, Eye, ZoomIn, Palette, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDrawingGame } from '@/hooks/useDrawingGame';
+import { useToast } from "@/components/ui/use-toast";
 
 interface DrawingGameProps {
   isOpen: boolean;
@@ -49,6 +50,7 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
   const [selectedDrawing, setSelectedDrawing] = useState<SavedDrawing | null>(null);
   
   const { saveDrawing, getDrawings, updateDrawingName, deleteDrawing, loading } = useDrawingGame();
+  const { toast } = useToast();
 
   const getPlayerName = (player: 'player1' | 'player2') => {
     return player === 'player1' ? 'מור' : 'גבי';
@@ -242,11 +244,26 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
       if (result.success) {
         setGameState('completed');
         loadSavedDrawings();
+        toast({
+          title: "הציור נשמר!",
+          description: `"${drawingName.trim()}" נוסף לגלריה.`,
+          className: "bg-green-100 border-green-300 text-green-800",
+        });
       } else {
         console.error('Failed to save drawing:', result.error);
+        toast({
+          variant: "destructive",
+          title: "שגיאה בשמירת הציור",
+          description: "אירעה שגיאה. נסו שוב מאוחר יותר.",
+        });
       }
     } catch (error) {
       console.error('Error saving drawing:', error);
+      toast({
+        variant: "destructive",
+        title: "שגיאה בשמירת הציור",
+        description: "אירעה שגיאה. נסו שוב מאוחר יותר.",
+      });
     }
   };
 
@@ -272,6 +289,16 @@ const DrawingGame: React.FC<DrawingGameProps> = ({ isOpen, onClose }) => {
         if (selectedDrawing?.id === drawingId) {
           setSelectedDrawing(null); // Close modal if viewing deleted drawing
         }
+        toast({
+          title: "הציור נמחק",
+          description: "הציור הוסר מהגלריה.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "שגיאה במחיקת הציור",
+          description: "לא ניתן היה למחוק את הציור. נסו שוב.",
+        });
       }
     }
   };
