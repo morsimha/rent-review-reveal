@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import type { Apartment } from '@/hooks/useApartments';
+import type { Apartment } from '@/types/ApartmentTypes';
 
 interface EditApartmentDialogProps {
   isOpen: boolean;

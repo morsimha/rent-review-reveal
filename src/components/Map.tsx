@@ -1,10 +1,9 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import type { Apartment } from '@/hooks/useApartments';
+import type { Apartment } from '@/types/ApartmentTypes';
 
 interface MapProps {
   apartments: Apartment[];

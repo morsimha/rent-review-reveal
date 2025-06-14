@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Trash2, Edit, Phone, Link, House } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import StarRating from './StarRating';
-import type { Apartment } from '@/hooks/useApartments';
+import type { Apartment } from '@/types/ApartmentTypes';
 import { format, parseISO } from 'date-fns';
 
 interface ApartmentCardProps {

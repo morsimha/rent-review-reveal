@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useApartments, type Apartment } from '@/hooks/useApartments';
+import { useApartments } from '@/hooks/useApartments';
+import type { Apartment } from '@/types/ApartmentTypes';
 import Map from '@/components/Map';
 import CatGame from '@/components/CatGame';
 import DrawingGame from '@/components/DrawingGame';
