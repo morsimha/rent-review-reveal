@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Trash2, Edit, Phone, Link } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -63,12 +64,16 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           <div className="flex flex-row-reverse items-end gap-2 mb-2">
             <h3 className="font-bold text-base text-gray-800 line-clamp-1 text-right flex-1">{apartment.title}</h3>
             {apartment.entry_date && (
-              <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-medium text-right whitespace-nowrap" dir="ltr" style={{direction: 'ltr'}}>
+              <span
+                className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap mx-auto"
+                dir="ltr"
+                style={{ direction: 'ltr', marginLeft: 0, marginRight: 0 }}
+              >
                 {apartment.entry_date}
               </span>
             )}
           </div>
-          
+
           {/* Location */}
           {apartment.location && (
             <p className="text-purple-600 text-sm mb-2 font-medium text-right">{apartment.location}</p>
@@ -104,19 +109,19 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 
           {/* Ratings */}
           <div className="mb-3 space-y-2">
-            <div className="flex items-center gap-2 justify-end text-right">
+            <div className="flex items-center gap-2 justify-end text-right flex-row-reverse">
+              <span className="text-sm font-medium text-purple-600">:מור</span>
               <StarRating 
                 rating={apartment.mor_rating || 0} 
                 onRatingChange={(rating) => onMorRatingChange(apartment.id, rating)}
               />
-              <span className="text-sm font-medium text-purple-600">:מור</span>
             </div>
-            <div className="flex items-center gap-2 justify-end text-right">
+            <div className="flex items-center gap-2 justify-end text-right flex-row-reverse">
+              <span className="text-sm font-medium text-pink-600">:גבי</span>
               <StarRating 
                 rating={apartment.gabi_rating || 0} 
                 onRatingChange={(rating) => onGabiRatingChange(apartment.id, rating)}
               />
-              <span className="text-sm font-medium text-pink-600">:גבי</span>
             </div>
           </div>
 
@@ -129,15 +134,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 
           {/* Actions */}
           <div className="flex justify-between items-center mt-auto pt-2">
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => onDelete(apartment.id)}
-              className="bg-red-500 hover:bg-red-600 h-8 w-8 p-0"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-
+            {/* Edit button first (right), then Delete */}
             <Button
               size="sm"
               variant="outline"
@@ -146,6 +143,14 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             >
               <Edit className="w-4 h-4 ml-1" />
               ערוך
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => onDelete(apartment.id)}
+              className="bg-red-500 hover:bg-red-600 h-8 w-8 p-0"
+            >
+              <Trash2 className="w-4 h-4" />
             </Button>
           </div>
         </div>
