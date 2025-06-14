@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useApartments, type Apartment } from '@/hooks/useApartments';
@@ -44,7 +43,28 @@ const Index = () => {
   const handleAddApartment = async (apartmentId: string, apartmentData: Partial<Apartment>) => {
     // אם זה הוספה (apartmentId ריק), הוסף את הדירה
     if (apartmentId === '') {
-      addApartment(apartmentData);
+      // יצירת אובייקט מלא עם ערכי ברירת מחדל
+      const fullApartmentData = {
+        fb_url: `https://facebook.com/generated-${Date.now()}`,
+        title: apartmentData.title || '',
+        description: apartmentData.description || null,
+        price: apartmentData.price || null,
+        location: apartmentData.location || null,
+        image_url: apartmentData.image_url || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+        rating: 0,
+        mor_rating: apartmentData.mor_rating || 0,
+        gabi_rating: apartmentData.gabi_rating || 0,
+        note: apartmentData.note || null,
+        apartment_link: apartmentData.apartment_link || null,
+        contact_phone: apartmentData.contact_phone || null,
+        contact_name: apartmentData.contact_name || null,
+        status: apartmentData.status || 'not_spoke' as const,
+        pets_allowed: apartmentData.pets_allowed || 'unknown' as const,
+        has_shelter: apartmentData.has_shelter || null,
+        entry_date: apartmentData.entry_date || null,
+      };
+      
+      addApartment(fullApartmentData);
       setIsAddDialogOpen(false);
       return true;
     }
