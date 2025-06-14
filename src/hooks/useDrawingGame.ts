@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -7,6 +8,7 @@ interface GameSession {
   last_player_device_id: string | null;
   session_name: string;
   drawing_id: string | null;
+  draft_canvas_data: string | null; // <-- FIX: add this property
 }
 
 export const useDrawingGame = () => {
