@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useCatGameScores } from '@/hooks/useCatGameScores';
 
 interface CatGameProps {
   isOpen: boolean;
@@ -22,8 +23,12 @@ const CatGame: React.FC<CatGameProps> = ({ isOpen, onClose }) => {
   const [timeLeft, setTimeLeft] = useState(30);
   const [gameActive, setGameActive] = useState(false);
   const [gameOver, setGameOver] = useState(false);
+  const [showNameInput, setShowNameInput] = useState(false);
+  const [playerName, setPlayerName] = useState('');
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const catIdRef = useRef(0);
+
+  const { scores, loading, saveScore } = useCatGameScores();
 
   const catEmojis = ['😸', '😺', '😻', '🙀', '😿', '😾', '🐱', '🐈'];
 
@@ -59,6 +64,7 @@ const CatGame: React.FC<CatGameProps> = ({ isOpen, onClose }) => {
   const startGame = () => {
     setGameActive(true);
     setGameOver(false);
+    setShowNameInput(false);
     setScore(0);
     setTimeLeft(30);
     setCats([]);
@@ -69,6 +75,18 @@ const CatGame: React.FC<CatGameProps> = ({ isOpen, onClose }) => {
     setGameActive(false);
     setGameOver(true);
     setCats([]);
+    setShowNameInput(true);
+  };
+
+  const handleSaveScore = async () => {
+    await saveScore(score, playerName.trim() || undefined);
+    setShowNameInput(false);
+    setPlayerName('');
+  };
+
+  const skipSaveScore = () => {
+    setShowNameInput(false);
+    setPlayerName('');
   };
 
   // Game timer
@@ -122,57 +140,140 @@ const CatGame: React.FC<CatGameProps> = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          {/* Game Area */}
-          <div 
-            ref={gameAreaRef}
-            className="flex-1 relative bg-gradient-to-br from-blue-50 to-green-50 rounded-lg border-2 border-purple-300 overflow-hidden"
-          >
-            {!gameActive && !gameOver && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className="text-6xl mb-4">🐱</div>
-                <h3 className="text-xl font-bold text-purple-800 mb-2">תפוס כמה שיותר חתולים!</h3>
-                <p className="text-purple-600 mb-6 text-center">
-                  לחץ על החתולים שמופיעים על המסך במשך 30 שניות
-                </p>
-                <Button 
-                  onClick={startGame}
-                  className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold py-3 px-6"
-                >
-                  התחל משחק! 🎮
-                </Button>
-              </div>
-            )}
+          <div className="flex gap-4 h-full">
+            {/* Game Area */}
+            <div 
+              ref={gameAreaRef}
+              className="flex-1 relative bg-gradient-to-br from-blue-50 to-green-50 rounded-lg border-2 border-purple-300 overflow-hidden"
+            >
+              {!gameActive && !gameOver && !showNameInput && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="text-6xl mb-4">🐱</div>
+                  <h3 className="text-xl font-bold text-purple-800 mb-2">תפוס כמה שיותר חתולים!</h3>
+                  <p className="text-purple-600 mb-6 text-center">
+                    לחץ על החתולים שמופיעים על המסך במשך 30 שניות
+                  </p>
+                  <Button 
+                    onClick={startGame}
+                    className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold py-3 px-6"
+                  >
+                    התחל משחק! 🎮
+                  </Button>
+                </div>
+              )}
 
-            {gameOver && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90">
-                <div className="text-6xl mb-4">🏆</div>
-                <h3 className="text-2xl font-bold text-purple-800 mb-2">המשחק הסתיים!</h3>
-                <p className="text-xl text-purple-600 mb-6">
-                  תפסת {score} חתולים! {score >= 15 ? 'מדהים! 🌟' : score >= 10 ? 'יפה מאוד! 👏' : 'נסה שוב! 💪'}
-                </p>
-                <Button 
-                  onClick={startGame}
-                  className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold py-3 px-6"
-                >
-                  שחק שוב! 🔄
-                </Button>
-              </div>
-            )}
+              {gameOver && showNameInput && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90">
+                  <div className="text-6xl mb-4">🏆</div>
+                  <h3 className="text-2xl font-bold text-purple-800 mb-2">המשחק הסתיים!</h3>
+                  <p className="text-xl text-purple-600 mb-6">
+                    תפסת {score} חתולים! {score >= 15 ? 'מדהים! 🌟' : score >= 10 ? 'יפה מאוד! 👏' : 'נסה שוב! 💪'}
+                  </p>
+                  
+                  <div className="bg-white p-4 rounded-lg border-2 border-purple-300 mb-4">
+                    <p className="text-purple-700 mb-2">רוצה לשמור את התוצאה? הכנס את השם שלך:</p>
+                    <input
+                      type="text"
+                      value={playerName}
+                      onChange={(e) => setPlayerName(e.target.value)}
+                      placeholder="השם שלך (לא חובה)"
+                      className="w-full p-2 border border-purple-300 rounded mb-3 text-center"
+                      dir="rtl"
+                    />
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={handleSaveScore}
+                        className="bg-green-500 hover:bg-green-600 text-white flex-1"
+                      >
+                        שמור תוצאה
+                      </Button>
+                      <Button 
+                        onClick={skipSaveScore}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        דלג
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    onClick={startGame}
+                    className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold py-3 px-6"
+                  >
+                    שחק שוב! 🔄
+                  </Button>
+                </div>
+              )}
 
-            {/* Cats */}
-            {cats.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => catchCat(cat.id)}
-                className="absolute text-4xl hover:scale-110 transition-transform duration-200 cursor-pointer animate-bounce"
-                style={{
-                  left: `${cat.x}px`,
-                  top: `${cat.y}px`,
-                }}
-              >
-                {cat.emoji}
-              </button>
-            ))}
+              {gameOver && !showNameInput && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90">
+                  <div className="text-6xl mb-4">🏆</div>
+                  <h3 className="text-2xl font-bold text-purple-800 mb-2">המשחק הסתיים!</h3>
+                  <p className="text-xl text-purple-600 mb-6">
+                    תפסת {score} חתולים! {score >= 15 ? 'מדהים! 🌟' : score >= 10 ? 'יפה מאוד! 👏' : 'נסה שוב! 💪'}
+                  </p>
+                  <Button 
+                    onClick={startGame}
+                    className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold py-3 px-6"
+                  >
+                    שחק שוב! 🔄
+                  </Button>
+                </div>
+              )}
+
+              {/* Cats */}
+              {cats.map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => catchCat(cat.id)}
+                  className="absolute text-4xl hover:scale-110 transition-transform duration-200 cursor-pointer animate-bounce"
+                  style={{
+                    left: `${cat.x}px`,
+                    top: `${cat.y}px`,
+                  }}
+                >
+                  {cat.emoji}
+                </button>
+              ))}
+            </div>
+
+            {/* Leaderboard */}
+            <div className="w-80 bg-white rounded-lg border-2 border-purple-300 p-4">
+              <h3 className="text-lg font-bold text-purple-800 mb-4 text-center">🏆 טבלת שיאים</h3>
+              
+              {loading ? (
+                <div className="text-center text-purple-600">טוען...</div>
+              ) : scores.length === 0 ? (
+                <div className="text-center text-purple-600">עדיין אין שיאים!</div>
+              ) : (
+                <div className="space-y-2">
+                  {scores.map((scoreEntry, index) => (
+                    <div 
+                      key={scoreEntry.id}
+                      className={`flex justify-between items-center p-2 rounded ${
+                        index === 0 ? 'bg-yellow-100 border border-yellow-300' :
+                        index === 1 ? 'bg-gray-100 border border-gray-300' :
+                        index === 2 ? 'bg-orange-100 border border-orange-300' :
+                        'bg-purple-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-purple-700">
+                          {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`}
+                        </span>
+                        <span className="text-purple-800">
+                          {scoreEntry.player_name || 'אנונימי'}
+                        </span>
+                      </div>
+                      <span className="font-bold text-purple-900">
+                        {scoreEntry.score} 🐱
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Instructions */}
