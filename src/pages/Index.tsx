@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Plus, Star, Trash2, Edit, Phone, Link } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -174,7 +175,7 @@ const Index = () => {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-purple-800 mb-2">מור וגבי מוצאים דירה</h1>
           <p className="text-purple-600 text-lg">וואו איזה ביתתת 🏠✨</p>
-          <p className="text-sm text-purple-500 mt-2">מסד נתונים משותף - כל המשתמשים רואים את אותן הדירות</p>
+          <p className="text-sm text-purple-500 mt-2">מי שמוסיף הכי פחות דירות עושה כלים לשבוע בבית החדש</p>
         </div>
 
         {/* Add Apartment Form */}
