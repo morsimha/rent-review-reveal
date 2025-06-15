@@ -12,6 +12,8 @@ import EditApartmentDialog from '@/components/EditApartmentDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import PasswordDialog from '@/components/PasswordDialog';
 import { useToast } from '@/hooks/use-toast';
+import ThemeHeader from "@/components/ThemeHeader";
+import { useThemeDetails } from "@/contexts/ThemeContext";
 
 const Index = () => {
   const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
@@ -27,6 +29,7 @@ const Index = () => {
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [authAttempted, setAuthAttempted] = useState(false);
   const { toast } = useToast();
+  const { theme } = useThemeDetails();
 
   useEffect(() => {
     if (!isAuthenticated && !authAttempted) {
@@ -126,9 +129,9 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 flex items-center justify-center" dir="rtl">
+      <div className={`min-h-screen bg-gradient-to-br ${theme.background} flex items-center justify-center`} dir="rtl">
         <div className="text-center">
-          <div className="text-4xl mb-4">🏠</div>
+          <div className="text-4xl mb-4">{theme.emojis[0]}</div>
           <p className="text-purple-600 text-lg">טוען דירות...</p>
         </div>
       </div>
@@ -166,42 +169,20 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 relative overflow-hidden" dir="rtl">
-      {/* Cat Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-10 left-10 text-6xl">🐱</div>
-        <div className="absolute top-32 right-20 text-4xl">😸</div>
-        <div className="absolute top-64 left-1/4 text-5xl">🐈</div>
-        <div className="absolute bottom-40 right-1/3 text-6xl">😻</div>
-        <div className="absolute bottom-20 left-20 text-4xl">🐾</div>
-        <div className="absolute top-1/2 right-10 text-5xl">🙀</div>
-        <div className="absolute bottom-1/2 left-1/2 text-4xl">😺</div>
+    <div className={`min-h-screen bg-gradient-to-br ${theme.background} relative overflow-hidden transition-colors duration-500`} dir="rtl">
+      {/* Pattern of emojis לפי ערכת הנושא */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none select-none z-0">
+        {theme.emojis.map((emj, i) => (
+          <div key={i} className={`absolute ${i%2===0 ? 'top-10 left-10' : 'top-32 right-20'} text-6xl`} style={{
+            top: `${(i===0?10:i*80)+20}px`,
+            left: `${(i%2===0 ? 10+i*60 : 300-i*33)}px`,
+            opacity: 0.7 - i*0.11,
+          }}>{emj}</div>
+        ))}
       </div>
-
       <div className="container mx-auto px-4 py-8 relative z-10">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-purple-800 mb-2">מור וגבי מוצאים דירה</h1>
-          <p className="text-purple-600 text-lg">וואו איזה ביתתת 🏠✨</p>
-          <div className="flex items-center justify-center gap-4 mt-2">
-            <Button
-              onClick={() => setIsDrawingGameOpen(true)}
-              className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white text-2xl p-3 rounded-full animate-pulse"
-              title="משחק ציור שיתופי!"
-            >
-              🎨
-            </Button>
-            <p className="text-sm text-purple-500">מי שמוסיף הכי פחות דירות עושה כלים לשבוע בבית החדש</p>
-            <Button
-              onClick={() => setIsCatGameOpen(true)}
-              className="bg-gradient-to-r from-orange-400 to-pink-500 hover:from-orange-500 hover:to-pink-600 text-white text-2xl p-3 rounded-full animate-bounce"
-              title="תפוס את החתול!"
-            >
-              🐱
-            </Button>
-          </div>
-        </div>
-
+        {/* Header כולל כפתור ערכת נושא */}
+        <ThemeHeader />
         {/* כפתור הוסף דירה */}
         <div className="flex justify-center mb-8">
           <Button
