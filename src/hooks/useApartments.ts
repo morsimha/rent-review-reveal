@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Apartment } from '@/types/ApartmentTypes';
@@ -45,10 +44,27 @@ export const useApartments = () => {
     }
   };
 
+  const notifyByEmail = async (apartmentData: Partial<Apartment>) => {
+    try {
+      await fetch('https://afcdqglyehygiareaoot.supabase.co/functions/v1/send-apartment-email', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(apartmentData),
+      });
+    } catch (error) {
+      console.error('שגיאה בשליחת מייל על דירה חדשה:', error);
+      // לא עוצר תהליך, רק מדווח בלוג
+    }
+  };
+
   const addApartment = async (apartmentData: Omit<Apartment, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const data = await insertApartment(apartmentData);
       await fetchApartments(); // Refresh the list
+      // Email notification (best effort)
+      notifyByEmail(apartmentData);
       toast({
         title: "הצלחה",
         description: "הדירה נוספה בהצלחה!",
