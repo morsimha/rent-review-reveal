@@ -6,22 +6,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// חשוב: יש להגדיר את secret בשם OPENAI_API_KEY ב-Supabase Dashboard > Settings > Edge Functions > Secrets
+
 serve(async (req) => {
   console.log('--- analyze-apartment-image function START ---');
 
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Entry log and body parsing
-    console.log('Parsing request body...');
+    // parse body
     let body;
     try {
       body = await req.json();
       console.log('Body parsed:', JSON.stringify(body));
     } catch (parseErr) {
-      console.error('Failed to parse body:', parseErr);
       return new Response(
         JSON.stringify({ error: 'Request body must be valid JSON', details: parseErr.message }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -29,26 +29,21 @@ serve(async (req) => {
     }
 
     const { imageUrl } = body || {};
-    console.log('Received imageUrl:', imageUrl);
-
     if (!imageUrl) {
-      console.error('Missing imageUrl in request.');
       return new Response(
         JSON.stringify({ error: 'Image URL is required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      )
+      );
     }
 
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openaiApiKey) {
-      console.error('OpenAI API key not configured');
       return new Response(
-        JSON.stringify({ error: 'OpenAI API key not configured' }),
+        JSON.stringify({ error: 'OpenAI API key not configured. Go to Supabase Dashboard → Settings → Edge Functions → Secrets and set OPENAI_API_KEY.' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      )
+      );
     }
-    console.log('OpenAI API key loaded OK, calling OpenAI...');
-
+    // Prepare the OpenAI request
     const openaiReqBody = {
       model: 'gpt-4o',
       messages: [
@@ -76,9 +71,7 @@ serve(async (req) => {
             },
             {
               type: 'image_url',
-              image_url: {
-                url: imageUrl
-              }
+              image_url: { url: imageUrl }
             }
           ]
         }
@@ -86,7 +79,6 @@ serve(async (req) => {
       max_tokens: 500
     };
 
-    console.log('OpenAI request body:', JSON.stringify(openaiReqBody));
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -96,54 +88,44 @@ serve(async (req) => {
       body: JSON.stringify(openaiReqBody)
     });
 
-    console.log('OpenAI HTTP status:', response.status);
-
     if (!response.ok) {
       const text = await response.text();
-      console.error('OpenAI API error response:', text);
       throw new Error(`OpenAI API error: ${response.status} - ${text}`);
     }
 
     const data = await response.json();
-    console.log('OpenAI API Response:', JSON.stringify(data));
     const content = data.choices[0]?.message?.content;
 
     if (!content) {
-      console.error('No content returned from OpenAI');
       throw new Error('No content received from OpenAI');
     }
 
     // Try to parse the JSON response
-    let parsedData
+    let parsedData;
     try {
-      parsedData = JSON.parse(content)
-      console.log('Parsed OpenAI JSON response directly:', parsedData)
+      parsedData = JSON.parse(content);
     } catch (parseError) {
-      // If direct parsing fails, try to extract JSON from the response
-      const jsonMatch = content.match(/\{[\s\S]*\}/)
+      // Fallback to extracting JSON from content string
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        parsedData = JSON.parse(jsonMatch[0])
-        console.log('Extracted and parsed JSON from OpenAI message:', parsedData)
+        parsedData = JSON.parse(jsonMatch[0]);
       } else {
-        console.error('Could not parse JSON from OpenAI response', parseError)
-        throw new Error('Could not parse JSON from OpenAI response')
+        throw new Error('Could not parse JSON from OpenAI response');
       }
     }
 
-    console.log('analyze-apartment-image function END: success');
     return new Response(
       JSON.stringify({ data: parsedData }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    );
 
   } catch (error) {
-    console.error('Error analyzing image (final catch):', error?.stack || error?.message || error)
     return new Response(
       JSON.stringify({ 
         error: 'Failed to analyze image', 
         details: error?.stack || error?.message || JSON.stringify(error) 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    )
+    );
   }
-})
+});
