@@ -1,7 +1,6 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-const PASSWORD = "mor&gabi"; // The password to access editing features
+const PASSWORD = "mor&gaby"; // The password to access editing features
 
 interface AuthContextType {
   isAuthenticated: boolean;
