@@ -62,24 +62,30 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
         ></div>
         {/* Image and prices */}
         <ApartmentCardImageSection apartment={apartment} />
+
         {/* Info */}
         <ApartmentCardMainInfo apartment={apartment} />
+
         {/* דירוגים/סטטוס */}
-        <ApartmentCardRatings
-          apartment={apartment}
-          isAuthenticated={isAuthenticated}
-          onMorRatingChange={onMorRatingChange}
-          onGabiRatingChange={onGabiRatingChange}
-          onMorTalkedChange={onMorTalkedChange}
-          onGabiTalkedChange={onGabiTalkedChange}
-        />
+        <div className="pr-3 pl-2">
+          <ApartmentCardRatings
+            apartment={apartment}
+            isAuthenticated={isAuthenticated}
+            onMorRatingChange={onMorRatingChange}
+            onGabiRatingChange={onGabiRatingChange}
+            onMorTalkedChange={onMorTalkedChange}
+            onGabiTalkedChange={onGabiTalkedChange}
+          />
+        </div>
+
         {/* הערות + שורה חדשה לתאריך ביקור */}
         <ApartmentCardNote
           note={apartment.note}
           scheduled_visit_text={apartment.scheduled_visit_text}
         />
-        {/* כפתור "שווה לי?" */}
-        <div className="flex flex-row justify-center pb-2 mt-1">
+
+        {/* כפתור "שווה לי?" + כפתורי עריכה ומחיקה - בשורה אחת ממורכזת */}
+        <div className="flex flex-row justify-center items-center gap-2 pb-2 mt-3">
           <button
             type="button"
             className="flex items-center gap-2 border rounded px-3 py-1 text-sm font-semibold text-purple-700 border-purple-300 bg-purple-50 hover:bg-purple-100 transition"
@@ -88,15 +94,16 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             <Brain size={18} className="text-purple-500"/>
             שווה לי? 🧠
           </button>
+          {isAuthenticated && (
+            <div className="flex gap-2">
+              <ApartmentCardActions
+                apartment={apartment}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            </div>
+          )}
         </div>
-        {/* פעולות */}
-        {isAuthenticated && (
-          <ApartmentCardActions
-            apartment={apartment}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        )}
       </CardContent>
       {/* דיאלוג ייעוץ + בדיחה */}
       <ApartmentAdviceDialog
@@ -115,3 +122,4 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 };
 
 export default ApartmentCard;
+
