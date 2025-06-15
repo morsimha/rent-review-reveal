@@ -174,19 +174,15 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     }
   };
 
-  const handleMapDoubleClick = (e: mapboxgl.MapMouseEvent) => {
-    // Prevent default double-click behavior
-    e.preventDefault();
-    
-    console.log('Map double-clicked, routing mode:', isRoutingMode, 'route points length:', routePoints.length);
+  const handleRoutePointSelection = (lngLat: [number, number]) => {
+    console.log('Route point selected, routing mode:', isRoutingMode, 'route points length:', routePoints.length);
     
     if (!isRoutingMode) {
-      console.log('Not in routing mode, ignoring double-click');
+      console.log('Not in routing mode, ignoring selection');
       return;
     }
 
-    const lngLat: [number, number] = [e.lngLat.lng, e.lngLat.lat];
-    console.log('Double-clicked coordinates:', lngLat);
+    console.log('Selected coordinates:', lngLat);
     
     if (routePoints.length === 0) {
       // First point
@@ -207,6 +203,18 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
       // Calculate route
       getRoute(routePoints[0], lngLat);
     }
+  };
+
+  const handleMapDoubleClick = (e: mapboxgl.MapMouseEvent) => {
+    // Prevent default double-click behavior
+    e.preventDefault();
+    const lngLat: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+    handleRoutePointSelection(lngLat);
+  };
+
+  const handleMapTouch = (e: mapboxgl.MapTouchEvent) => {
+    const lngLat: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+    handleRoutePointSelection(lngLat);
   };
 
   const toggleRoutingMode = () => {
@@ -377,17 +385,17 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
         });
       });
 
-      // Add double-click handler for routing mode with better event handling
+      // Add double-click handler for routing mode with proper type handling
       map.current.on('dblclick', handleMapDoubleClick);
       
-      // Also handle touch events for mobile
+      // Also handle touch events for mobile with proper type handling
       let touchTime = 0;
       map.current.on('touchstart', (e) => {
         const currentTime = new Date().getTime();
         const tapLength = currentTime - touchTime;
         if (tapLength < 500 && tapLength > 0) {
           // Double tap detected
-          handleMapDoubleClick(e);
+          handleMapTouch(e);
         }
         touchTime = currentTime;
       });
