@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import ApartmentFormFields from './ApartmentFormFields';
 import type { Apartment } from '@/types/ApartmentTypes';
+import { supabase } from '@/integrations/supabase/client'; // ייבוא תקין של supabase
 
 interface ApartmentFormProps {
   onAddApartment: (apartmentData: any) => Promise<boolean>;
@@ -38,7 +39,8 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
   const handleAnalyzeImage = async (imageUrlToAnalyze: string) => {
     setUploadingImage(true);
     try {
-      const { data, error } = await (window as any).supabase.functions.invoke('analyze-apartment-image', {
+      // שימוש נכון ב-supabase invoke
+      const { data, error } = await supabase.functions.invoke('analyze-apartment-image', {
         body: { imageUrl: imageUrlToAnalyze }
       });
 
