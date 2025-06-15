@@ -87,7 +87,7 @@ const themeConfigs: Record<ThemeType, ThemeConfig> = {
   },
   dogs: {
     name: 'כלבים',
-    title: 'מור וגבי מחפשים בית לחבורה',
+    title: 'מור וגבי מחפשים בית ללהקה',
     subtitle: 'כל דירה צריכה חצר לכלבים! 🐕🦴',
     punishment: 'מי שמוסיף הכי פחות דירות מטייל עם כל הכלבים בשכונה',
     mapTitle: 'מפת הדירות הידידותיות לכלבים',
