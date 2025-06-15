@@ -51,29 +51,46 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
   const [adviceError, setAdviceError] = useState<string | null>(null);
   const [adviceLoading, setAdviceLoading] = useState(false);
 
+  // עדכון fetchAdvice לפי הדרישה שלך
   const fetchAdvice = async () => {
     setAdviceError(null);
     setAdvice(null);
     setAdviceLoading(true);
     try {
-      const res = await fetch("/functions/v1/gpt-apartment-advisor", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apartment }),
-      });
+      // שימוש ב-URL המלא ו-Authorization header
+      const res = await fetch(
+        "https://afcdqglyehygiareaoot.supabase.co/functions/v1/gpt-apartment-advisor",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmY2RxZ2x5ZWh5Z2lhcmVhb290Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MTQyNjgsImV4cCI6MjA2NTQ5MDI2OH0.F2Ljk7v3WkXnuAZ2Vt4VUQKEuP_ZWTeTt7rVTTFGTI8"}`
+          },
+          body: JSON.stringify({ apartment }),
+        }
+      );
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: "Unknown error" }));
+        console.error("GPT Advisor error:", errorData);
+        setAdviceError(`שגיאה: ${errorData.error || res.statusText}`);
+        return;
+      }
+
       const data = await res.json();
-      if (data.advice) setAdvice(data.advice);
-      else {
+      if (data.advice) {
+        setAdvice(data.advice);
+      } else {
         setAdviceError("לא התקבלה תשובה מהמערכת. נסה שוב מאוחר יותר.");
       }
     } catch (e: any) {
+      console.error("Error fetching advice:", e);
       setAdviceError("שגיאה בחיבור ל-GPT. נסה שוב בעוד רגע.");
     } finally {
       setAdviceLoading(false);
     }
   };
 
-  // כפתור חדש "שווה לי?"
   return (
     <Card
       className="bg-white/90 backdrop-blur-sm border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 flex flex-col cursor-pointer"
