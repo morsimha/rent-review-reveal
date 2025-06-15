@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -151,16 +150,16 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     }
   };
 
-  const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
-    console.log('Map clicked, routing mode:', isRoutingMode, 'route points length:', routePoints.length);
+  const handleMapDoubleClick = (e: mapboxgl.MapMouseEvent) => {
+    console.log('Map double-clicked, routing mode:', isRoutingMode, 'route points length:', routePoints.length);
     
     if (!isRoutingMode) {
-      console.log('Not in routing mode, ignoring click');
+      console.log('Not in routing mode, ignoring double-click');
       return;
     }
 
     const lngLat: [number, number] = [e.lngLat.lng, e.lngLat.lat];
-    console.log('Clicked coordinates:', lngLat);
+    console.log('Double-clicked coordinates:', lngLat);
     
     if (routePoints.length === 0) {
       // First point
@@ -169,7 +168,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
       addRouteMarker(lngLat, 'A');
       toast({
         title: "נקודת התחלה נבחרה",
-        description: "לחץ על המפה לבחירת נקודת הסיום",
+        description: "לחץ לחיצה כפולה על המפה לבחירת נקודת הסיום",
       });
     } else if (routePoints.length === 1) {
       // Second point
@@ -197,7 +196,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
       setRoutePoints([]);
       toast({
         title: "מצב מסלול",
-        description: "לחץ על המפה לבחירת נקודת התחלה",
+        description: "לחץ לחיצה כפולה על המפה לבחירת נקודת התחלה",
       });
     }
   };
@@ -349,9 +348,9 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
         });
       });
 
-      // Add click handler for routing mode
-      map.current.on('click', handleMapClick);
-      console.log('Map click handler added');
+      // Add double-click handler for routing mode
+      map.current.on('dblclick', handleMapDoubleClick);
+      console.log('Map double-click handler added');
 
     } catch (error) {
       console.error('Map initialization error:', error);
@@ -428,6 +427,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
               <div className="bg-white/90 p-2 rounded text-xs">
                 <div>מצב מסלול: {isRoutingMode ? 'פעיל' : 'לא פעיל'}</div>
                 <div>נקודות: {routePoints.length}</div>
+                <div>הוראה: לחיצה כפולה לסימון נקודות</div>
               </div>
             )}
           </div>
