@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -151,12 +152,19 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
   };
 
   const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
-    if (!isRoutingMode) return;
+    console.log('Map clicked, routing mode:', isRoutingMode, 'route points length:', routePoints.length);
+    
+    if (!isRoutingMode) {
+      console.log('Not in routing mode, ignoring click');
+      return;
+    }
 
     const lngLat: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+    console.log('Clicked coordinates:', lngLat);
     
     if (routePoints.length === 0) {
       // First point
+      console.log('Setting first route point');
       setRoutePoints([lngLat]);
       addRouteMarker(lngLat, 'A');
       toast({
@@ -165,6 +173,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
       });
     } else if (routePoints.length === 1) {
       // Second point
+      console.log('Setting second route point');
       const newPoints = [...routePoints, lngLat];
       setRoutePoints(newPoints);
       addRouteMarker(lngLat, 'B');
@@ -175,6 +184,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
   };
 
   const toggleRoutingMode = () => {
+    console.log('Toggling routing mode from:', isRoutingMode);
     if (isRoutingMode) {
       clearRoute();
       setIsRoutingMode(false);
@@ -184,6 +194,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
       });
     } else {
       setIsRoutingMode(true);
+      setRoutePoints([]);
       toast({
         title: "מצב מסלול",
         description: "לחץ על המפה לבחירת נקודת התחלה",
@@ -340,8 +351,10 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
 
       // Add click handler for routing mode
       map.current.on('click', handleMapClick);
+      console.log('Map click handler added');
 
     } catch (error) {
+      console.error('Map initialization error:', error);
       setIsLoading(false);
       toast({
         title: "שגיאה בטעינת המפה",
@@ -408,6 +421,14 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
               >
                 נקה מסלול
               </Button>
+            )}
+            
+            {/* Debug info - remove in production */}
+            {isRoutingMode && (
+              <div className="bg-white/90 p-2 rounded text-xs">
+                <div>מצב מסלול: {isRoutingMode ? 'פעיל' : 'לא פעיל'}</div>
+                <div>נקודות: {routePoints.length}</div>
+              </div>
             )}
           </div>
 
