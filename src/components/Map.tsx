@@ -102,9 +102,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
             .setPopup(popup)
             .addTo(map.current!);
 
-          // לחיצה על הסמן במפה: פותחת פופאפ ל-3 שניות, ללא zoom-in
-          markerElement.addEventListener('click', (e) => {
-            e.stopPropagation();
+          markerElement.addEventListener('click', () => {
             if (setSelectedApartmentId) setSelectedApartmentId(apartment.id);
             popup.addTo(map.current!);
 
@@ -128,7 +126,6 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     if (match && match.popup && match.marker) {
       match.popup.addTo(map.current!);
       match.marker.togglePopup();
-      // כאן נבצע zoom+flyTo רק אם זה הגיע מכרטיס דירה (מלמטה)
       map.current.flyTo({ center: match.marker.getLngLat(), zoom: 15, speed: 1.5 });
 
       if (popupTimeoutRef.current) {
