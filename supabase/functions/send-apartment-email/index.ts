@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
@@ -82,8 +83,8 @@ serve(async (req: Request): Promise<Response> => {
     const actionText = apartment.action === 'updated' ? 'עודכנה' : 'נוספה';
     const actionEmoji = apartment.action === 'updated' ? '✏️' : '🆕';
 
-    // שלח רק לנמען אחד
-    const recipients = "elgartgavriela@gmail.com";
+    // שלח תמיד לשני הנמענים
+    const recipients = ["moroy9@gmail.com", "elgartgavriela@gmail.com"];
 
     const result = await resend.emails.send({
       from: "מור וגבי דירות <onboarding@resend.dev>",
