@@ -46,16 +46,27 @@ export const useApartments = () => {
 
   const notifyByEmail = async (apartmentData: Partial<Apartment>) => {
     try {
-      await fetch('https://afcdqglyehygiareaoot.supabase.co/functions/v1/send-apartment-email', {
+      const res = await fetch('https://afcdqglyehygiareaoot.supabase.co/functions/v1/send-apartment-email', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(apartmentData),
       });
+      const resJson = await res.json();
+      console.log('send-apartment-email response:', resJson);
+      if (!res.ok) {
+        throw new Error(resJson?.error || 'שגיאה בשליחת מייל');
+      }
+      return true;
     } catch (error) {
       console.error('שגיאה בשליחת מייל על דירה חדשה:', error);
-      // לא עוצר תהליך, רק מדווח בלוג
+      toast({
+        title: "שגיאה בשליחת מייל",
+        description: error?.message || "המייל לא נשלח",
+        variant: "destructive"
+      });
+      return false;
     }
   };
 
@@ -63,8 +74,16 @@ export const useApartments = () => {
     try {
       const data = await insertApartment(apartmentData);
       await fetchApartments(); // Refresh the list
-      // Email notification (best effort)
-      notifyByEmail(apartmentData);
+
+      // Email notification (now we await, check result and show toast if failed)
+      const emailSent = await notifyByEmail(apartmentData);
+      if (emailSent) {
+        toast({
+          title: "התראה במייל נשלחה",
+          description: "נשלח מייל למור וגבי על דירה חדשה.",
+        });
+      }
+
       toast({
         title: "הצלחה",
         description: "הדירה נוספה בהצלחה!",
