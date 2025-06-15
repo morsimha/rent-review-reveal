@@ -157,14 +157,8 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 
           {/* Ratings & מי דיבר */}
           <div className="mb-3 space-y-2">
-            {/* מור: הכי שמאל, כוכבים מימין */}
+            {/* מור: תיבת הסימון בצד ימין */}
             <div className="flex flex-row items-center gap-2 justify-start text-right">
-              <span className="text-sm font-medium text-purple-600">מור:</span>
-              <StarRating
-                rating={apartment.mor_rating || 0}
-                onRatingChange={(rating) => onMorRatingChange(apartment.id, rating)}
-              />
-              {/* סימון האם מור דיבר */}
               <div className="flex items-center gap-1">
                 <Checkbox
                   checked={!!apartment.spoke_with_mor}
@@ -175,16 +169,15 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
                   className="accent-purple-600"
                   disabled={!isAuthenticated}
                 />
-                <span className="text-xs text-gray-500">דיברתי</span>
               </div>
-            </div>
-            <div className="flex flex-row items-center gap-2 justify-start text-right">
-              <span className="text-sm font-medium text-pink-600">גבי:</span>
+              <span className="text-sm font-medium text-purple-600">מור:</span>
               <StarRating
-                rating={apartment.gabi_rating || 0}
-                onRatingChange={(rating) => onGabiRatingChange(apartment.id, rating)}
+                rating={apartment.mor_rating || 0}
+                onRatingChange={(rating) => onMorRatingChange(apartment.id, rating)}
               />
-              {/* סימון האם גבי דיבר */}
+            </div>
+            {/* גבי: תיבת הסימון בצד ימין */}
+            <div className="flex flex-row items-center gap-2 justify-start text-right">
               <div className="flex items-center gap-1">
                 <Checkbox
                   checked={!!apartment.spoke_with_gabi}
@@ -195,8 +188,12 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
                   className="accent-pink-600"
                   disabled={!isAuthenticated}
                 />
-                <span className="text-xs text-gray-500">דיברתי</span>
               </div>
+              <span className="text-sm font-medium text-pink-600">גבי:</span>
+              <StarRating
+                rating={apartment.gabi_rating || 0}
+                onRatingChange={(rating) => onGabiRatingChange(apartment.id, rating)}
+              />
             </div>
           </div>
 
