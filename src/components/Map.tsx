@@ -122,18 +122,15 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
 
   useEffect(() => {
     if (!selectedApartmentId || !markersRef.current.length || !map.current) return;
-    
     const match = markersRef.current.find(x => x.id === selectedApartmentId);
     if (match && match.popup && match.marker) {
-      // Show the popup
       match.popup.addTo(map.current!);
-      
-      // Clear any existing timeout
+      match.marker.togglePopup();
+      map.current.flyTo({ center: match.marker.getLngLat(), zoom: 15, speed: 1.5 });
+
       if (popupTimeoutRef.current) {
         clearTimeout(popupTimeoutRef.current);
       }
-      
-      // Set timeout to close popup after 3 seconds
       popupTimeoutRef.current = window.setTimeout(() => {
         match.popup.remove();
       }, 3000);
