@@ -82,8 +82,8 @@ serve(async (req: Request): Promise<Response> => {
     const actionText = apartment.action === 'updated' ? 'עודכנה' : 'נוספה';
     const actionEmoji = apartment.action === 'updated' ? '✏️' : '🆕';
 
-    // שלח תמיד לשני הנמענים
-    const recipients = ["elgartgavriela@gmail.com", "moroy9@gmail.com"];
+    // שלח רק לנמען אחד
+    const recipients = "elgartgavriela@gmail.com";
 
     const result = await resend.emails.send({
       from: "מור וגבי דירות <onboarding@resend.dev>",
