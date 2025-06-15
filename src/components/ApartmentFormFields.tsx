@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -216,6 +215,15 @@ const ApartmentFormFields: React.FC<ApartmentFormFieldsProps> = ({
           onChange={e => setFormData(prev => ({...prev, entry_date: e.target.value}))}
           min={new Date().toISOString().split("T")[0]}
           className="bg-white/70 border-purple-300 focus:border-purple-500"
+        />
+      </div>
+      <div className="md:col-span-2">
+        <Label className="text-right">קבענו לראות ב</Label>
+        <Input
+          value={formData.scheduled_visit_text ?? ''}
+          onChange={e => setFormData(prev => ({ ...prev, scheduled_visit_text: e.target.value }))}
+          placeholder='מתי קבעתם ביקור? (למשל: יום שלישי 8/7 בשעה 18:00)'
+          className='mb-2'
         />
       </div>
       <div className="md:col-span-2">

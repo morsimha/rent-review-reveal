@@ -66,8 +66,11 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           onMorTalkedChange={onMorTalkedChange}
           onGabiTalkedChange={onGabiTalkedChange}
         />
-        {/* הערות */}
-        <ApartmentCardNote note={apartment.note} />
+        {/* הערות + שורה חדשה לתאריך ביקור */}
+        <ApartmentCardNote
+          note={apartment.note}
+          scheduled_visit_text={apartment.scheduled_visit_text}
+        />
         {/* פעולות */}
         {isAuthenticated && (
           <ApartmentCardActions

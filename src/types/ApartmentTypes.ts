@@ -24,4 +24,5 @@ export interface Apartment {
   floor: number | null;
   spoke_with_mor?: boolean | null;
   spoke_with_gabi?: boolean | null;
+  scheduled_visit_text?: string | null;
 }

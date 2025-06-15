@@ -30,6 +30,7 @@ export type Database = {
           pets_allowed: string | null
           price: number | null
           rating: number | null
+          scheduled_visit_text: string | null
           spoke_with_gabi: boolean | null
           spoke_with_mor: boolean | null
           square_meters: number | null
@@ -57,6 +58,7 @@ export type Database = {
           pets_allowed?: string | null
           price?: number | null
           rating?: number | null
+          scheduled_visit_text?: string | null
           spoke_with_gabi?: boolean | null
           spoke_with_mor?: boolean | null
           square_meters?: number | null
@@ -84,6 +86,7 @@ export type Database = {
           pets_allowed?: string | null
           price?: number | null
           rating?: number | null
+          scheduled_visit_text?: string | null
           spoke_with_gabi?: boolean | null
           spoke_with_mor?: boolean | null
           square_meters?: number | null
