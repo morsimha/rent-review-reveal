@@ -73,30 +73,57 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           onMorTalkedChange={onMorTalkedChange}
           onGabiTalkedChange={onGabiTalkedChange}
         />
-        {/* הערות + שורה חדשה לתאריך ביקור */}
+        {/* שורה סגולה – רק אם יש scheduled_visit_text */}
+        {apartment.scheduled_visit_text && (
+          <div className="w-full flex justify-center items-center mt-3 px-3">
+            <div className="bg-purple-100 text-purple-700 text-sm px-3 py-1 rounded-lg font-medium text-center break-words whitespace-pre-line">
+              {apartment.scheduled_visit_text}
+            </div>
+          </div>
+        )}
+        {/* הערות */}
         <ApartmentCardNote
           note={apartment.note}
-          scheduled_visit_text={apartment.scheduled_visit_text}
+          scheduled_visit_text={undefined /* הוצאתי מההערה, עכשיו למעלה */}
         />
-        {/* כפתור "שווה לי?" */}
-        <div className="flex flex-row justify-center pb-2 mt-1">
+        {/* כפתורים בשורה אחת */}
+        <div className="flex flex-row flex-wrap gap-2 justify-center items-center pb-2 mt-3">
           <button
             type="button"
-            className="flex items-center gap-2 border rounded px-3 py-1 text-sm font-semibold text-purple-700 border-purple-300 bg-purple-50 hover:bg-purple-100 transition"
+            className="flex items-center gap-1.5 border rounded px-3 py-1 text-sm font-semibold text-purple-700 border-purple-300 bg-purple-50 hover:bg-purple-100 transition"
             onClick={adviceDialog.openDialog}
           >
-            <Brain size={18} className="text-purple-500"/>
+            <Brain size={18} className="text-purple-500" />
             שווה לי? 🧠
           </button>
+          {isAuthenticated && (
+            <>
+              <button
+                type="button"
+                className="flex items-center gap-1 border rounded px-3 py-1 text-sm font-semibold text-gray-700 border-gray-300 bg-gray-50 hover:bg-gray-100 transition"
+                onClick={e => { e.stopPropagation(); onEdit(apartment); }}
+              >
+                <span className="ml-1">
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+                    <path stroke="#7c3aed" strokeWidth="2" d="M16 3l5 5-13 13H3v-5L16 3z"/>
+                  </svg>
+                </span>
+                ערוך
+              </button>
+              <button
+                type="button"
+                className="flex items-center gap-1 border rounded px-2 py-1 text-sm font-semibold text-red-600 border-red-200 bg-red-50 hover:bg-red-100 transition"
+                onClick={e => { e.stopPropagation(); onDelete(apartment.id); }}
+              >
+                <span className="ml-1">
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+                    <path stroke="#dc2626" strokeWidth="2" d="M3 6h18M8 6V4h8v2M8 6v14m8-14v14M10 10v6m4-6v6"/>
+                  </svg>
+                </span>
+              </button>
+            </>
+          )}
         </div>
-        {/* פעולות */}
-        {isAuthenticated && (
-          <ApartmentCardActions
-            apartment={apartment}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        )}
       </CardContent>
       {/* דיאלוג ייעוץ + בדיחה */}
       <ApartmentAdviceDialog
@@ -115,3 +142,4 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 };
 
 export default ApartmentCard;
+
