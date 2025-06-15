@@ -17,9 +17,6 @@ const MusicalKeyboard: React.FC<MusicalKeyboardProps> = ({ bigButtons = false })
     { name: 'מי', frequency: 329.63, emoji: '🎼' },
     { name: 'פה', frequency: 349.23, emoji: '🎤' },
     { name: 'סול', frequency: 392.00, emoji: '🎧' },
-    { name: 'לה', frequency: 440.00, emoji: '🎸' },
-    { name: 'סי', frequency: 493.88, emoji: '🎺' },
-    { name: 'דו', frequency: 523.25, emoji: '🎹' }
   ];
 
   const playNote = (frequency: number) => {
