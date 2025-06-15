@@ -57,40 +57,13 @@ export const insertApartment = async (apartmentData: Omit<Apartment, 'id' | 'cre
   return data;
 };
 
+// *** MAIN CHANGE: Remove the email notification logic from updateApartmentInDB ***
 export const updateApartmentInDB = async (id: string, updates: Partial<Apartment>) => {
   const { error: updateError } = await supabase
     .from('apartments')
     .update(updates)
     .eq('id', id);
   if (updateError) throw updateError;
-  
-  // Fetch the full updated apartment to send in the email
-  const { data: updatedApartment, error: fetchError } = await supabase
-    .from('apartments')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  if (fetchError) {
-    console.error('Failed to fetch updated apartment for email notification:', fetchError);
-    // Don't fail the whole update if this fetch fails, but log it.
-    // The main update operation succeeded.
-    return;
-  }
-  
-  // Send email notification for apartment update
-  try {
-    await supabase.functions.invoke('send-apartment-email', {
-      body: {
-        ...updatedApartment,
-        action: 'updated',
-      }
-    });
-    console.log('Email notification sent for apartment update');
-  } catch (emailError) {
-    console.error('Failed to send email notification:', emailError);
-    // Don't fail the apartment update if email fails
-  }
 };
 
 export const deleteApartmentFromDB = async (id: string) => {
