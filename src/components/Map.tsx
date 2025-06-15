@@ -150,6 +150,30 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     }
   };
 
+  const toggleMapInteractions = (enabled: boolean) => {
+    if (!map.current) return;
+
+    if (enabled) {
+      // Enable all interactions
+      map.current.scrollZoom.enable();
+      map.current.boxZoom.enable();
+      map.current.dragRotate.enable();
+      map.current.dragPan.enable();
+      map.current.keyboard.enable();
+      map.current.doubleClickZoom.enable();
+      map.current.touchZoomRotate.enable();
+    } else {
+      // Disable all interactions except for double-click (which we handle manually)
+      map.current.scrollZoom.disable();
+      map.current.boxZoom.disable();
+      map.current.dragRotate.disable();
+      map.current.dragPan.disable();
+      map.current.keyboard.disable();
+      map.current.doubleClickZoom.disable();
+      map.current.touchZoomRotate.disable();
+    }
+  };
+
   const handleMapDoubleClick = (e: mapboxgl.MapMouseEvent) => {
     console.log('Map double-clicked, routing mode:', isRoutingMode, 'route points length:', routePoints.length);
     
@@ -187,6 +211,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     if (isRoutingMode) {
       clearRoute();
       setIsRoutingMode(false);
+      toggleMapInteractions(true); // Re-enable map interactions
       toast({
         title: "מצב מסלול בוטל",
         description: "חזרה למצב רגיל",
@@ -194,6 +219,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     } else {
       setIsRoutingMode(true);
       setRoutePoints([]);
+      toggleMapInteractions(false); // Disable map interactions
       toast({
         title: "מצב מסלול",
         description: "לחץ לחיצה כפולה על המפה לבחירת נקודת התחלה",
@@ -422,12 +448,13 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
               </Button>
             )}
             
-            {/* Debug info - remove in production */}
+            {/* Status info */}
             {isRoutingMode && (
               <div className="bg-white/90 p-2 rounded text-xs">
-                <div>מצב מסלול: {isRoutingMode ? 'פעיל' : 'לא פעיל'}</div>
+                <div>מצב מסלול: פעיל</div>
                 <div>נקודות: {routePoints.length}</div>
                 <div>הוראה: לחיצה כפולה לסימון נקודות</div>
+                <div className="text-orange-600 font-bold">זום והזזה מבוטלים</div>
               </div>
             )}
           </div>
