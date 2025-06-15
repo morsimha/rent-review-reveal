@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Piano } from "lucide-react";
+// import { Piano } from "lucide-react"; // לא צריך יותר
 import MusicalKeyboard from '@/components/MusicalKeyboard';
 
 interface ThemeHeaderProps {
@@ -13,7 +13,6 @@ interface ThemeHeaderProps {
 
 const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameOpen }) => {
   const { themeConfig, cycleTheme, currentTheme } = useTheme();
-  // מצב ה־Drawer של הפסנתר
   const [isPianoOpen, setIsPianoOpen] = useState(false);
 
   return (
@@ -32,14 +31,20 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
             {themeConfig.title}
           </h1>
           <DrawerTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-2xl p-0 hover:bg-transparent transition-transform"
+            <button
+              className="relative flex items-center justify-center w-12 h-12 rounded-full overflow-hidden p-0 border-none group"
               title="פסנתר"
+              aria-label="פסנתר אינטראקטיבי"
+              style={{ background: "none" }}
             >
-              <Piano size={36} />
-            </Button>
+              <span className="absolute inset-0 animate-pulse bg-gradient-to-tr from-green-400 via-blue-400 to-fuchsia-400 group-hover:brightness-110 opacity-80 transition-all rounded-full" />
+              <img
+                src="/lovable-uploads/17ee855b-ac58-4c6f-9e04-7d2cc7d604e4.png"
+                alt="פסנתר"
+                className="relative z-10 w-8 h-8"
+                style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.15))' }}
+              />
+            </button>
           </DrawerTrigger>
         </div>
         <DrawerContent>
@@ -79,3 +84,4 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
 };
 
 export default ThemeHeader;
+
