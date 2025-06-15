@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Apartment } from '@/types/ApartmentTypes';
@@ -44,45 +45,10 @@ export const useApartments = () => {
     }
   };
 
-  const notifyByEmail = async (apartmentData: Partial<Apartment>) => {
-    try {
-      const res = await fetch('https://afcdqglyehygiareaoot.supabase.co/functions/v1/send-apartment-email', {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(apartmentData),
-      });
-      const resJson = await res.json();
-      console.log('send-apartment-email response:', resJson);
-      if (!res.ok) {
-        throw new Error(resJson?.error || 'שגיאה בשליחת מייל');
-      }
-      return true;
-    } catch (error) {
-      console.error('שגיאה בשליחת מייל על דירה חדשה:', error);
-      toast({
-        title: "שגיאה בשליחת מייל",
-        description: error?.message || "המייל לא נשלח",
-        variant: "destructive"
-      });
-      return false;
-    }
-  };
-
   const addApartment = async (apartmentData: Omit<Apartment, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const data = await insertApartment(apartmentData);
       await fetchApartments(); // Refresh the list
-
-      // Email notification (now we await, check result and show toast if failed)
-      const emailSent = await notifyByEmail(apartmentData);
-      if (emailSent) {
-        toast({
-          title: "התראה במייל נשלחה",
-          description: "נשלח מייל למור וגבי על דירה חדשה.",
-        });
-      }
 
       toast({
         title: "הצלחה",

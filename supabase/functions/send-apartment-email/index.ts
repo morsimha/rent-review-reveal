@@ -23,12 +23,16 @@ interface ApartmentData {
   contact_phone?: string;
   status?: string;
   entry_date?: string;
+  action?: 'added' | 'updated';
   test?: boolean;
 }
 
 function formatEmail(apartment: ApartmentData) {
+  const actionText = apartment.action === 'updated' ? 'עודכנה דירה' : 'נוספה דירה חדשה';
+  const actionEmoji = apartment.action === 'updated' ? '✏️' : '🆕';
+  
   return `
-    <h2>🆕 נוספה דירה חדשה</h2>
+    <h2>${actionEmoji} ${actionText}</h2>
     <ul dir="rtl" style="font-size:16px;">
       <li><b>כותרת:</b> ${apartment.title || "אין"}</li>
       <li><b>מחיר:</b> ${apartment.price ? apartment.price + " ₪" : "-"}</li>
@@ -50,10 +54,11 @@ serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+  
   try {
     let apartment: ApartmentData = await req.json();
 
-    // Check if it's a test request – if so, override
+    // Check if it's a test request
     if (apartment.test) {
       apartment = {
         title: "דירה 3.5 חד׳ ברחוב מבוא פודים",
@@ -68,13 +73,17 @@ serve(async (req: Request): Promise<Response> => {
         description: "דירה מהממת עם נוף פתוח, מרוהטת חלקית, כניסה גמישה.",
         status: "not_spoke",
         image_url: "",
+        action: "added"
       };
     }
+
+    const actionText = apartment.action === 'updated' ? 'עודכנה' : 'נוספה';
+    const actionEmoji = apartment.action === 'updated' ? '✏️' : '🆕';
 
     const result = await resend.emails.send({
       from: "מור וגבי דירות <onboarding@resend.dev>",
       to: ["moroy9@gmail.com", "elgartgavriela@gmail.com"],
-      subject: "🆕 נוספה דירה חדשה במערכת!",
+      subject: `${actionEmoji} ${actionText} דירה במערכת!`,
       html: formatEmail(apartment),
     });
 
@@ -82,13 +91,19 @@ serve(async (req: Request): Promise<Response> => {
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
-      headers: corsHeaders,
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders,
+      },
     });
   } catch (error: any) {
     console.error("Error sending apartment email:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: corsHeaders,
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders,
+      },
     });
   }
 });

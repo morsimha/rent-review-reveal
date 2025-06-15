@@ -39,6 +39,21 @@ export const insertApartment = async (apartmentData: Omit<Apartment, 'id' | 'cre
     .select()
     .single();
   if (error) throw error;
+  
+  // Send email notification for new apartment
+  try {
+    await supabase.functions.invoke('send-apartment-email', {
+      body: {
+        ...apartmentData,
+        action: 'added'
+      }
+    });
+    console.log('Email notification sent for new apartment');
+  } catch (emailError) {
+    console.error('Failed to send email notification:', emailError);
+    // Don't fail the apartment creation if email fails
+  }
+  
   return data;
 };
 
@@ -48,6 +63,20 @@ export const updateApartmentInDB = async (id: string, updates: Partial<Apartment
     .update(updates)
     .eq('id', id);
   if (error) throw error;
+  
+  // Send email notification for apartment update
+  try {
+    await supabase.functions.invoke('send-apartment-email', {
+      body: {
+        ...updates,
+        action: 'updated'
+      }
+    });
+    console.log('Email notification sent for apartment update');
+  } catch (emailError) {
+    console.error('Failed to send email notification:', emailError);
+    // Don't fail the apartment update if email fails
+  }
 };
 
 export const deleteApartmentFromDB = async (id: string) => {
