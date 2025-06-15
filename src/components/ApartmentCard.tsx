@@ -1,3 +1,4 @@
+
 import { Trash2, Edit, Phone, Link, House } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -51,7 +52,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 
   return (
     <Card
-      className="bg-white/90 backdrop-blur-sm border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 h-[580px] flex flex-col cursor-pointer"
+      className="bg-white/90 backdrop-blur-sm border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 flex flex-col cursor-pointer"
       onClick={onCardClick}
     >
       <CardContent className="p-0 flex flex-col h-full">
@@ -128,7 +129,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           )}
 
           {/* Description */}
-          <div className="mb-2 h-10 flex items-start">
+          <div className="mb-2">
             <p className="text-gray-600 text-sm line-clamp-2 text-right leading-5">{apartment.description}</p>
           </div>
 
@@ -198,8 +199,8 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           </div>
 
           {/* Note */}
-          <div className="mb-4 flex-grow min-h-0">
-            <p className="text-sm text-gray-600 text-right break-words overflow-hidden">
+          <div className="mb-4">
+            <p className="text-sm text-gray-600 text-right break-words whitespace-pre-line">
               {apartment.note || 'אין הערות'}
             </p>
           </div>
@@ -234,3 +235,4 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 };
 
 export default ApartmentCard;
+
