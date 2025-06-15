@@ -10,20 +10,21 @@ interface MusicalKeyboardProps {
 const MusicalKeyboard: React.FC<MusicalKeyboardProps> = ({ bigButtons = false }) => {
   const { themeConfig } = useTheme();
 
-  // סדר: דו הגבוה עד דו הנמוך
+  // סדר: דו הנמוך עד דו הגבוה (משמאל לימין)
   const notes = [
-    { name: 'דו', frequency: 523.25, emoji: '🎹' },
-    { name: 'סי', frequency: 493.88, emoji: '🎺' },
-    { name: 'לה', frequency: 440.00, emoji: '🎸' },
-    { name: 'סו', frequency: 392.00, emoji: '🎧' },
-    { name: 'פה', frequency: 349.23, emoji: '🎤' },
-    { name: 'מי', frequency: 329.63, emoji: '🎼' },
+    { name: 'דו', frequency: 261.63, emoji: '🎵' },
     { name: 'רה', frequency: 293.66, emoji: '🎶' },
-    { name: 'דו', frequency: 261.63, emoji: '🎵' }
+    { name: 'מי', frequency: 329.63, emoji: '🎼' },
+    { name: 'פה', frequency: 349.23, emoji: '🎤' },
+    { name: 'סול', frequency: 392.00, emoji: '🎧' },
+    { name: 'לה', frequency: 440.00, emoji: '🎸' },
+    { name: 'סי', frequency: 493.88, emoji: '🎺' },
+    { name: 'דו', frequency: 523.25, emoji: '🎹' }
   ];
 
   const playNote = (frequency: number) => {
     try {
+      // יצירת AudioContext חדש בכל לחיצה כדי למנוע תקיעות
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
@@ -33,12 +34,18 @@ const MusicalKeyboard: React.FC<MusicalKeyboardProps> = ({ bigButtons = false })
       
       oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
       oscillator.type = 'sine';
-      // Volume עוד יותר מוגבר (לדוג' פי 6)
-      gainNode.gain.setValueAtTime(0.6, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+      
+      // התחלה עם ווליום מלא וירידה הדרגתית
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
       
       oscillator.start();
-      oscillator.stop(audioContext.currentTime + 0.8);
+      oscillator.stop(audioContext.currentTime + 0.5);
+      
+      // ניקוי ה-AudioContext אחרי שהצליל הסתיים
+      setTimeout(() => {
+        audioContext.close();
+      }, 600);
     } catch (error) {
       console.log('Failed to play note:', error);
     }
