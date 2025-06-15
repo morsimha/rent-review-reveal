@@ -20,6 +20,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
   const mapboxToken = 'pk.eyJ1IjoibW9yb3k5IiwiYSI6ImNtYndnN2s5YzBrMm4ycXNkMGw3bDRtMW0ifQ.TfWPfMMUQfcjEy4OzGR9XA';
 
   const markersRef = useRef<{ id: string, marker: mapboxgl.Marker, popup: mapboxgl.Popup }[]>([]);
+  const popupTimeoutRef = useRef<number | null>(null);
 
   const clearMarkers = () => {
     markersRef.current.forEach(({marker}) => {
@@ -47,7 +48,6 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     return null;
   };
 
-  // ב- markersRef נשים reference לכל דירה דרך id
   const addApartmentMarkers = async () => {
     if (!map.current) return;
     clearMarkers();
@@ -84,7 +84,6 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
           }
           markerElement.innerHTML = '🏠';
 
-          // מציג רק שם וכותרת (כפי שביקשת)
           const popupContent = `
           <div style="text-align: right; direction: rtl;">
             <h3 style="font-weight: bold; margin-bottom: 4px; font-size:1rem;">${apartment.title}</h3>
@@ -107,11 +106,10 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
             if (setSelectedApartmentId) setSelectedApartmentId(apartment.id);
             popup.addTo(map.current!);
 
-            // סגור את הפופאפ אחרי 3 שניות
             if (popupTimeoutRef.current) {
               clearTimeout(popupTimeoutRef.current);
             }
-            popupTimeoutRef.current = setTimeout(() => {
+            popupTimeoutRef.current = window.setTimeout(() => {
               popup.remove();
             }, 3000);
           });
@@ -122,29 +120,23 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     }
   };
 
-  // פותח popup של דירה מתאימה בעת שינוי selectedApartmentId
   useEffect(() => {
-    // אל תעשה כלום אם אין id
     if (!selectedApartmentId || !markersRef.current.length || !map.current) return;
-    // חפש את ה־popup המתאים ופתח אותו
     const match = markersRef.current.find(x => x.id === selectedApartmentId);
     if (match && match.popup && match.marker) {
       match.popup.addTo(map.current!);
-      // פוקוס למרכז
-      match.marker.togglePopup(); // יבטיח שה-popup ייפתח
+      match.marker.togglePopup();
       map.current.flyTo({ center: match.marker.getLngLat(), zoom: 15, speed: 1.5 });
 
-      // סגור את הפופאפ אחרי 3 שניות
       if (popupTimeoutRef.current) {
         clearTimeout(popupTimeoutRef.current);
       }
-      popupTimeoutRef.current = setTimeout(() => {
+      popupTimeoutRef.current = window.setTimeout(() => {
         match.popup.remove();
       }, 3000);
     }
   }, [selectedApartmentId]);
 
-  // ננקה timeout בלת使 הרכיב
   useEffect(() => {
     return () => {
       if (popupTimeoutRef.current) {
@@ -210,7 +202,6 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     };
   }, []);
 
-  // עדכון markers כשמשהו משתנה ברשימת דירות
   useEffect(() => {
     if (map.current && map.current.isStyleLoaded()) {
       addApartmentMarkers();
