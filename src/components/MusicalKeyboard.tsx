@@ -6,15 +6,16 @@ import { useTheme } from '@/contexts/ThemeContext';
 const MusicalKeyboard: React.FC = () => {
   const { themeConfig } = useTheme();
 
+  // סדר הפוך: דו הגבוה עד דו הנמוך
   const notes = [
-    { name: 'דו', frequency: 261.63, emoji: '🎵' },
-    { name: 'רה', frequency: 293.66, emoji: '🎶' },
-    { name: 'מי', frequency: 329.63, emoji: '🎼' },
-    { name: 'פה', frequency: 349.23, emoji: '🎤' },
-    { name: 'סו', frequency: 392.00, emoji: '🎧' },
-    { name: 'לה', frequency: 440.00, emoji: '🎸' },
+    { name: 'דו', frequency: 523.25, emoji: '🎹' },
     { name: 'סי', frequency: 493.88, emoji: '🎺' },
-    { name: 'דו', frequency: 523.25, emoji: '🎹' }
+    { name: 'לה', frequency: 440.00, emoji: '🎸' },
+    { name: 'סו', frequency: 392.00, emoji: '🎧' },
+    { name: 'פה', frequency: 349.23, emoji: '🎤' },
+    { name: 'מי', frequency: 329.63, emoji: '🎼' },
+    { name: 'רה', frequency: 293.66, emoji: '🎶' },
+    { name: 'דו', frequency: 261.63, emoji: '🎵' }
   ];
 
   const playNote = (frequency: number) => {
@@ -28,7 +29,8 @@ const MusicalKeyboard: React.FC = () => {
       
       oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
       oscillator.type = 'sine';
-      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+      // Volume מוגבר (בערך פי 4)
+      gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
       
       oscillator.start();
@@ -45,7 +47,7 @@ const MusicalKeyboard: React.FC = () => {
           <Button
             key={index}
             onClick={() => playNote(note.frequency)}
-            className={`${themeConfig.buttonGradient} text-white text-lg px-3 py-2 rounded-full transition-all duration-200 hover:scale-110 active:scale-95`}
+            className={`${themeConfig.buttonGradient} text-white text-base px-2 py-1 rounded-full min-w-8 min-h-8 transition-all duration-200 hover:scale-110 active:scale-95`}
             title={`נגן ${note.name}`}
           >
             {note.emoji}
