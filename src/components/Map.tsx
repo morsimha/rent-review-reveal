@@ -175,6 +175,9 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
   };
 
   const handleMapDoubleClick = (e: mapboxgl.MapMouseEvent) => {
+    // Prevent default double-click behavior
+    e.preventDefault();
+    
     console.log('Map double-clicked, routing mode:', isRoutingMode, 'route points length:', routePoints.length);
     
     if (!isRoutingMode) {
@@ -221,7 +224,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
       setRoutePoints([]);
       toggleMapInteractions(false); // Disable map interactions
       toast({
-        title: "מצב מסלול",
+        title: "מצב מסלול הופעל",
         description: "לחץ לחיצה כפולה על המפה לבחירת נקודת התחלה",
       });
     }
@@ -374,9 +377,22 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
         });
       });
 
-      // Add double-click handler for routing mode
+      // Add double-click handler for routing mode with better event handling
       map.current.on('dblclick', handleMapDoubleClick);
-      console.log('Map double-click handler added');
+      
+      // Also handle touch events for mobile
+      let touchTime = 0;
+      map.current.on('touchstart', (e) => {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - touchTime;
+        if (tapLength < 500 && tapLength > 0) {
+          // Double tap detected
+          handleMapDoubleClick(e);
+        }
+        touchTime = currentTime;
+      });
+      
+      console.log('Map double-click and touch handlers added');
 
     } catch (error) {
       console.error('Map initialization error:', error);
@@ -432,7 +448,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
               ) : (
                 <>
                   <Route className="w-4 h-4" />
-                  מסלול
+                  התחל מסלול
                 </>
               )}
             </Button>
@@ -450,10 +466,14 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
             
             {/* Status info */}
             {isRoutingMode && (
-              <div className="bg-white/90 p-2 rounded text-xs">
-                <div>מצב מסלול: פעיל</div>
-                <div>נקודות: {routePoints.length}</div>
-                <div>הוראה: לחיצה כפולה לסימון נקודות</div>
+              <div className="bg-white/90 p-2 rounded text-xs shadow-lg">
+                <div className="text-green-600 font-bold">מצב מסלול: פעיל</div>
+                <div>נקודות שנבחרו: {routePoints.length}</div>
+                <div className="text-blue-600">
+                  {routePoints.length === 0 && "לחיצה כפולה לנקודת התחלה"}
+                  {routePoints.length === 1 && "לחיצה כפולה לנקודת הסיום"}
+                  {routePoints.length === 2 && "מסלול הושלם!"}
+                </div>
                 <div className="text-orange-600 font-bold">זום והזזה מבוטלים</div>
               </div>
             )}
