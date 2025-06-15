@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useThemeMusic } from '@/hooks/useThemeMusic';
 
 interface ThemeHeaderProps {
   onDrawingGameOpen: () => void;
@@ -9,7 +10,8 @@ interface ThemeHeaderProps {
 }
 
 const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameOpen }) => {
-  const { themeConfig, cycleTheme } = useTheme();
+  const { themeConfig, cycleTheme, currentTheme } = useTheme();
+  const { toggleMusic, isPlaying } = useThemeMusic(currentTheme);
 
   return (
     <div className="text-center mb-8">
@@ -24,6 +26,13 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
         <h1 className={`text-4xl font-bold ${themeConfig.textColor}`}>
           {themeConfig.title}
         </h1>
+        <Button
+          onClick={toggleMusic}
+          className={`${themeConfig.buttonGradient} text-white text-xl p-2 rounded-full transition-all duration-200 ${isPlaying ? 'animate-pulse' : ''}`}
+          title={isPlaying ? "השתק מוזיקה" : "הפעל מוזיקה"}
+        >
+          {isPlaying ? '🔊' : '🔇'}
+        </Button>
       </div>
       <p className={`${themeConfig.accentColor} text-lg mb-2`}>{themeConfig.subtitle}</p>
       <div className="flex items-center justify-center gap-4 mt-2">
