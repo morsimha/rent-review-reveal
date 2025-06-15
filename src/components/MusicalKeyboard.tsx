@@ -59,8 +59,8 @@ const MusicalKeyboard: React.FC<MusicalKeyboardProps> = ({ bigButtons = false })
           <Button
             key={idx}
             onClick={() => playNote(note.frequency)}
-            className={`${themeConfig.buttonGradient} text-white ${buttonSizeClasses} rounded-full transition-all duration-200 hover:scale-110 active:scale-95`}
-            title={`נגן ${note.name}`}
+            className={${themeConfig.buttonGradient} text-white ${buttonSizeClasses} rounded-full transition-all duration-200 hover:scale-110 active:scale-95}
+            title={נגן ${note.name}}
           >
             {note.emoji}
           </Button>
@@ -71,3 +71,5 @@ const MusicalKeyboard: React.FC<MusicalKeyboardProps> = ({ bigButtons = false })
 };
 
 export default MusicalKeyboard;
+
+
