@@ -12,6 +12,8 @@ import EditApartmentDialog from '@/components/EditApartmentDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import PasswordDialog from '@/components/PasswordDialog';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from '@/contexts/ThemeContext';
+import ThemeHeader from '@/components/ThemeHeader';
 
 const Index = () => {
   const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
@@ -21,12 +23,13 @@ const Index = () => {
   const [sortBy, setSortBy] = useState<"rating" | "entry_date" | "created_at" | "status">("rating");
   const [statusFilter, setStatusFilter] = useState<"all" | "spoke" | "not_spoke" | "no_answer">("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [selectedApartmentId, setSelectedApartmentId] = useState<string | null>(null); // NEW
+  const [selectedApartmentId, setSelectedApartmentId] = useState<string | null>(null);
 
   const { isAuthenticated, login } = useAuth();
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [authAttempted, setAuthAttempted] = useState(false);
   const { toast } = useToast();
+  const { themeConfig } = useTheme();
 
   useEffect(() => {
     if (!isAuthenticated && !authAttempted) {
@@ -126,10 +129,10 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 flex items-center justify-center" dir="rtl">
+      <div className={`min-h-screen ${themeConfig.backgroundGradient} flex items-center justify-center`} dir="rtl">
         <div className="text-center">
-          <div className="text-4xl mb-4">🏠</div>
-          <p className="text-purple-600 text-lg">טוען דירות...</p>
+          <div className="text-4xl mb-4">{themeConfig.mainEmoji}</div>
+          <p className={`${themeConfig.accentColor} text-lg`}>טוען דירות...</p>
         </div>
       </div>
     );
@@ -166,47 +169,39 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 relative overflow-hidden" dir="rtl">
-      {/* Cat Background Pattern */}
+    <div className={`min-h-screen ${themeConfig.backgroundGradient} relative overflow-hidden`} dir="rtl">
+      {/* Themed Background Pattern */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-10 left-10 text-6xl">🐱</div>
-        <div className="absolute top-32 right-20 text-4xl">😸</div>
-        <div className="absolute top-64 left-1/4 text-5xl">🐈</div>
-        <div className="absolute bottom-40 right-1/3 text-6xl">😻</div>
-        <div className="absolute bottom-20 left-20 text-4xl">🐾</div>
-        <div className="absolute top-1/2 right-10 text-5xl">🙀</div>
-        <div className="absolute bottom-1/2 left-1/2 text-4xl">😺</div>
+        {themeConfig.backgroundEmojis.map((emoji, index) => {
+          const positions = [
+            'top-10 left-10 text-6xl',
+            'top-32 right-20 text-4xl',
+            'top-64 left-1/4 text-5xl',
+            'bottom-40 right-1/3 text-6xl',
+            'bottom-20 left-20 text-4xl',
+            'top-1/2 right-10 text-5xl',
+            'bottom-1/2 left-1/2 text-4xl'
+          ];
+          return (
+            <div key={index} className={`absolute ${positions[index] || 'top-10 left-10 text-4xl'}`}>
+              {emoji}
+            </div>
+          );
+        })}
       </div>
 
       <div className="container mx-auto px-4 py-8 relative z-10">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-purple-800 mb-2">מור וגבי מוצאים דירה</h1>
-          <p className="text-purple-600 text-lg">וואו איזה ביתתת 🏠✨</p>
-          <div className="flex items-center justify-center gap-4 mt-2">
-            <Button
-              onClick={() => setIsDrawingGameOpen(true)}
-              className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white text-2xl p-3 rounded-full animate-pulse"
-              title="משחק ציור שיתופי!"
-            >
-              🎨
-            </Button>
-            <p className="text-sm text-purple-500">מי שמוסיף הכי פחות דירות עושה כלים לשבוע בבית החדש</p>
-            <Button
-              onClick={() => setIsCatGameOpen(true)}
-              className="bg-gradient-to-r from-orange-400 to-pink-500 hover:from-orange-500 hover:to-pink-600 text-white text-2xl p-3 rounded-full animate-bounce"
-              title="תפוס את החתול!"
-            >
-              🐱
-            </Button>
-          </div>
-        </div>
+        {/* Themed Header */}
+        <ThemeHeader 
+          onDrawingGameOpen={() => setIsDrawingGameOpen(true)}
+          onCatGameOpen={() => setIsCatGameOpen(true)}
+        />
 
         {/* כפתור הוסף דירה */}
         <div className="flex justify-center mb-8">
           <Button
             onClick={() => setIsAddDialogOpen(true)}
-            className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-lg px-6 py-3 rounded shadow hover:from-purple-600 hover:to-pink-600 transition"
+            className={`${themeConfig.buttonGradient} text-white text-lg px-6 py-3 rounded shadow transition`}
             disabled={!isAuthenticated}
           >
             + הוסף דירה חדשה
@@ -216,20 +211,20 @@ const Index = () => {
         {/* תפריט מיון וסינון סטטוס */}
         <div className="flex flex-wrap justify-center items-center gap-3 mb-7">
           <div className="flex items-center gap-2">
-            <label className="font-medium text-purple-700 text-sm">מיין לפי:</label>
+            <label className={`font-medium ${themeConfig.textColor} text-sm`}>מיין לפי:</label>
             <select
               value={sortBy}
               onChange={e => setSortBy(e.target.value as any)}
               className="rounded border px-2 py-1 text-right"
             >
-              <option value="rating">דירוג 🏅</option>
-              <option value="entry_date">תאריך כניסה 🗓️</option>
-              <option value="created_at">מועד הוספה ⏰</option>
-              <option value="status">סטטוס דיבור 📞</option>
+              <option value="rating">דירוג {themeConfig.sortEmojis.rating}</option>
+              <option value="entry_date">תאריך כניסה {themeConfig.sortEmojis.entry_date}</option>
+              <option value="created_at">מועד הוספה {themeConfig.sortEmojis.created_at}</option>
+              <option value="status">סטטוס דיבור {themeConfig.sortEmojis.status}</option>
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <label className="font-medium text-purple-700 text-sm">סנן לפי סטטוס:</label>
+            <label className={`font-medium ${themeConfig.textColor} text-sm`}>סנן לפי סטטוס:</label>
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value as any)}
@@ -262,7 +257,9 @@ const Index = () => {
 
         {/* Map Section */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-purple-800 mb-4 text-center">מפת הדירות</h2>
+          <h2 className={`text-2xl font-bold ${themeConfig.textColor} mb-4 text-center`}>
+            {themeConfig.mapTitle}
+          </h2>
           <Map
             apartments={apartments}
             selectedApartmentId={selectedApartmentId}
@@ -290,7 +287,7 @@ const Index = () => {
 
         {filteredApartments.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-purple-600 text-lg">לא נמצאו דירות בהתאם לסינון 🏠</p>
+            <p className={`${themeConfig.accentColor} text-lg`}>לא נמצאו דירות בהתאם לסינון {themeConfig.mainEmoji}</p>
           </div>
         )}
       </div>
