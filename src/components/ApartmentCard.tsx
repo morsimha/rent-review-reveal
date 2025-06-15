@@ -51,6 +51,11 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
   const [adviceError, setAdviceError] = useState<string | null>(null);
   const [adviceLoading, setAdviceLoading] = useState(false);
 
+  // state+logic לבדיחה
+  const [joke, setJoke] = useState<string | null>(null);
+  const [jokeLoading, setJokeLoading] = useState(false);
+  const [jokeError, setJokeError] = useState<string | null>(null);
+
   // עדכון fetchAdvice לפי הדרישה שלך
   const fetchAdvice = async () => {
     setAdviceError(null);
@@ -91,6 +96,53 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
     }
   };
 
+  // פוקנציית בדיחה
+  const fetchJoke = async () => {
+    setJokeError(null);
+    setJoke(null);
+    setJokeLoading(true);
+    try {
+      const res = await fetch(
+        "https://afcdqglyehygiareaoot.supabase.co/functions/v1/gpt-apartment-advisor-joke",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmY2RxZ2x5ZWh5Z2lhcmVhb290Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MTQyNjgsImV4cCI6MjA2NTQ5MDI2OH0.F2Ljk7v3WkXnuAZ2Vt4VUQKEuP_ZWTeTt7rVTTFGTI8"}`
+          },
+          body: JSON.stringify({ apartment }),
+        }
+      );
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: "Unknown error" }));
+        setJokeError(`שגיאת בדיחה: ${errorData.error || res.statusText}`);
+        return;
+      }
+      const data = await res.json();
+      if (data.joke) {
+        setJoke(data.joke);
+      } else {
+        setJokeError("לא התקבלה בדיחה. נסה שוב מאוחר יותר.");
+      }
+    } catch (e: any) {
+      setJokeError("שגיאת תקשורת. נסה שוב בעוד רגע.");
+    } finally {
+      setJokeLoading(false);
+    }
+  };
+
+  // פתיחת ייעוץ תפעיל גם את הבדיחה
+  const openAdviceWithJoke = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    setAdviceOpen(true);
+    setAdvice(null);
+    setAdviceError(null);
+    setJoke(null);
+    setJokeError(null);
+    fetchAdvice();
+    fetchJoke();
+  };
+
   return (
     <Card
       className="bg-white/90 backdrop-blur-sm border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 flex flex-col cursor-pointer"
@@ -124,12 +176,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           <button
             type="button"
             className="flex items-center gap-2 border rounded px-3 py-1 text-sm font-semibold text-purple-700 border-purple-300 bg-purple-50 hover:bg-purple-100 transition"
-            onClick={e => {
-              e.stopPropagation();
-              setAdviceOpen(true);
-              setAdvice(null);
-              fetchAdvice();
-            }}
+            onClick={openAdviceWithJoke}
           >
             <Brain size={18} className="text-purple-500"/>
             שווה לי? 🧠
@@ -144,14 +191,17 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           />
         )}
       </CardContent>
-      {/* דיאלוג לייעוץ GPT */}
+      {/* דיאלוג לייעוץ GPT + בדיחה */}
       <ApartmentAdviceDialog
         open={isAdviceOpen}
         onOpenChange={setAdviceOpen}
         loading={adviceLoading}
         advice={advice}
         error={adviceError}
-        onRetry={fetchAdvice}
+        onRetry={() => { fetchAdvice(); fetchJoke(); }}
+        joke={joke}
+        jokeLoading={jokeLoading}
+        jokeError={jokeError}
       />
     </Card>
   );

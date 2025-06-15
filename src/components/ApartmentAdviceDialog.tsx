@@ -11,10 +11,14 @@ interface Props {
   advice: string | null;
   error: string | null;
   onRetry: () => void;
+  joke?: string | null;
+  jokeLoading?: boolean;
+  jokeError?: string | null;
 }
 
 const ApartmentAdviceDialog: React.FC<Props> = ({
-  open, onOpenChange, loading, advice, error, onRetry
+  open, onOpenChange, loading, advice, error, onRetry,
+  joke, jokeLoading, jokeError,
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -45,6 +49,24 @@ const ApartmentAdviceDialog: React.FC<Props> = ({
             </div>
           ) : null}
         </div>
+        <div className="py-1 min-h-12 text-center">
+          {/* בדיחה על הדירה */}
+          <div className="mt-2">
+            <b>בדיחה על הדירה:</b>
+          </div>
+          {jokeLoading ? (
+            <div className="text-sky-700 flex flex-col items-center gap-2">
+              <span className="animate-spin inline-block text-xl">😺</span>
+              מחשב בדיחה...
+            </div>
+          ) : jokeError ? (
+            <div className="text-red-500">{jokeError}</div>
+          ) : joke ? (
+            <div className="text-sky-900 text-base bg-sky-50 rounded p-2">
+              {joke}
+            </div>
+          ) : null}
+        </div>
         <DialogFooter>
           <Button variant="secondary" onClick={() => onOpenChange(false)}>סגור</Button>
         </DialogFooter>
@@ -54,3 +76,4 @@ const ApartmentAdviceDialog: React.FC<Props> = ({
 };
 
 export default ApartmentAdviceDialog;
+
