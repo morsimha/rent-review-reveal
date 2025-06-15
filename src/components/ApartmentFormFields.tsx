@@ -158,52 +158,64 @@ const ApartmentFormFields: React.FC<ApartmentFormFieldsProps> = ({
         <Label className="text-right block mb-1">בעלי חיים</Label>
         <RadioGroup value={formData.pets_allowed} onValueChange={(value: 'yes' | 'no' | 'unknown') => setFormData(prev => ({...prev, pets_allowed: value}))}>
           <div className="flex flex-col gap-2 items-end">
-            {/* קודם "כן" עם 🐱 בסוף */}
+            {/* כן עם האימוג'י ממש משמאל */}
             <div className="flex flex-row-reverse items-center gap-2">
               <RadioGroupItem value="yes" id={`${idPrefix}pets_yes`} />
-              <Label htmlFor={`${idPrefix}pets_yes`}>כן <span className="text-lg ml-1">🐱</span></Label>
+              <Label htmlFor={`${idPrefix}pets_yes`} className="flex items-center flex-row-reverse gap-1">
+                כן
+                <span className="text-lg">🐱</span>
+              </Label>
             </div>
-            {/* אחריו "לא" עם 🚫 בסוף */}
+            {/* לא עם האימוג'י ממש משמאל */}
             <div className="flex flex-row-reverse items-center gap-2">
               <RadioGroupItem value="no" id={`${idPrefix}pets_no`} />
-              <Label htmlFor={`${idPrefix}pets_no`}>לא <span className="text-lg ml-1">🚫</span></Label>
+              <Label htmlFor={`${idPrefix}pets_no`} className="flex items-center flex-row-reverse gap-1">
+                לא
+                <span className="text-lg">🚫</span>
+              </Label>
             </div>
-            {/* לא יודע */}
+            {/* לא יודע ללא אימוג'י */}
             <div className="flex flex-row-reverse items-center gap-2">
               <RadioGroupItem value="unknown" id={`${idPrefix}pets_unknown`} />
-              <Label htmlFor={`${idPrefix}pets_unknown`}>לא יודע</Label>
+              <Label htmlFor={`${idPrefix}pets_unknown`} className="flex items-center flex-row-reverse gap-1">
+                לא יודע
+              </Label>
             </div>
           </div>
         </RadioGroup>
       </div>
-      {/* יש מקלט */}
+      {/* יש מקלט - קודם לא, אחר כך כן */}
       <div>
         <Label className="text-right block mb-1">יש מקלט?</Label>
         <RadioGroup value={formData.has_shelter === null || formData.has_shelter === undefined ? "" : formData.has_shelter ? "yes" : "no"}
           onValueChange={v => setFormData(prev => ({...prev, has_shelter: v === "yes" ? true : v === "no" ? false : null}))}
           className="flex flex-row gap-2 justify-end"
         >
-          <div className="flex items-center space-x-2 space-x-reverse flex-row-reverse">
-            <Label htmlFor={`${idPrefix}hasShelter_yes`} className="text-green-600 flex items-center gap-1">כן <span className="text-lg">🏠</span></Label>
-            <RadioGroupItem value="yes" id={`${idPrefix}hasShelter_yes`} />
-          </div>
+          {/* קודם לא */}
           <div className="flex items-center space-x-2 space-x-reverse flex-row-reverse">
             <Label htmlFor={`${idPrefix}hasShelter_no`} className="text-gray-600">לא</Label>
             <RadioGroupItem value="no" id={`${idPrefix}hasShelter_no`} />
           </div>
+          {/* אחר כך כן */}
+          <div className="flex items-center space-x-2 space-x-reverse flex-row-reverse">
+            <Label htmlFor={`${idPrefix}hasShelter_yes`} className="text-green-600 flex items-center gap-1">כן <span className="text-lg">🏠</span></Label>
+            <RadioGroupItem value="yes" id={`${idPrefix}hasShelter_yes`} />
+          </div>
         </RadioGroup>
       </div>
-      {/* כותרת המשך היישור לימין לכל השדה מתחת "יש מקלט" */}
-      {/* תאריך כניסה */}
-      <div className="md:col-span-2 text-right">
-        <Label className="text-right block mb-1">תאריך כניסה</Label>
-        <Input
-          type="date"
-          value={formData.entry_date || ''}
-          onChange={e => setFormData(prev => ({...prev, entry_date: e.target.value}))}
-          min={new Date().toISOString().split("T")[0]}
-          className="bg-white/70 border-purple-300 focus:border-purple-500"
-        />
+      {/* שורת תאריך כניסה - תחילה האימוג'י בקצה ימין (RTL), ואז אינפוט */}
+      <div className="md:col-span-2 text-right flex flex-row-reverse items-center gap-2">
+        <span className="text-xl ml-2">🗓️</span>
+        <div className="flex-1">
+          <Label className="text-right block mb-1">תאריך כניסה</Label>
+          <Input
+            type="date"
+            value={formData.entry_date || ''}
+            onChange={e => setFormData(prev => ({...prev, entry_date: e.target.value}))}
+            min={new Date().toISOString().split("T")[0]}
+            className="bg-white/70 border-purple-300 focus:border-purple-500"
+          />
+        </div>
       </div>
       {/* שאר הקוד */}
       <div className="md:col-span-2">
