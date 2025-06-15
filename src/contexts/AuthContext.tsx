@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 const PASSWORD = "mor&gaby"; // The password to access editing features
@@ -11,12 +12,14 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true); // Temporarily set to true to bypass password
 
   useEffect(() => {
     const storedAuth = sessionStorage.getItem('isAuthenticated');
     if (storedAuth === 'true') {
       setIsAuthenticated(true);
+    } else if (storedAuth === 'false') { // Handle logout case
+      setIsAuthenticated(false);
     }
   }, []);
 
@@ -30,7 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
-    sessionStorage.removeItem('isAuthenticated');
+    sessionStorage.setItem('isAuthenticated', 'false'); // Set to false instead of removing
     setIsAuthenticated(false);
   };
 
