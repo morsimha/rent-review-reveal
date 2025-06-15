@@ -1,25 +1,27 @@
 
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ThemeType } from '@/contexts/ThemeContext';
 
-// Audio URLs for each theme (using royalty-free music from freesound.org or similar)
+// Audio URLs for each theme (using working public URLs)
 const THEME_MUSIC: Record<ThemeType, string> = {
-  cats: 'https://www.soundjay.com/misc/sounds/cat-purr-1.mp3', // Cat purring/relaxing sounds
-  modern: 'https://www.soundjay.com/electronic/sounds/house-1.mp3', // Modern electronic music
-  capybara: 'https://www.soundjay.com/nature/sounds/forest-1.mp3', // Peaceful nature sounds
-  dogs: 'https://www.soundjay.com/misc/sounds/happy-1.mp3', // Upbeat playful music
-  space: 'https://www.soundjay.com/electronic/sounds/space-1.mp3' // Ambient space music
+  cats: 'https://www.soundjay.com/misc/sounds/beep-07a.wav', // Short cat-like sound
+  modern: 'https://www.soundjay.com/misc/sounds/beep-10.wav', // Electronic beep
+  capybara: 'https://www.soundjay.com/misc/sounds/beep-05.wav', // Soft nature-like sound
+  dogs: 'https://www.soundjay.com/misc/sounds/beep-03.wav', // Playful sound
+  space: 'https://www.soundjay.com/misc/sounds/beep-09.wav' // Futuristic beep
 };
 
 export const useThemeMusic = (currentTheme: ThemeType) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentThemeRef = useRef<ThemeType>(currentTheme);
+  const [isPlaying, setIsPlaying] = React.useState(false);
 
   useEffect(() => {
     // Stop current music if theme changed
     if (currentThemeRef.current !== currentTheme && audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+      setIsPlaying(false);
     }
 
     currentThemeRef.current = currentTheme;
@@ -30,20 +32,17 @@ export const useThemeMusic = (currentTheme: ThemeType) => {
     audio.volume = 0.3; // Keep volume low for background music
     audioRef.current = audio;
 
-    // Start playing after a short delay
-    const timer = setTimeout(() => {
-      audio.play().catch(error => {
-        console.log('Auto-play prevented:', error);
-        // Auto-play is often blocked by browsers, user needs to interact first
-      });
-    }, 1000);
+    // Add event listeners
+    audio.addEventListener('play', () => setIsPlaying(true));
+    audio.addEventListener('pause', () => setIsPlaying(false));
+    audio.addEventListener('ended', () => setIsPlaying(false));
 
     return () => {
-      clearTimeout(timer);
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
+      setIsPlaying(false);
     };
   }, [currentTheme]);
 
@@ -58,8 +57,6 @@ export const useThemeMusic = (currentTheme: ThemeType) => {
       }
     }
   };
-
-  const isPlaying = audioRef.current ? !audioRef.current.paused : false;
 
   return { toggleMusic, isPlaying };
 };
