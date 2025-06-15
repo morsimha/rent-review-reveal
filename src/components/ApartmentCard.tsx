@@ -68,8 +68,10 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           {/* Prices, Arnona, and Pet Icon */}
           <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-20">
             {apartment.price && (
-              <div className="bg-green-500 text-white px-2 py-1 rounded-full font-bold text-sm">
-                ₪{apartment.price}
+              <div className="bg-green-500 text-white px-2 py-1 rounded-full font-bold text-sm flex items-center gap-1">
+                {/* שפוך את המספר קודם ואז את סמל המטבע */}
+                <span>{apartment.price}</span>
+                <span>₪</span>
               </div>
             )}
             {/* ארנונה */}
