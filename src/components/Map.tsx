@@ -103,9 +103,10 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
             .setPopup(popup)
             .addTo(map.current!);
 
-          markerElement.addEventListener('click', () => {
-            if (setSelectedApartmentId) setSelectedApartmentId(apartment.id);
+          markerElement.addEventListener('click', (e) => {
+            // נפתח את הפופאפ מיידית
             popup.addTo(map.current!);
+            if (setSelectedApartmentId) setSelectedApartmentId(apartment.id);
 
             if (popupTimeoutRef.current) {
               clearTimeout(popupTimeoutRef.current);
@@ -113,6 +114,9 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
             popupTimeoutRef.current = window.setTimeout(() => {
               popup.remove();
             }, 3000);
+
+            // נבטל Bubbling כדי למנוע קונפליקט עם אירועים אחרים
+            e.stopPropagation();
           });
 
           markersRef.current.push({ id: apartment.id, marker, popup });
