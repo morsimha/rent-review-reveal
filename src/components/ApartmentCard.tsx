@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import type { Apartment } from "@/types/ApartmentTypes";
 import ApartmentCardImageSection from "./ApartmentCardImageSection";
@@ -6,6 +5,9 @@ import ApartmentCardMainInfo from "./ApartmentCardMainInfo";
 import ApartmentCardNote from "./ApartmentCardNote";
 import ApartmentCardRatings from "./ApartmentCardRatings";
 import ApartmentCardActions from "./ApartmentCardActions";
+import { Brain } from "lucide-react";
+import ApartmentAdviceDialog from "./ApartmentAdviceDialog";
+import { useState } from "react";
 
 interface ApartmentCardProps {
   apartment: Apartment;
@@ -43,6 +45,35 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
     }
   };
 
+  // state+logic לייעוץ GPT
+  const [isAdviceOpen, setAdviceOpen] = useState(false);
+  const [advice, setAdvice] = useState<string | null>(null);
+  const [adviceError, setAdviceError] = useState<string | null>(null);
+  const [adviceLoading, setAdviceLoading] = useState(false);
+
+  const fetchAdvice = async () => {
+    setAdviceError(null);
+    setAdvice(null);
+    setAdviceLoading(true);
+    try {
+      const res = await fetch("/functions/v1/gpt-apartment-advisor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apartment }),
+      });
+      const data = await res.json();
+      if (data.advice) setAdvice(data.advice);
+      else {
+        setAdviceError("לא התקבלה תשובה מהמערכת. נסה שוב מאוחר יותר.");
+      }
+    } catch (e: any) {
+      setAdviceError("שגיאה בחיבור ל-GPT. נסה שוב בעוד רגע.");
+    } finally {
+      setAdviceLoading(false);
+    }
+  };
+
+  // כפתור חדש "שווה לי?"
   return (
     <Card
       className="bg-white/90 backdrop-blur-sm border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 flex flex-col cursor-pointer"
@@ -71,6 +102,22 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           note={apartment.note}
           scheduled_visit_text={apartment.scheduled_visit_text}
         />
+        {/* כפתור "שווה לי?" */}
+        <div className="flex flex-row justify-center pb-2 mt-1">
+          <button
+            type="button"
+            className="flex items-center gap-2 border rounded px-3 py-1 text-sm font-semibold text-purple-700 border-purple-300 bg-purple-50 hover:bg-purple-100 transition"
+            onClick={e => {
+              e.stopPropagation();
+              setAdviceOpen(true);
+              setAdvice(null);
+              fetchAdvice();
+            }}
+          >
+            <Brain size={18} className="text-purple-500"/>
+            שווה לי? 🧠
+          </button>
+        </div>
         {/* פעולות */}
         {isAuthenticated && (
           <ApartmentCardActions
@@ -80,6 +127,15 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           />
         )}
       </CardContent>
+      {/* דיאלוג לייעוץ GPT */}
+      <ApartmentAdviceDialog
+        open={isAdviceOpen}
+        onOpenChange={setAdviceOpen}
+        loading={adviceLoading}
+        advice={advice}
+        error={adviceError}
+        onRetry={fetchAdvice}
+      />
     </Card>
   );
 };
