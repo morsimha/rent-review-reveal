@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Apartment } from '@/types/ApartmentTypes';
 
@@ -59,19 +58,32 @@ export const insertApartment = async (apartmentData: Omit<Apartment, 'id' | 'cre
 };
 
 export const updateApartmentInDB = async (id: string, updates: Partial<Apartment>) => {
-  const { error } = await supabase
+  const { error: updateError } = await supabase
     .from('apartments')
     .update(updates)
     .eq('id', id);
-  if (error) throw error;
+  if (updateError) throw updateError;
   
-  // Send email notification for apartment update (כולל שדה הערות)
+  // Fetch the full updated apartment to send in the email
+  const { data: updatedApartment, error: fetchError } = await supabase
+    .from('apartments')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (fetchError) {
+    console.error('Failed to fetch updated apartment for email notification:', fetchError);
+    // Don't fail the whole update if this fetch fails, but log it.
+    // The main update operation succeeded.
+    return;
+  }
+  
+  // Send email notification for apartment update
   try {
     await supabase.functions.invoke('send-apartment-email', {
       body: {
-        ...updates,
+        ...updatedApartment,
         action: 'updated',
-        note: updates.note || "", // ensure נשלח
       }
     });
     console.log('Email notification sent for apartment update');
