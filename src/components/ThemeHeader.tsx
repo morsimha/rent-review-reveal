@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useThemeMusic } from '@/hooks/useThemeMusic';
+import { Piano } from "lucide-react";
 import MusicalKeyboard from '@/components/MusicalKeyboard';
 
 interface ThemeHeaderProps {
@@ -12,32 +13,47 @@ interface ThemeHeaderProps {
 
 const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameOpen }) => {
   const { themeConfig, cycleTheme, currentTheme } = useTheme();
-  const { toggleMusic, isPlaying } = useThemeMusic(currentTheme);
+  // מצב ה־Drawer של הפסנתר
+  const [isPianoOpen, setIsPianoOpen] = useState(false);
 
   return (
     <div className="text-center mb-8">
-      {/* Musical Keyboard */}
-      <MusicalKeyboard />
-      
-      <div className="flex items-center justify-center gap-2 mb-2">
-        <button
-          onClick={cycleTheme}
-          className="text-4xl hover:scale-110 transition-transform duration-200 cursor-pointer"
-          title="לחץ לשינוי ערכת נושא"
-        >
-          {themeConfig.mainEmoji}
-        </button>
-        <h1 className={`text-4xl font-bold ${themeConfig.textColor}`}>
-          {themeConfig.title}
-        </h1>
-        <Button
-          onClick={toggleMusic}
-          className={`${themeConfig.buttonGradient} text-white text-xl p-2 rounded-full transition-all duration-200 ${isPlaying ? 'animate-pulse' : ''}`}
-          title={isPlaying ? "השתק מוזיקה" : "הפעל מוזיקה"}
-        >
-          {isPlaying ? '🔊' : '🔇'}
-        </Button>
-      </div>
+      {/* Drawer לפסנתר */}
+      <Drawer open={isPianoOpen} onOpenChange={setIsPianoOpen}>
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <button
+            onClick={cycleTheme}
+            className="text-4xl hover:scale-110 transition-transform duration-200 cursor-pointer"
+            title="לחץ לשינוי ערכת נושא"
+          >
+            {themeConfig.mainEmoji}
+          </button>
+          <h1 className={`text-4xl font-bold ${themeConfig.textColor}`}>
+            {themeConfig.title}
+          </h1>
+          <DrawerTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-2xl p-0 hover:bg-transparent transition-transform"
+              title="פסנתר"
+            >
+              <Piano size={36} />
+            </Button>
+          </DrawerTrigger>
+        </div>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>
+              פסנתר אינטראקטיבי
+              <span className="mx-2" role="img" aria-label="Piano">🎹</span>
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="flex items-center justify-center mt-2">
+            <MusicalKeyboard bigButtons />
+          </div>
+        </DrawerContent>
+      </Drawer>
       <p className={`${themeConfig.accentColor} text-lg mb-2`}>{themeConfig.subtitle}</p>
       <div className="flex items-center justify-center gap-4 mt-2">
         <Button

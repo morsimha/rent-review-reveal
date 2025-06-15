@@ -3,10 +3,14 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
 
-const MusicalKeyboard: React.FC = () => {
+interface MusicalKeyboardProps {
+  bigButtons?: boolean;
+}
+
+const MusicalKeyboard: React.FC<MusicalKeyboardProps> = ({ bigButtons = false }) => {
   const { themeConfig } = useTheme();
 
-  // סדר הפוך: דו הגבוה עד דו הנמוך
+  // סדר: דו הגבוה עד דו הנמוך
   const notes = [
     { name: 'דו', frequency: 523.25, emoji: '🎹' },
     { name: 'סי', frequency: 493.88, emoji: '🎺' },
@@ -29,8 +33,8 @@ const MusicalKeyboard: React.FC = () => {
       
       oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
       oscillator.type = 'sine';
-      // Volume מוגבר (בערך פי 4)
-      gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+      // Volume עוד יותר מוגבר (לדוג' פי 6)
+      gainNode.gain.setValueAtTime(0.6, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
       
       oscillator.start();
@@ -40,6 +44,11 @@ const MusicalKeyboard: React.FC = () => {
     }
   };
 
+  // גודל כפתורים דינמי לפי props
+  const buttonSizeClasses = bigButtons
+    ? "text-2xl px-4 py-2 min-w-12 min-h-12"
+    : "text-base px-2 py-1 min-w-8 min-h-8";
+
   return (
     <div className="flex items-center justify-center gap-1 mb-4">
       <div className="flex flex-wrap justify-center gap-1">
@@ -47,7 +56,7 @@ const MusicalKeyboard: React.FC = () => {
           <Button
             key={index}
             onClick={() => playNote(note.frequency)}
-            className={`${themeConfig.buttonGradient} text-white text-base px-2 py-1 rounded-full min-w-8 min-h-8 transition-all duration-200 hover:scale-110 active:scale-95`}
+            className={`${themeConfig.buttonGradient} text-white ${buttonSizeClasses} rounded-full transition-all duration-200 hover:scale-110 active:scale-95`}
             title={`נגן ${note.name}`}
           >
             {note.emoji}
