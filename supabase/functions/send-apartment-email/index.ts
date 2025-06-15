@@ -23,6 +23,7 @@ interface ApartmentData {
   contact_phone?: string;
   status?: string;
   entry_date?: string;
+  test?: boolean;
 }
 
 function formatEmail(apartment: ApartmentData) {
@@ -50,11 +51,29 @@ serve(async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
   try {
-    const apartment: ApartmentData = await req.json();
+    let apartment: ApartmentData = await req.json();
+
+    // Check if it's a test request – if so, override
+    if (apartment.test) {
+      apartment = {
+        title: "דירה 3.5 חד׳ ברחוב מבוא פודים",
+        price: 3400,
+        square_meters: 65,
+        arnona: 400,
+        floor: 3,
+        location: "מבוא פודים, ירושלים",
+        entry_date: "2025-08-01",
+        contact_name: "אבי בעל־הבית",
+        contact_phone: "050-0000000",
+        description: "דירה מהממת עם נוף פתוח, מרוהטת חלקית, כניסה גמישה.",
+        status: "not_spoke",
+        image_url: "",
+      };
+    }
 
     const result = await resend.emails.send({
       from: "מור וגבי דירות <onboarding@resend.dev>",
-      to: "moroy9@gmail.com",
+      to: ["moroy9@gmail.com", "elgartgavriela@gmail.com"],
       subject: "🆕 נוספה דירה חדשה במערכת!",
       html: formatEmail(apartment),
     });
