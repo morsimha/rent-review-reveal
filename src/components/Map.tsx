@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -7,110 +8,50 @@ import type { Apartment } from '@/types/ApartmentTypes';
 
 interface MapProps {
   apartments: Apartment[];
+  selectedApartmentId?: string | null;
+  setSelectedApartmentId?: (id: string | null) => void;
 }
 
-const Map: React.FC<MapProps> = ({ apartments }) => {
+const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedApartmentId }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // Mapbox token embedded directly
   const mapboxToken = 'pk.eyJ1IjoibW9yb3k5IiwiYSI6ImNtYndnN2s5YzBrMm4ycXNkMGw3bDRtMW0ifQ.TfWPfMMUQfcjEy4OzGR9XA';
 
-  // Store markers to clean them up when needed
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const markersRef = useRef<{ id: string, marker: mapboxgl.Marker, popup: mapboxgl.Popup }[]>([]);
 
-  // Clear all existing markers
   const clearMarkers = () => {
-    markersRef.current.forEach(marker => {
+    markersRef.current.forEach(({marker}) => {
       try {
         marker.remove();
-      } catch (error) {
-        // Ignore cleanup errors
-      }
+      } catch (error) {}
     });
     markersRef.current = [];
   };
 
-  // Geocoding function to convert address to coordinates
   const geocodeAddress = async (location: string, token: string): Promise<[number, number] | null> => {
     if (!location || !token) return null;
-    
     try {
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(location)}.json?access_token=${token}&country=IL&limit=1`
       );
-      
       if (!response.ok) {
         return null;
       }
-      
       const data = await response.json();
       if (data.features && data.features.length > 0) {
         return data.features[0].center;
       }
-    } catch {
-      // Ignore
-    }
-    
+    } catch { }
     return null;
   };
 
-  const initializeMap = async () => {
-    if (!mapContainer.current || !mapboxToken) {
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // Set the access token
-      mapboxgl.accessToken = mapboxToken;
-
-      // Clean up map if exists
-      if (map.current) {
-        clearMarkers();
-        map.current.remove();
-        map.current = null;
-      }
-
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v11',
-        center: [34.7818, 32.0853],
-        zoom: 11,
-      });
-
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-      
-      map.current.on('load', async () => {
-        await addApartmentMarkers();
-        setIsLoading(false);
-        toast({
-          title: "המפה נטענה בהצלחה",
-          description: `נוספו ${apartments.length} דירות למפה`,
-        });
-      });
-
-    } catch (error) {
-      setIsLoading(false);
-      toast({
-        title: "שגיאה בטעינת המפה",
-        description: "תקלה בעת טעינת המפה. נסה שנית.",
-        variant: "destructive"
-      });
-    }
-  };
-
+  // ב- markersRef נשים reference לכל דירה דרך id
   const addApartmentMarkers = async () => {
     if (!map.current) return;
-    
-    // Clear existing markers first
     clearMarkers();
-
-    // Add apartment markers
     for (const apartment of apartments) {
       if (apartment.location) {
         const coordinates = await geocodeAddress(apartment.location, mapboxToken);
@@ -131,31 +72,27 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
           markerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
           switch (apartment.status) {
             case 'spoke':
-              markerElement.style.backgroundColor = '#10b981'; // green
+              markerElement.style.backgroundColor = '#10b981';
               break;
             case 'not_spoke':
-              markerElement.style.backgroundColor = '#f59e0b'; // yellow
+              markerElement.style.backgroundColor = '#f59e0b';
               break;
             case 'no_answer':
-              markerElement.style.backgroundColor = '#ef4444'; // red
+              markerElement.style.backgroundColor = '#ef4444';
               break;
             default:
               markerElement.style.backgroundColor = '#6b7280';
           }
           markerElement.innerHTML = '🏠';
 
+          // יציג רק שם וכותרת
           const popupContent = `
-            <div style="text-align: right; direction: rtl;">
-              <h3 style="font-weight: bold; margin-bottom: 8px;">${apartment.title}</h3>
-              ${apartment.price ? `<p style="color: #10b981; font-weight: bold;">₪${apartment.price}</p>` : ''}
-              ${apartment.description ? `<p style="margin: 4px 0;">${apartment.description}</p>` : ''}
-              ${apartment.contact_name ? `<p style="margin: 4px 0;"><strong>איש קשר:</strong> ${apartment.contact_name}</p>` : ''}
-              ${apartment.contact_phone ? `<p style="margin: 4px 0;"><strong>טלפון:</strong> ${apartment.contact_phone}</p>` : ''}
-              <div style="margin-top: 8px;">
-                ${'★'.repeat(apartment.rating)}${'☆'.repeat(5 - apartment.rating)}
-              </div>
-            </div>
+          <div style="text-align: right; direction: rtl;">
+            <h3 style="font-weight: bold; margin-bottom: 4px; font-size:1rem;">${apartment.title}</h3>
+            ${apartment.price ? `<div style="color: #10b981; font-weight: bold; font-size:0.9rem;">₪${apartment.price}</div>` : ''}
+          </div>
           `;
+
           const popup = new mapboxgl.Popup({
             offset: 25,
             closeButton: true,
@@ -167,30 +104,89 @@ const Map: React.FC<MapProps> = ({ apartments }) => {
             .setPopup(popup)
             .addTo(map.current!);
 
-          // Store marker reference for cleanup
-          markersRef.current.push(marker);
+          markerElement.addEventListener('click', () => {
+            if (setSelectedApartmentId) setSelectedApartmentId(apartment.id);
+            popup.addTo(map.current!);
+          });
+
+          markersRef.current.push({ id: apartment.id, marker, popup });
         }
       }
     }
   };
 
+  // פותח popup של דירה מתאימה בעת שינוי selectedApartmentId
+  useEffect(() => {
+    // אל תעשה כלום אם אין id
+    if (!selectedApartmentId || !markersRef.current.length || !map.current) return;
+    // חפש את ה־popup המתאים ופתח אותו
+    const match = markersRef.current.find(x => x.id === selectedApartmentId);
+    if (match && match.popup && match.marker) {
+      match.popup.addTo(map.current!);
+      // פוקוס למרכז
+      match.marker.togglePopup(); // יבטיח שה-popup ייפתח
+      map.current.flyTo({ center: match.marker.getLngLat(), zoom: 15, speed: 1.5 });
+    }
+  }, [selectedApartmentId]);
+
+  const initializeMap = async () => {
+    if (!mapContainer.current || !mapboxToken) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      mapboxgl.accessToken = mapboxToken;
+      if (map.current) {
+        clearMarkers();
+        map.current.remove();
+        map.current = null;
+      }
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: [34.7818, 32.0853],
+        zoom: 11,
+      });
+
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+      map.current.on('load', async () => {
+        await addApartmentMarkers();
+        setIsLoading(false);
+        toast({
+          title: "המפה נטענה בהצלחה",
+          description: `נוספו ${apartments.length} דירות למפה`,
+        });
+      });
+
+    } catch (error) {
+      setIsLoading(false);
+      toast({
+        title: "שגיאה בטעינת המפה",
+        description: "תקלה בעת טעינת המפה. נסה שנית.",
+        variant: "destructive"
+      });
+    }
+  };
+
   useEffect(() => {
     initializeMap();
-    
+
     return () => {
       clearMarkers();
       if (map.current) {
         try {
           map.current.remove();
-        } catch (error) {
-          // Ignore cleanup errors
-        }
+        } catch (error) {}
         map.current = null;
       }
     };
   }, []);
 
-  // Update markers when apartments change
+  // עדכון markers כשמשהו משתנה ברשימת דירות
   useEffect(() => {
     if (map.current && map.current.isStyleLoaded()) {
       addApartmentMarkers();

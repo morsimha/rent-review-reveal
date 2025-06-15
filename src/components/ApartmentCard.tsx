@@ -14,6 +14,7 @@ interface ApartmentCardProps {
   onMorRatingChange: (apartmentId: string, rating: number) => void;
   onGabiRatingChange: (apartmentId: string, rating: number) => void;
   isAuthenticated: boolean;
+  onCardClick?: () => void; // NEW: Click handler, optional
 }
 
 const ApartmentCard: React.FC<ApartmentCardProps> = ({
@@ -22,7 +23,8 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
   onDelete,
   onMorRatingChange,
   onGabiRatingChange,
-  isAuthenticated
+  isAuthenticated,
+  onCardClick
 }) => {
   const getStatusColor = (status: 'spoke' | 'not_spoke' | 'no_answer') => {
     switch (status) {
@@ -45,7 +47,10 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
   }
 
   return (
-    <Card className="bg-white/90 backdrop-blur-sm border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 h-[580px] flex flex-col">
+    <Card
+      className="bg-white/90 backdrop-blur-sm border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 h-[580px] flex flex-col cursor-pointer"
+      onClick={onCardClick}
+    >
       <CardContent className="p-0 flex flex-col h-full">
         {/* Status Bar */}
         <div className={`h-2 w-full rounded-t-lg ${getStatusColor(apartment.status)}`}></div>

@@ -21,6 +21,7 @@ const Index = () => {
   const [sortBy, setSortBy] = useState<"rating" | "entry_date" | "created_at">("rating");
   const [showWithShelter, setShowWithShelter] = useState<null | boolean>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [selectedApartmentId, setSelectedApartmentId] = useState<string | null>(null); // NEW
 
   const { isAuthenticated, login } = useAuth();
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -245,7 +246,11 @@ const Index = () => {
         {/* Map Section */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-purple-800 mb-4 text-center">מפת הדירות</h2>
-          <Map apartments={apartments} />
+          <Map
+            apartments={apartments}
+            selectedApartmentId={selectedApartmentId}
+            setSelectedApartmentId={setSelectedApartmentId}
+          />
         </div>
 
         {/* Apartments Grid */}
@@ -259,6 +264,7 @@ const Index = () => {
               onMorRatingChange={handleMorRatingChange}
               onGabiRatingChange={handleGabiRatingChange}
               isAuthenticated={isAuthenticated}
+              onCardClick={() => setSelectedApartmentId(apartment.id)} // NEW!
             />
           ))}
         </div>
