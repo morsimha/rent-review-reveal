@@ -1,10 +1,11 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import ApartmentFormFields from './ApartmentFormFields';
 import type { Apartment } from '@/types/ApartmentTypes';
 import { supabase } from '@/integrations/supabase/client';
-// הוספת דיאלוג להצגת תוכן
+import ApartmentImageAnalysisDialog from './ApartmentImageAnalysisDialog';
 import {
   Dialog,
   DialogContent,
@@ -45,15 +46,13 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // ---------- State עבור מצב ה-Dialog ----------
+  // Dialog תצוגה עבור פיענוח בלבד
   const [showDialog, setShowDialog] = useState(false);
   const [parsedResult, setParsedResult] = useState<any>(null);
 
-  // State חדש - פופאפ על בסיס נתונים שחולצו מתמונה
+  // ---------- דיאלוג עריכה מהירה לדירה שנחלקה מתמונה ----------
   const [showQuickEdit, setShowQuickEdit] = useState(false);
   const [quickEditData, setQuickEditData] = useState<Partial<Apartment> | null>(null);
-  const [quickEditImageUrl, setQuickEditImageUrl] = useState<string | null>(null);
-  const quickEditFileInputRef = useRef<HTMLInputElement>(null);
 
   // פונקציה לנקות ולהמיר נתוני תאריך
   const cleanDateData = (dateString: string | null | undefined): string | null => {
@@ -69,22 +68,17 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
     return date.toISOString().split('T')[0];
   };
 
-  // פיצ'ר חדש: העלאה וניתוח אוטומטי של תמונה ליצירת דירה חדשה
+  // ניתוח תמונה: פותח דיאלוג עריכה לפני שמירה
   const handleAnalyzeImage = async (imageUrlToAnalyze: string) => {
     setUploadingImage(true);
     try {
-      console.log('Starting image analysis for URL:', imageUrlToAnalyze);
       const { data, error } = await supabase.functions.invoke('analyze-apartment-image', {
         body: { imageUrl: imageUrlToAnalyze }
       });
-      console.log('Analysis response:', { data, error });
       if (error) {
-        console.error('Edge function error:', error);
         throw new Error(`שגיאת ניתוח: ${error.message || 'בעיה בשרת'}`);
       }
-
       if (data?.data) {
-        // נקה ונמיר את הנתונים
         const cleanedData = {
           ...data.data,
           entry_date: cleanDateData(data.data.entry_date),
@@ -93,18 +87,12 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
           square_meters: data.data.square_meters ? Number(data.data.square_meters) : null,
           floor: data.data.floor ? Number(data.data.floor) : null,
         };
-
-        console.log('Cleaned data:', cleanedData);
-
-        // ---- פה: במקום להוסיף ישירות דירה, נפתח דיאלוג עם אפשרות עריכה ----
         setQuickEditData({
           ...INITIAL_STATE,
           ...cleanedData,
           image_url: imageUrlToAnalyze,
         });
-        setQuickEditImageUrl(imageUrlToAnalyze);
         setShowQuickEdit(true);
-        // המשתמש ישמור ידנית את הדירה אחרי עריכה
       } else {
         toast({
           title: "לא נמצאו מספיק נתונים",
@@ -113,7 +101,6 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
         });
       }
     } catch (error: any) {
-      console.error('Analysis error:', error);
       toast({
         title: "שגיאה",
         description: `לא הצלחנו להעלות או לנתח את התמונה: ${error.message}`,
@@ -123,7 +110,7 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
     setUploadingImage(false);
   };
 
-  // הוספת פעולה: "פרסר" - הצגה בלבד בלי הוספה
+  // פירסר בלבד (תצוגה בלבד של תוצאה)
   const handleParseOnlyImage = async () => {
     if (!formData.image_url?.trim()) {
       toast({
@@ -165,7 +152,7 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
     setUploadingImage(false);
   };
 
-  // שמירה מתוך דיאלוג תיקון מהיר
+  // שמירה מתוך דיאלוג עריכה מהירה
   const handleQuickEditSave = async () => {
     if (!quickEditData?.title?.trim()) {
       toast({
@@ -187,10 +174,8 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
     if (success) {
       setFormData(INITIAL_STATE);
       setQuickEditData(null);
-      setQuickEditImageUrl(null);
       setShowQuickEdit(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
-      if (quickEditFileInputRef.current) quickEditFileInputRef.current.value = '';
       toast({
         title: "הדירה נוספה בהצלחה!",
         description: "ערכת ושלחת דירה שנוספה אוטומטית מהתמונה 🎉",
@@ -204,11 +189,10 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
     }
   };
 
-  // מפעיל את האנליזה ברגע בחירת קובץ או כתובת URL
+  // העלאה וניתוח: פותח עריכה מהירה
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     setUploadingImage(true);
     const uploadedUrl = await uploadImage(file);
     setUploadingImage(false);
@@ -238,7 +222,6 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
       });
       return;
     }
-
     const apartmentData = {
       fb_url: `https://facebook.com/generated-${Date.now()}`,
       title: formData.title,
@@ -261,11 +244,8 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
       has_shelter: formData.has_shelter,
       entry_date: cleanDateData(formData.entry_date),
     };
-
     const success = await onAddApartment(apartmentData);
-
     if (success) {
-      // Reset form
       setFormData(INITIAL_STATE);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -275,33 +255,18 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
 
   return (
     <div className="space-y-6">
-      {/* Dialog עריכה לדירה שחולצה אוטומטית (רק אם חולצה) */}
-      <Dialog open={showQuickEdit} onOpenChange={setShowQuickEdit}>
-        <DialogContent className="max-w-2xl" dir="rtl">
-          <DialogHeader>
-            <DialogTitle>עבור על הנתונים לפני שמירה</DialogTitle>
-            <DialogDescription>נתוני הדירה חולצו אוטומטית. אנא בדוק וערוך אותם לפי הצורך לפני שמירה!</DialogDescription>
-          </DialogHeader>
-          {quickEditData && (
-            <ApartmentFormFields
-              formData={quickEditData}
-              setFormData={setQuickEditData as any}
-              handleImageUpload={handleImageUpload}
-              uploadingImage={uploadingImage}
-              fileInputRef={quickEditFileInputRef}
-              idPrefix="quick_edit_"
-            />
-          )}
-          <DialogFooter>
-            <Button onClick={handleQuickEditSave} className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2">שמור דירה</Button>
-            <DialogClose asChild>
-              <Button variant="secondary">ביטול</Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* דיאלוג עריכת נתוני תמונה */}
+      <ApartmentImageAnalysisDialog
+        open={showQuickEdit}
+        setOpen={setShowQuickEdit}
+        quickEditData={quickEditData}
+        setQuickEditData={setQuickEditData}
+        uploadingImage={uploadingImage}
+        handleImageUpload={handleImageUpload}
+        onSave={handleQuickEditSave}
+      />
 
-      {/* העלאת תמונה להוספה אוטומטית */}
+      {/* העלאת תמונה + אנליזה */}
       <div className="border-2 border-dashed border-purple-300 rounded-lg p-6 bg-purple-50 mb-4">
         <div className="text-center mb-4">
           <h3 className="text-lg font-semibold text-purple-800">העלאת תמונת פוסט להוספת דירה מיידית</h3>
@@ -352,7 +317,7 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
         )}
       </div>
 
-      {/* Dialog להצגת התוצאה */}
+      {/* Dialog להצגת פיענוח */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent>
           <DialogHeader>
