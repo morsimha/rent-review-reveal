@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import ApartmentFormFields from './ApartmentFormFields';
-import ImageAnalyzer from './ImageAnalyzer';
 import type { Apartment } from '@/types/ApartmentTypes';
 
 interface ApartmentFormProps {
@@ -32,34 +31,84 @@ const INITIAL_STATE: Partial<Apartment> = {
 const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadImage }) => {
   const [formData, setFormData] = useState<Partial<Apartment>>(INITIAL_STATE);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [showAnalyzer, setShowAnalyzer] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  // פיצ'ר חדש: העלאה וניתוח אוטומטי של תמונה ליצירת דירה חדשה
+  const handleAnalyzeImage = async (imageUrlToAnalyze: string) => {
+    setUploadingImage(true);
+    try {
+      const { data, error } = await (window as any).supabase.functions.invoke('analyze-apartment-image', {
+        body: { imageUrl: imageUrlToAnalyze }
+      });
+
+      if (error) throw error;
+
+      if (data?.data) {
+        // מנסה להוסיף דירה חדשה אוטומטית לפי הנתונים שחולצו
+        const newApartmentData = {
+          ...INITIAL_STATE,
+          ...data.data,
+          image_url: imageUrlToAnalyze,
+        };
+        const success = await onAddApartment(newApartmentData);
+
+        if (success) {
+          setFormData(INITIAL_STATE);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+          toast({
+            title: "הדירה נוספה בהצלחה!",
+            description: "הנתונים נלקחו אוטומטית מהתמונה 🎉",
+          });
+        } else {
+          toast({
+            title: "שגיאה בהוספה",
+            description: "קרה משהו לא צפוי. אנא נסה שוב",
+            variant: "destructive"
+          });
+        }
+      } else {
+        toast({
+          title: "לא נמצאו מספיק נתונים",
+          description: "המערכת לא הצליחה לזהות נתוני דירה בתמונה",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "שגיאה",
+        description: "לא הצלחנו להעלות או לנתח את התמונה",
+        variant: "destructive"
+      });
+    }
+    setUploadingImage(false);
+  };
+
+  // מפעיל את האנליזה ברגע בחירת קובץ או כתובת URL
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setUploadingImage(true);
     const uploadedUrl = await uploadImage(file);
-    if (uploadedUrl) {
-      setFormData(prev => ({...prev, image_url: uploadedUrl}));
-    }
     setUploadingImage(false);
+    if (uploadedUrl) {
+      await handleAnalyzeImage(uploadedUrl);
+    }
   };
 
-  const handleDataExtracted = (extractedData: Partial<Apartment>) => {
-    setFormData(prev => ({
-      ...prev,
-      ...extractedData,
-      // Keep existing image_url if no new one was extracted
-      image_url: extractedData.image_url || prev.image_url
-    }));
-    setShowAnalyzer(false);
-    toast({
-      title: "נתונים חולצו בהצלחה",
-      description: "אנא בדוק ותקן את הנתונים לפני השמירה",
-    });
+  const handleImageUrlAnalyze = async () => {
+    if (!formData.image_url?.trim()) {
+      toast({
+        title: "שגיאה",
+        description: "יש להזין קישור לתמונה",
+        variant: "destructive"
+      });
+      return;
+    }
+    await handleAnalyzeImage(formData.image_url!);
   };
 
   const handleAddApartment = async () => {
@@ -100,7 +149,6 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
     if (success) {
       // Reset form
       setFormData(INITIAL_STATE);
-      setShowAnalyzer(true);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -109,26 +157,47 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
 
   return (
     <div className="space-y-6">
-      {/* Image Analyzer */}
-      {showAnalyzer && (
-        <ImageAnalyzer
-          onDataExtracted={handleDataExtracted}
-          uploadImage={uploadImage}
-        />
-      )}
-
-      {/* Toggle Analyzer */}
-      {!showAnalyzer && (
-        <div className="text-center">
-          <Button
-            onClick={() => setShowAnalyzer(true)}
-            variant="outline"
-            className="border-purple-300 text-purple-600 hover:bg-purple-50"
-          >
-            הצג שוב ניתוח תמונה
-          </Button>
+      {/* העלאת תמונה להוספה אוטומטית */}
+      <div className="border-2 border-dashed border-purple-300 rounded-lg p-6 bg-purple-50 mb-4">
+        <div className="text-center mb-4">
+          <h3 className="text-lg font-semibold text-purple-800">העלאת תמונת פוסט להוספת דירה מיידית</h3>
+          <p className="text-sm text-purple-600">העלה תמונה או הכנס קישור - נחלץ את נתוני הדירה ונצרף אותה אוטומטית!</p>
         </div>
-      )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={uploadingImage}
+              className="block w-full text-sm text-purple-900 border border-purple-300 rounded-lg cursor-pointer bg-purple-50 focus:outline-none"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="https://example.com/apartment-image.jpg"
+              value={formData.image_url || ""}
+              onChange={e => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+              disabled={uploadingImage}
+              className="flex-1 border border-purple-300 rounded px-3 py-2 text-sm"
+            />
+            <Button
+              type="button"
+              onClick={handleImageUrlAnalyze}
+              disabled={uploadingImage || !formData.image_url?.trim()}
+              className="bg-purple-500 hover:bg-purple-600"
+            >
+              {uploadingImage ? "מעלה..." : "שלח לאנליזה"}
+            </Button>
+          </div>
+        </div>
+        {uploadingImage && (
+          <div className="text-center py-4">
+            <span className="text-purple-600">מעלה/מנתח תמונה...</span>
+          </div>
+        )}
+      </div>
 
       {/* Form Fields */}
       <ApartmentFormFields
