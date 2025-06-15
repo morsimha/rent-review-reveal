@@ -1,10 +1,9 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Route, X } from 'lucide-react';
 import type { Apartment } from '@/types/ApartmentTypes';
 
 interface MapProps {
@@ -17,16 +16,11 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRoutingMode, setIsRoutingMode] = useState(false);
-  const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartTime, setDragStartTime] = useState(0);
   const { toast } = useToast();
 
   const mapboxToken = 'pk.eyJ1IjoibW9yb3k5IiwiYSI6ImNtYndnN2s5YzBrMm4ycXNkMGw3bDRtMW0ifQ.TfWPfMMUQfcjEy4OzGR9XA';
 
   const markersRef = useRef<{ id: string, marker: mapboxgl.Marker, popup: mapboxgl.Popup }[]>([]);
-  const routeMarkersRef = useRef<mapboxgl.Marker[]>([]);
   const popupTimeoutRef = useRef<number | null>(null);
 
   const clearMarkers = () => {
@@ -36,234 +30,6 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
       } catch (error) {}
     });
     markersRef.current = [];
-  };
-
-  const clearRouteMarkers = () => {
-    routeMarkersRef.current.forEach(marker => {
-      try {
-        marker.remove();
-      } catch (error) {}
-    });
-    routeMarkersRef.current = [];
-  };
-
-  const clearRoute = () => {
-    if (map.current && map.current.getSource('route')) {
-      map.current.removeLayer('route');
-      map.current.removeSource('route');
-    }
-    clearRouteMarkers();
-    setRoutePoints([]);
-  };
-
-  const addRouteMarker = (lngLat: [number, number], label: string) => {
-    if (!map.current) return;
-
-    const el = document.createElement('div');
-    el.className = 'route-marker';
-    el.style.width = '20px';
-    el.style.height = '20px';
-    el.style.borderRadius = '50%';
-    el.style.backgroundColor = '#3b82f6';
-    el.style.border = '2px solid white';
-    el.style.display = 'flex';
-    el.style.alignItems = 'center';
-    el.style.justifyContent = 'center';
-    el.style.fontSize = '12px';
-    el.style.fontWeight = 'bold';
-    el.style.color = 'white';
-    el.textContent = label;
-
-    const marker = new mapboxgl.Marker(el)
-      .setLngLat(lngLat)
-      .addTo(map.current);
-
-    routeMarkersRef.current.push(marker);
-  };
-
-  const getRoute = async (start: [number, number], end: [number, number]) => {
-    try {
-      const response = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?geometries=geojson&access_token=${mapboxToken}`
-      );
-      
-      if (!response.ok) {
-        throw new Error('Failed to get route');
-      }
-
-      const data = await response.json();
-      
-      if (data.routes && data.routes.length > 0) {
-        const route = data.routes[0];
-        
-        // Add route layer to map
-        if (map.current) {
-          if (map.current.getSource('route')) {
-            map.current.removeLayer('route');
-            map.current.removeSource('route');
-          }
-
-          map.current.addSource('route', {
-            type: 'geojson',
-            data: {
-              type: 'Feature',
-              properties: {},
-              geometry: route.geometry
-            }
-          });
-
-          map.current.addLayer({
-            id: 'route',
-            type: 'line',
-            source: 'route',
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round'
-            },
-            paint: {
-              'line-color': '#3b82f6',
-              'line-width': 5,
-              'line-opacity': 0.75
-            }
-          });
-
-          // Fit map to route bounds
-          const coordinates = route.geometry.coordinates;
-          const bounds = new mapboxgl.LngLatBounds();
-          coordinates.forEach((coord: [number, number]) => bounds.extend(coord));
-          map.current.fitBounds(bounds, { padding: 50 });
-        }
-
-        const duration = Math.round(route.duration / 60);
-        const distance = (route.distance / 1000).toFixed(1);
-        
-        toast({
-          title: "מסלול נמצא!",
-          description: `מרחק: ${distance} ק"מ, זמן נסיעה: ${duration} דקות`,
-        });
-      }
-    } catch (error) {
-      console.error('Error getting route:', error);
-      toast({
-        title: "שגיאה",
-        description: "לא ניתן לחשב מסלול",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const toggleMapInteractions = (enabled: boolean) => {
-    if (!map.current) return;
-
-    if (enabled) {
-      // Enable all interactions
-      map.current.scrollZoom.enable();
-      map.current.boxZoom.enable();
-      map.current.dragRotate.enable();
-      map.current.dragPan.enable();
-      map.current.keyboard.enable();
-      map.current.doubleClickZoom.enable();
-      map.current.touchZoomRotate.enable();
-    } else {
-      // Disable all interactions 
-      map.current.scrollZoom.disable();
-      map.current.boxZoom.disable();
-      map.current.dragRotate.disable();
-      map.current.dragPan.disable();
-      map.current.keyboard.disable();
-      map.current.doubleClickZoom.disable();
-      map.current.touchZoomRotate.disable();
-    }
-  };
-
-  const handleRoutePointSelection = (lngLat: [number, number]) => {
-    console.log('Route point selected, routing mode:', isRoutingMode, 'route points length:', routePoints.length);
-    
-    if (!isRoutingMode) {
-      console.log('Not in routing mode, ignoring selection');
-      return;
-    }
-
-    console.log('Selected coordinates:', lngLat);
-    
-    if (routePoints.length === 0) {
-      // First point
-      console.log('Setting first route point');
-      setRoutePoints([lngLat]);
-      addRouteMarker(lngLat, 'A');
-      toast({
-        title: "נקודת התחלה נבחרה",
-        description: "לחץ וגרור על המפה לבחירת נקודת הסיום",
-      });
-    } else if (routePoints.length === 1) {
-      // Second point
-      console.log('Setting second route point');
-      const newPoints = [...routePoints, lngLat];
-      setRoutePoints(newPoints);
-      addRouteMarker(lngLat, 'B');
-      
-      // Calculate route
-      getRoute(routePoints[0], lngLat);
-    }
-  };
-
-  const handleMapMouseDown = (e: mapboxgl.MapMouseEvent) => {
-    if (!isRoutingMode) return;
-    
-    console.log('Mouse down in routing mode');
-    setIsDragging(false);
-    setDragStartTime(Date.now());
-  };
-
-  const handleMapMouseMove = (e: mapboxgl.MapMouseEvent) => {
-    if (!isRoutingMode) return;
-    
-    if (dragStartTime > 0) {
-      setIsDragging(true);
-    }
-  };
-
-  const handleMapMouseUp = (e: mapboxgl.MapMouseEvent) => {
-    if (!isRoutingMode) return;
-    
-    console.log('Mouse up in routing mode, isDragging:', isDragging, 'dragStartTime:', dragStartTime);
-    
-    const dragDuration = Date.now() - dragStartTime;
-    const wasShortClick = dragDuration < 200 && !isDragging;
-    
-    if (wasShortClick) {
-      // This was a quick click without dragging - ignore
-      console.log('Short click detected, ignoring');
-    } else if (isDragging || dragDuration >= 200) {
-      // This was a drag or a long press - select point
-      console.log('Drag or long press detected, selecting point');
-      const lngLat: [number, number] = [e.lngLat.lng, e.lngLat.lat];
-      handleRoutePointSelection(lngLat);
-    }
-    
-    setIsDragging(false);
-    setDragStartTime(0);
-  };
-
-  const toggleRoutingMode = () => {
-    console.log('Toggling routing mode from:', isRoutingMode);
-    if (isRoutingMode) {
-      clearRoute();
-      setIsRoutingMode(false);
-      toggleMapInteractions(true); // Re-enable map interactions
-      toast({
-        title: "מצב מסלול בוטל",
-        description: "חזרה למצב רגיל",
-      });
-    } else {
-      setIsRoutingMode(true);
-      setRoutePoints([]);
-      toggleMapInteractions(false); // Disable map interactions
-      toast({
-        title: "מצב מסלול הופעל",
-        description: "לחץ וגרור על המפה לבחירת נקודת התחלה",
-      });
-    }
   };
 
   const geocodeAddress = async (location: string, token: string): Promise<[number, number] | null> => {
@@ -391,7 +157,6 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
       mapboxgl.accessToken = mapboxToken;
       if (map.current) {
         clearMarkers();
-        clearRouteMarkers();
         map.current.remove();
         map.current = null;
       }
@@ -413,13 +178,6 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
         });
       });
 
-      // Add mouse event handlers for drag-based route point selection
-      map.current.on('mousedown', handleMapMouseDown);
-      map.current.on('mousemove', handleMapMouseMove);
-      map.current.on('mouseup', handleMapMouseUp);
-      
-      console.log('Map drag handlers added for routing');
-
     } catch (error) {
       console.error('Map initialization error:', error);
       setIsLoading(false);
@@ -436,7 +194,6 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
 
     return () => {
       clearMarkers();
-      clearRouteMarkers();
       if (map.current) {
         try {
           map.current.remove();
@@ -458,53 +215,6 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
         <div className="relative">
           <div ref={mapContainer} className="w-full h-96 rounded-lg" />
           
-          {/* Route Controls */}
-          <div className="absolute top-2 left-2 flex flex-col gap-2">
-            <Button
-              onClick={toggleRoutingMode}
-              variant={isRoutingMode ? "destructive" : "default"}
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              {isRoutingMode ? (
-                <>
-                  <X className="w-4 h-4" />
-                  ביטול מסלול
-                </>
-              ) : (
-                <>
-                  <Route className="w-4 h-4" />
-                  התחל מסלול
-                </>
-              )}
-            </Button>
-            
-            {isRoutingMode && routePoints.length > 0 && (
-              <Button
-                onClick={clearRoute}
-                variant="outline"
-                size="sm"
-                className="text-xs"
-              >
-                נקה מסלול
-              </Button>
-            )}
-            
-            {/* Status info */}
-            {isRoutingMode && (
-              <div className="bg-white/90 p-2 rounded text-xs shadow-lg">
-                <div className="text-green-600 font-bold">מצב מסלול: פעיל</div>
-                <div>נקודות שנבחרו: {routePoints.length}</div>
-                <div className="text-blue-600">
-                  {routePoints.length === 0 && "לחץ וגרור לנקודת התחלה"}
-                  {routePoints.length === 1 && "לחץ וגרור לנקודת הסיום"}
-                  {routePoints.length === 2 && "מסלול הושלם!"}
-                </div>
-                <div className="text-orange-600 font-bold">זום והזזה מבוטלים</div>
-              </div>
-            )}
-          </div>
-
           {/* Legend */}
           <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 text-xs" dir="rtl">
             <div className="flex items-center gap-2 mb-1">
