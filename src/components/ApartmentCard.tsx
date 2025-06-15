@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Trash2, Edit, Phone, Link, House } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import StarRating from './StarRating';
 import type { Apartment } from '@/types/ApartmentTypes';
 import { format, parseISO } from 'date-fns';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface ApartmentCardProps {
   apartment: Apartment;
@@ -13,6 +13,8 @@ interface ApartmentCardProps {
   onDelete: (apartmentId: string) => void;
   onMorRatingChange: (apartmentId: string, rating: number) => void;
   onGabiRatingChange: (apartmentId: string, rating: number) => void;
+  onMorTalkedChange?: (apartmentId: string, value: boolean) => void;
+  onGabiTalkedChange?: (apartmentId: string, value: boolean) => void;
   isAuthenticated: boolean;
   onCardClick?: () => void; // NEW: Click handler, optional
 }
@@ -23,6 +25,8 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
   onDelete,
   onMorRatingChange,
   onGabiRatingChange,
+  onMorTalkedChange,
+  onGabiTalkedChange,
   isAuthenticated,
   onCardClick
 }) => {
@@ -152,7 +156,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             </div>
           )}
 
-          {/* Ratings */}
+          {/* Ratings & מי דיבר */}
           <div className="mb-3 space-y-2">
             {/* מור: הכי שמאל, כוכבים מימין */}
             <div className="flex flex-row items-center gap-2 justify-start text-right">
@@ -161,6 +165,19 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
                 rating={apartment.mor_rating || 0}
                 onRatingChange={(rating) => onMorRatingChange(apartment.id, rating)}
               />
+              {/* סימון האם מור דיבר */}
+              <div className="flex items-center gap-1">
+                <Checkbox
+                  checked={!!apartment.spoke_with_mor}
+                  onCheckedChange={(value) =>
+                    onMorTalkedChange?.(apartment.id, !!value)
+                  }
+                  aria-label="מור דיבר עם בעל הדירה"
+                  className="accent-purple-600"
+                  disabled={!isAuthenticated}
+                />
+                <span className="text-xs text-gray-500">דיברתי</span>
+              </div>
             </div>
             <div className="flex flex-row items-center gap-2 justify-start text-right">
               <span className="text-sm font-medium text-pink-600">גבי:</span>
@@ -168,6 +185,19 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
                 rating={apartment.gabi_rating || 0}
                 onRatingChange={(rating) => onGabiRatingChange(apartment.id, rating)}
               />
+              {/* סימון האם גבי דיבר */}
+              <div className="flex items-center gap-1">
+                <Checkbox
+                  checked={!!apartment.spoke_with_gabi}
+                  onCheckedChange={(value) =>
+                    onGabiTalkedChange?.(apartment.id, !!value)
+                  }
+                  aria-label="גבי דיבר עם בעל הדירה"
+                  className="accent-pink-600"
+                  disabled={!isAuthenticated}
+                />
+                <span className="text-xs text-gray-500">דיברתי</span>
+              </div>
             </div>
           </div>
 

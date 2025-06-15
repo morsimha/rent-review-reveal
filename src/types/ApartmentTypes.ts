@@ -1,4 +1,3 @@
-
 export interface Apartment {
   id: string;
   fb_url: string | null;
@@ -23,4 +22,6 @@ export interface Apartment {
   arnona: number | null;
   square_meters: number | null;
   floor: number | null;
+  spoke_with_mor?: boolean | null;
+  spoke_with_gabi?: boolean | null;
 }

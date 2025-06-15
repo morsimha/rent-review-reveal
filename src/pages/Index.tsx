@@ -67,6 +67,15 @@ const Index = () => {
     await updateGabiRating(apartmentId, newRating);
   };
 
+  const handleMorTalkedChange = async (apartmentId: string, value: boolean) => {
+    if (!isAuthenticated) return;
+    await updateApartment(apartmentId, { spoke_with_mor: value });
+  };
+  const handleGabiTalkedChange = async (apartmentId: string, value: boolean) => {
+    if (!isAuthenticated) return;
+    await updateApartment(apartmentId, { spoke_with_gabi: value });
+  };
+
   const handleEditApartment = (apartment: Apartment) => {
     setEditingApartment(apartment);
     setIsEditDialogOpen(true);
@@ -264,7 +273,9 @@ const Index = () => {
               onMorRatingChange={handleMorRatingChange}
               onGabiRatingChange={handleGabiRatingChange}
               isAuthenticated={isAuthenticated}
-              onCardClick={() => setSelectedApartmentId(apartment.id)} // NEW!
+              onCardClick={() => setSelectedApartmentId(apartment.id)}
+              onMorTalkedChange={handleMorTalkedChange}
+              onGabiTalkedChange={handleGabiTalkedChange}
             />
           ))}
         </div>
