@@ -5,6 +5,16 @@ import { useToast } from '@/hooks/use-toast';
 import ApartmentFormFields from './ApartmentFormFields';
 import type { Apartment } from '@/types/ApartmentTypes';
 import { supabase } from '@/integrations/supabase/client';
+// הוספת דיאלוג להצגת תוכן
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
 
 interface ApartmentFormProps {
   onAddApartment: (apartmentData: any) => Promise<boolean>;
@@ -36,23 +46,21 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  // ---------- State עבור מצב ה-Dialog ----------
+  const [showDialog, setShowDialog] = useState(false);
+  const [parsedResult, setParsedResult] = useState<any>(null);
+
   // פונקציה לנקות ולהמיר נתוני תאריך
   const cleanDateData = (dateString: string | null | undefined): string | null => {
     if (!dateString) return null;
-    
-    // אם התאריך מכיל מילים כמו "מידית", "כעת", וכו' - נחזיר null
     const hebrewWords = /מידית|כעת|עכשיו|תכף|בקרוב/;
     if (hebrewWords.test(dateString)) {
       return null;
     }
-    
-    // ננסה להמיר לתאריך תקין
     const date = new Date(dateString);
     if (isNaN(date.getTime())) {
       return null;
     }
-    
-    // נחזיר בפורמט YYYY-MM-DD
     return date.toISOString().split('T')[0];
   };
 
@@ -61,13 +69,10 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
     setUploadingImage(true);
     try {
       console.log('Starting image analysis for URL:', imageUrlToAnalyze);
-      
       const { data, error } = await supabase.functions.invoke('analyze-apartment-image', {
         body: { imageUrl: imageUrlToAnalyze }
       });
-
       console.log('Analysis response:', { data, error });
-
       if (error) {
         console.error('Edge function error:', error);
         throw new Error(`שגיאת ניתוח: ${error.message || 'בעיה בשרת'}`);
@@ -92,9 +97,7 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
           ...cleanedData,
           image_url: imageUrlToAnalyze,
         };
-        
         console.log('Final apartment data to add:', newApartmentData);
-        
         const success = await onAddApartment(newApartmentData);
 
         if (success) {
@@ -125,6 +128,48 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
       toast({
         title: "שגיאה",
         description: `לא הצלחנו להעלות או לנתח את התמונה: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+    setUploadingImage(false);
+  };
+
+  // הוספת פעולה: "פרסר" - הצגה בלבד בלי הוספה
+  const handleParseOnlyImage = async () => {
+    if (!formData.image_url?.trim()) {
+      toast({
+        title: "שגיאה",
+        description: "יש להזין קישור לתמונה",
+        variant: "destructive"
+      });
+      return;
+    }
+    setUploadingImage(true);
+    setParsedResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-apartment-image', {
+        body: { imageUrl: formData.image_url }
+      });
+      if (error) {
+        toast({
+          title: "שגיאה בניתוח",
+          description: error.message || "בעיה בניתוח התמונה",
+          variant: "destructive"
+        });
+      } else if (data?.data) {
+        setParsedResult(data.data);
+        setShowDialog(true);
+      } else {
+        toast({
+          title: "לא נמצא תוכן",
+          description: "המערכת לא הצליחה לנתח מידע מהתמונה",
+          variant: "destructive"
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: "שגיאה",
+        description: err?.message || "קרתה שגיאה לא צפויה",
         variant: "destructive"
       });
     }
@@ -235,6 +280,15 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
             >
               {uploadingImage ? "מעלה..." : "שלח לאנליזה"}
             </Button>
+            <Button
+              type="button"
+              onClick={handleParseOnlyImage}
+              disabled={uploadingImage || !formData.image_url?.trim()}
+              variant="secondary"
+              className="bg-purple-100 text-purple-700 border-purple-400 hover:bg-purple-200 transition"
+            >
+              פרסר
+            </Button>
           </div>
         </div>
         {uploadingImage && (
@@ -243,6 +297,26 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
           </div>
         )}
       </div>
+
+      {/* Dialog להצגת התוצאה */}
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>פיענוח אוטומטי מהתמונה</DialogTitle>
+            <DialogDescription>
+              אלו הנתונים שחולצו ע"י OpenAI:
+            </DialogDescription>
+          </DialogHeader>
+          <div dir="ltr" className="overflow-x-auto p-2 bg-gray-100 rounded border text-sm max-h-80">
+            <pre className="whitespace-pre-wrap break-words">{parsedResult ? JSON.stringify(parsedResult, null, 2) : "אין נתונים"}</pre>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="secondary">סגור</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Form Fields */}
       <ApartmentFormFields
@@ -253,7 +327,7 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
         fileInputRef={fileInputRef}
         idPrefix="add_"
       />
-      
+
       <Button 
         onClick={handleAddApartment}
         className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold py-3 transition-all duration-300"
