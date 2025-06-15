@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -154,37 +153,22 @@ const ApartmentFormFields: React.FC<ApartmentFormFieldsProps> = ({
           placeholder="שם איש קשר"
         />
       </div>
-      <div>
-        <Label className="text-right block mb-1">סטטוס</Label>
-        <RadioGroup value={formData.status} onValueChange={(value: 'spoke' | 'not_spoke' | 'no_answer') => setFormData(prev => ({...prev, status: value}))}>
-          <div className="flex flex-col gap-2 items-end">
-            <div className="flex flex-row-reverse items-center gap-2">
-              <RadioGroupItem value="spoke" id={`${idPrefix}spoke`} />
-              <Label htmlFor={`${idPrefix}spoke`} className="text-green-600">דיברנו</Label>
-            </div>
-            <div className="flex flex-row-reverse items-center gap-2">
-              <RadioGroupItem value="not_spoke" id={`${idPrefix}not_spoke`} />
-              <Label htmlFor={`${idPrefix}not_spoke`} className="text-yellow-600">לא דיברנו</Label>
-            </div>
-            <div className="flex flex-row-reverse items-center gap-2">
-              <RadioGroupItem value="no_answer" id={`${idPrefix}no_answer`} />
-              <Label htmlFor={`${idPrefix}no_answer`} className="text-red-600">לא ענו</Label>
-            </div>
-          </div>
-        </RadioGroup>
-      </div>
+      {/* בעלי חיים */}
       <div>
         <Label className="text-right block mb-1">בעלי חיים</Label>
         <RadioGroup value={formData.pets_allowed} onValueChange={(value: 'yes' | 'no' | 'unknown') => setFormData(prev => ({...prev, pets_allowed: value}))}>
           <div className="flex flex-col gap-2 items-end">
+            {/* קודם "כן" עם 🐱 בסוף */}
             <div className="flex flex-row-reverse items-center gap-2">
               <RadioGroupItem value="yes" id={`${idPrefix}pets_yes`} />
-              <Label htmlFor={`${idPrefix}pets_yes`}>כן 🐱</Label>
+              <Label htmlFor={`${idPrefix}pets_yes`}>כן <span className="text-lg ml-1">🐱</span></Label>
             </div>
+            {/* אחריו "לא" עם 🚫 בסוף */}
             <div className="flex flex-row-reverse items-center gap-2">
               <RadioGroupItem value="no" id={`${idPrefix}pets_no`} />
-              <Label htmlFor={`${idPrefix}pets_no`}>לא 🚫</Label>
+              <Label htmlFor={`${idPrefix}pets_no`}>לא <span className="text-lg ml-1">🚫</span></Label>
             </div>
+            {/* לא יודע */}
             <div className="flex flex-row-reverse items-center gap-2">
               <RadioGroupItem value="unknown" id={`${idPrefix}pets_unknown`} />
               <Label htmlFor={`${idPrefix}pets_unknown`}>לא יודע</Label>
@@ -192,6 +176,7 @@ const ApartmentFormFields: React.FC<ApartmentFormFieldsProps> = ({
           </div>
         </RadioGroup>
       </div>
+      {/* יש מקלט */}
       <div>
         <Label className="text-right block mb-1">יש מקלט?</Label>
         <RadioGroup value={formData.has_shelter === null || formData.has_shelter === undefined ? "" : formData.has_shelter ? "yes" : "no"}
@@ -208,7 +193,9 @@ const ApartmentFormFields: React.FC<ApartmentFormFieldsProps> = ({
           </div>
         </RadioGroup>
       </div>
-      <div>
+      {/* כותרת המשך היישור לימין לכל השדה מתחת "יש מקלט" */}
+      {/* תאריך כניסה */}
+      <div className="md:col-span-2 text-right">
         <Label className="text-right block mb-1">תאריך כניסה</Label>
         <Input
           type="date"
@@ -218,6 +205,7 @@ const ApartmentFormFields: React.FC<ApartmentFormFieldsProps> = ({
           className="bg-white/70 border-purple-300 focus:border-purple-500"
         />
       </div>
+      {/* שאר הקוד */}
       <div className="md:col-span-2">
         <Label className="text-right">תיאור</Label>
         <Textarea

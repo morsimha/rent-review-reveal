@@ -69,9 +69,8 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-20">
             {apartment.price && (
               <div className="bg-green-500 text-white px-2 py-1 rounded-full font-bold text-sm flex items-center gap-1">
-                {/* שפוך את המספר קודם ואז את סמל המטבע */}
-                <span>{apartment.price}</span>
-                <span>₪</span>
+                {/* הצג מחיר כ: ₪1234 */}
+                <span>₪{apartment.price}</span>
               </div>
             )}
             {/* ארנונה */}
@@ -112,15 +111,17 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
               {apartment.title}
             </h3>
           </div>
-          {/* Entry date below title */}
+          {/* Entry date below title - שנה בין המקום של התאריך ללוגו */}
           {formattedEntryDate && (
-            <div className="flex w-full mb-2 mt-1">
+            <div className="flex w-full mb-2 mt-1 flex-row-reverse items-center justify-end">
+              {/* הכפתור משמאל לתאריך */}
               <span
-                className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ml-auto"
+                className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ml-1"
                 dir="ltr"
               >
                 {formattedEntryDate}
               </span>
+              <span className="text-purple-700 mr-2 text-base">🗓️</span>
             </div>
           )}
 
@@ -160,8 +161,8 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           {/* Ratings & מי דיבר */}
           <div className="mb-3 space-y-2">
             {/* מור: תיבת הסימון בצד ימין */}
-            <div className="flex flex-row items-center gap-2 justify-start text-right">
-              <div className="flex items-center gap-1">
+            <div className="flex flex-row items-center gap-2 justify-end text-right">
+              <div className="flex items-center gap-1 order-2">
                 <Checkbox
                   checked={!!apartment.spoke_with_mor}
                   onCheckedChange={(value) =>
@@ -172,15 +173,15 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
                   disabled={!isAuthenticated}
                 />
               </div>
-              <span className="text-sm font-medium text-purple-600">מור:</span>
+              <span className="text-sm font-medium text-purple-600 order-1">מור:</span>
               <StarRating
                 rating={apartment.mor_rating || 0}
                 onRatingChange={(rating) => onMorRatingChange(apartment.id, rating)}
               />
             </div>
             {/* גבי: תיבת הסימון בצד ימין */}
-            <div className="flex flex-row items-center gap-2 justify-start text-right">
-              <div className="flex items-center gap-1">
+            <div className="flex flex-row items-center gap-2 justify-end text-right">
+              <div className="flex items-center gap-1 order-2">
                 <Checkbox
                   checked={!!apartment.spoke_with_gabi}
                   onCheckedChange={(value) =>
@@ -191,7 +192,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
                   disabled={!isAuthenticated}
                 />
               </div>
-              <span className="text-sm font-medium text-pink-600">גבי:</span>
+              <span className="text-sm font-medium text-pink-600 order-1">גבי:</span>
               <StarRating
                 rating={apartment.gabi_rating || 0}
                 onRatingChange={(rating) => onGabiRatingChange(apartment.id, rating)}
