@@ -18,8 +18,7 @@ const Index = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCatGameOpen, setIsCatGameOpen] = useState(false);
   const [isDrawingGameOpen, setIsDrawingGameOpen] = useState(false);
-  const [sortBy, setSortBy] = useState<"rating" | "entry_date" | "created_at">("rating");
-  const [showWithShelter, setShowWithShelter] = useState<null | boolean>(null);
+  const [sortBy, setSortBy] = useState<"rating" | "entry_date" | "created_at" | "status">("rating");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedApartmentId, setSelectedApartmentId] = useState<string | null>(null); // NEW
 
@@ -136,9 +135,6 @@ const Index = () => {
   }
 
   let filteredApartments = apartments;
-  if (showWithShelter !== null) {
-    filteredApartments = filteredApartments.filter(a => (a.has_shelter ?? false) === showWithShelter);
-  }
   if (sortBy === "entry_date") {
     filteredApartments = [...filteredApartments].sort((a, b) => {
       if (!a.entry_date) return 1;
@@ -153,6 +149,14 @@ const Index = () => {
     });
   } else if (sortBy === "created_at") {
     filteredApartments = [...filteredApartments].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  } else if (sortBy === "status") {
+    // סדר עדיפות: spoke > not_spoke > no_answer > undefined/other
+    const statusOrder = { "spoke": 0, "not_spoke": 1, "no_answer": 2 };
+    filteredApartments = [...filteredApartments].sort((a, b) => {
+      const aOrder = statusOrder[a.status as keyof typeof statusOrder] ?? 3;
+      const bOrder = statusOrder[b.status as keyof typeof statusOrder] ?? 3;
+      return aOrder - bOrder;
+    });
   }
 
   return (
@@ -203,7 +207,7 @@ const Index = () => {
           </Button>
         </div>
 
-        {/* תפריט מיון ופילטור */}
+        {/* תפריט מיון */}
         <div className="flex flex-wrap justify-center items-center gap-3 mb-7">
           <div className="flex items-center gap-2">
             <label className="font-medium text-purple-700 text-sm">מיין לפי:</label>
@@ -215,23 +219,8 @@ const Index = () => {
               <option value="rating">דירוג 🏅</option>
               <option value="entry_date">תאריך כניסה 🗓️</option>
               <option value="created_at">מועד הוספה ⏰</option>
+              <option value="status">סטטוס דיבור 📞</option>
             </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="font-medium text-purple-700 text-sm">רק עם מקלט</label>
-            <input
-              type="checkbox"
-              checked={showWithShelter === true}
-              onChange={() => setShowWithShelter(showWithShelter === true ? null : true)}
-              className="accent-purple-600 w-4 h-4"
-            />
-            <label className="font-medium text-purple-700 text-sm">רק בלי מקלט</label>
-            <input
-              type="checkbox"
-              checked={showWithShelter === false}
-              onChange={() => setShowWithShelter(showWithShelter === false ? null : false)}
-              className="accent-purple-600 w-4 h-4"
-            />
           </div>
         </div>
 
