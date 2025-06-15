@@ -23,6 +23,7 @@ interface ApartmentData {
   contact_phone?: string;
   status?: string;
   entry_date?: string;
+  note?: string; // --- הוספנו תמיכה בהערות
   action?: 'added' | 'updated';
   test?: boolean;
 }
@@ -45,6 +46,7 @@ function formatEmail(apartment: ApartmentData) {
       <li><b>שם איש קשר:</b> ${apartment.contact_name ?? "-"}</li>
       <li><b>טלפון:</b> ${apartment.contact_phone ?? "-"}</li>
       <li><b>תיאור:</b> ${apartment.description || "-"}</li>
+      <li><b>הערות:</b> ${apartment.note || "-"}</li>
       <li><b>תמונה:</b> ${apartment.image_url ? `<br/><img src="${apartment.image_url}" style="max-width:360px;border-radius:12px;" alt="" />` : "-"}</li>
     </ul>
   `;
@@ -71,6 +73,7 @@ serve(async (req: Request): Promise<Response> => {
         contact_name: "אבי בעל־הבית",
         contact_phone: "050-0000000",
         description: "דירה מהממת עם נוף פתוח, מרוהטת חלקית, כניסה גמישה.",
+        note: "זו הערה שהתווספה לטסט.",
         status: "not_spoke",
         image_url: "",
         action: "added"
@@ -80,9 +83,12 @@ serve(async (req: Request): Promise<Response> => {
     const actionText = apartment.action === 'updated' ? 'עודכנה' : 'נוספה';
     const actionEmoji = apartment.action === 'updated' ? '✏️' : '🆕';
 
+    // שלח תמיד לשני הנמענים
+    const recipients = ["moroy9@gmail.com", "elgartgavriela@gmail.com"];
+
     const result = await resend.emails.send({
       from: "מור וגבי דירות <onboarding@resend.dev>",
-      to: ["moroy9@gmail.com", "elgartgavriela@gmail.com"],
+      to: recipients,
       subject: `${actionEmoji} ${actionText} דירה במערכת!`,
       html: formatEmail(apartment),
     });

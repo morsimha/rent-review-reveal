@@ -40,12 +40,13 @@ export const insertApartment = async (apartmentData: Omit<Apartment, 'id' | 'cre
     .single();
   if (error) throw error;
   
-  // Send email notification for new apartment
+  // Send email notification for new apartment (כולל שדה הערות)
   try {
     await supabase.functions.invoke('send-apartment-email', {
       body: {
         ...apartmentData,
-        action: 'added'
+        action: 'added',
+        note: apartmentData.note || "", // ensure נשלח
       }
     });
     console.log('Email notification sent for new apartment');
@@ -64,12 +65,13 @@ export const updateApartmentInDB = async (id: string, updates: Partial<Apartment
     .eq('id', id);
   if (error) throw error;
   
-  // Send email notification for apartment update
+  // Send email notification for apartment update (כולל שדה הערות)
   try {
     await supabase.functions.invoke('send-apartment-email', {
       body: {
         ...updates,
-        action: 'updated'
+        action: 'updated',
+        note: updates.note || "", // ensure נשלח
       }
     });
     console.log('Email notification sent for apartment update');
