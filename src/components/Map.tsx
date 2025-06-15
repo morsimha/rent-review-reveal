@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -85,7 +84,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
           }
           markerElement.innerHTML = '🏠';
 
-          // יציג רק שם וכותרת
+          // מציג רק שם וכותרת (כפי שביקשת)
           const popupContent = `
           <div style="text-align: right; direction: rtl;">
             <h3 style="font-weight: bold; margin-bottom: 4px; font-size:1rem;">${apartment.title}</h3>
@@ -107,6 +106,14 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
           markerElement.addEventListener('click', () => {
             if (setSelectedApartmentId) setSelectedApartmentId(apartment.id);
             popup.addTo(map.current!);
+
+            // סגור את הפופאפ אחרי 3 שניות
+            if (popupTimeoutRef.current) {
+              clearTimeout(popupTimeoutRef.current);
+            }
+            popupTimeoutRef.current = setTimeout(() => {
+              popup.remove();
+            }, 3000);
           });
 
           markersRef.current.push({ id: apartment.id, marker, popup });
@@ -126,8 +133,25 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
       // פוקוס למרכז
       match.marker.togglePopup(); // יבטיח שה-popup ייפתח
       map.current.flyTo({ center: match.marker.getLngLat(), zoom: 15, speed: 1.5 });
+
+      // סגור את הפופאפ אחרי 3 שניות
+      if (popupTimeoutRef.current) {
+        clearTimeout(popupTimeoutRef.current);
+      }
+      popupTimeoutRef.current = setTimeout(() => {
+        match.popup.remove();
+      }, 3000);
     }
   }, [selectedApartmentId]);
+
+  // ננקה timeout בלת使 הרכיב
+  useEffect(() => {
+    return () => {
+      if (popupTimeoutRef.current) {
+        clearTimeout(popupTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const initializeMap = async () => {
     if (!mapContainer.current || !mapboxToken) {
