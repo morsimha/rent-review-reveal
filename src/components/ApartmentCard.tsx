@@ -1,11 +1,11 @@
 
-import { Trash2, Edit, Phone, Link, House } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import StarRating from './StarRating';
-import type { Apartment } from '@/types/ApartmentTypes';
-import { format, parseISO } from 'date-fns';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent } from "@/components/ui/card";
+import type { Apartment } from "@/types/ApartmentTypes";
+import ApartmentCardImageSection from "./ApartmentCardImageSection";
+import ApartmentCardMainInfo from "./ApartmentCardMainInfo";
+import ApartmentCardNote from "./ApartmentCardNote";
+import ApartmentCardRatings from "./ApartmentCardRatings";
+import ApartmentCardActions from "./ApartmentCardActions";
 
 interface ApartmentCardProps {
   apartment: Apartment;
@@ -16,7 +16,7 @@ interface ApartmentCardProps {
   onMorTalkedChange?: (apartmentId: string, value: boolean) => void;
   onGabiTalkedChange?: (apartmentId: string, value: boolean) => void;
   isAuthenticated: boolean;
-  onCardClick?: () => void; // NEW: Click handler, optional
+  onCardClick?: () => void;
 }
 
 const ApartmentCard: React.FC<ApartmentCardProps> = ({
@@ -28,27 +28,20 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
   onMorTalkedChange,
   onGabiTalkedChange,
   isAuthenticated,
-  onCardClick
+  onCardClick,
 }) => {
-  const getStatusColor = (status: 'spoke' | 'not_spoke' | 'no_answer') => {
+  const getStatusColor = (status: "spoke" | "not_spoke" | "no_answer") => {
     switch (status) {
-      case 'spoke': return 'bg-green-400';
-      case 'not_spoke': return 'bg-yellow-400';
-      case 'no_answer': return 'bg-red-400';
-      default: return 'bg-gray-400';
+      case "spoke":
+        return "bg-green-400";
+      case "not_spoke":
+        return "bg-yellow-400";
+      case "no_answer":
+        return "bg-red-400";
+      default:
+        return "bg-gray-400";
     }
   };
-
-  // Format entry date as dd/MM if it exists and is parseable
-  let formattedEntryDate = '';
-  if (apartment.entry_date) {
-    try {
-      const parsed = parseISO(apartment.entry_date);
-      formattedEntryDate = format(parsed, 'dd/MM');
-    } catch {
-      formattedEntryDate = apartment.entry_date;
-    }
-  }
 
   return (
     <Card
@@ -57,182 +50,35 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
     >
       <CardContent className="p-0 flex flex-col h-full">
         {/* Status Bar */}
-        <div className={`h-2 w-full rounded-t-lg ${getStatusColor(apartment.status)}`}></div>
-
-        {/* Image Section */}
-        <div className="relative overflow-hidden flex-shrink-0 h-48">
-          <img
-            src={apartment.image_url || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2070&q=80'}
-            alt={apartment.title}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-110 rounded-tr-lg"
+        <div
+          className={`h-2 w-full rounded-t-lg ${getStatusColor(apartment.status)}`}
+        ></div>
+        {/* Image and prices */}
+        <ApartmentCardImageSection apartment={apartment} />
+        {/* Info */}
+        <ApartmentCardMainInfo apartment={apartment} />
+        {/* דירוגים/סטטוס */}
+        <ApartmentCardRatings
+          apartment={apartment}
+          isAuthenticated={isAuthenticated}
+          onMorRatingChange={onMorRatingChange}
+          onGabiRatingChange={onGabiRatingChange}
+          onMorTalkedChange={onMorTalkedChange}
+          onGabiTalkedChange={onGabiTalkedChange}
+        />
+        {/* הערות */}
+        <ApartmentCardNote note={apartment.note} />
+        {/* פעולות */}
+        {isAuthenticated && (
+          <ApartmentCardActions
+            apartment={apartment}
+            onEdit={onEdit}
+            onDelete={onDelete}
           />
-          {/* Prices, Arnona, and Pet Icon */}
-          <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-20">
-            {apartment.price && (
-              <div className="bg-green-500 text-white px-2 py-1 rounded-full font-bold text-sm flex items-center gap-1">
-                <span>{apartment.price}₪</span>
-              </div>
-            )}
-            {/* ארנונה */}
-            {apartment.arnona != null && !isNaN(Number(apartment.arnona)) && (
-              <div className="bg-yellow-400 text-black px-2 py-1 rounded-full font-bold text-sm" title="ארנונה">
-                {apartment.arnona}₪
-              </div>
-            )}
-            {apartment.pets_allowed === 'yes' && (
-              <div className="text-xl" title="מותר בעלי חיים">🐱</div>
-            )}
-          </div>
-          {/* Shelter, Floor, and Sq Meters Icons */}
-          <div className="absolute top-2 left-2 z-10 flex flex-col items-start gap-1">
-            {apartment.has_shelter && (
-              <div className="bg-white/70 rounded px-2 py-1 flex items-center gap-1 shadow">
-                <House className="w-5 h-5 text-purple-800" />
-                <span className="text-xs text-purple-800">מקלט</span>
-              </div>
-            )}
-            {apartment.floor != null && (
-              <div className="bg-white/70 rounded px-2 py-1 flex items-center gap-1 shadow text-purple-800 text-xs">
-                <span>קומה: </span><span className="font-bold">{apartment.floor}</span>
-              </div>
-            )}
-            {apartment.square_meters != null && (
-              <div className="bg-white/70 rounded px-2 py-1 flex items-center gap-1 shadow text-purple-800 text-xs">
-                <span>מ"ר: </span><span className="font-bold">{apartment.square_meters}</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="p-4 flex flex-col flex-grow min-h-0">
-          {/* Title (right) */}
-          <div className="w-full text-right">
-            <h3 className="font-bold text-base text-gray-800 line-clamp-1" style={{ minWidth: 0 }}>
-              {apartment.title}
-            </h3>
-          </div>
-          {/* Entry date below title */}
-          {formattedEntryDate && (
-            <div className="flex w-full mb-2 mt-1">
-              <span
-                className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ml-auto"
-                dir="ltr"
-              >
-                {formattedEntryDate}
-              </span>
-            </div>
-          )}
-
-          {/* Location */}
-          {apartment.location && (
-            <p className="text-purple-600 text-sm mb-2 font-medium text-right">{apartment.location}</p>
-          )}
-
-          {/* Description */}
-          <div className="mb-2">
-            <p className="text-gray-600 text-sm line-clamp-2 text-right leading-5">{apartment.description}</p>
-          </div>
-
-          {/* Contact Info */}
-          {(apartment.contact_name || apartment.contact_phone) && (
-            <div className="text-sm text-gray-700 mb-2 text-right">
-              {apartment.contact_name && <p className="mb-1 text-right">{apartment.contact_name}</p>}
-              {apartment.contact_phone && (
-                <p className="flex items-center gap-1 justify-end text-right">
-                  <span>{apartment.contact_phone}</span>
-                  <Phone className="w-4 h-4" />
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Links */}
-          {apartment.apartment_link && (
-            <div className="mb-2 text-right">
-              <a href={apartment.apartment_link} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline flex items-center gap-1 justify-end text-right">
-                <span>קישור לדירה</span>
-                <Link className="w-4 h-4" />
-              </a>
-            </div>
-          )}
-
-          {/* Ratings & מי דיבר */}
-          <div className="mb-3 space-y-2">
-            {/* מור: תיבת הסימון בצד ימין */}
-            <div className="flex flex-row items-center gap-2 justify-start text-right">
-              <div className="flex items-center gap-1">
-                <Checkbox
-                  checked={!!apartment.spoke_with_mor}
-                  onCheckedChange={(value) =>
-                    onMorTalkedChange?.(apartment.id, !!value)
-                  }
-                  aria-label="מור דיבר עם בעל הדירה"
-                  className="accent-purple-600"
-                  disabled={!isAuthenticated}
-                />
-              </div>
-              <span className="text-sm font-medium text-purple-600">מור:</span>
-              <StarRating
-                rating={apartment.mor_rating || 0}
-                onRatingChange={(rating) => onMorRatingChange(apartment.id, rating)}
-              />
-            </div>
-            {/* גבי: תיבת הסימון בצד ימין */}
-            <div className="flex flex-row items-center gap-2 justify-start text-right">
-              <div className="flex items-center gap-1">
-                <Checkbox
-                  checked={!!apartment.spoke_with_gabi}
-                  onCheckedChange={(value) =>
-                    onGabiTalkedChange?.(apartment.id, !!value)
-                  }
-                  aria-label="גבי דיבר עם בעל הדירה"
-                  className="accent-pink-600"
-                  disabled={!isAuthenticated}
-                />
-              </div>
-              <span className="text-sm font-medium text-pink-600">גבי:</span>
-              <StarRating
-                rating={apartment.gabi_rating || 0}
-                onRatingChange={(rating) => onGabiRatingChange(apartment.id, rating)}
-              />
-            </div>
-          </div>
-
-          {/* Note */}
-          <div className="mb-4">
-            <p className="text-sm text-gray-600 text-right break-words whitespace-pre-line">
-              {apartment.note || 'אין הערות'}
-            </p>
-          </div>
-
-          {/* Actions */}
-          {isAuthenticated && (
-            <div className="flex justify-between items-center mt-auto pt-3">
-              {/* Edit button (right), then Delete (left) */}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => onEdit(apartment)}
-                className="h-8 px-3 text-sm"
-              >
-                <Edit className="w-4 h-4 ml-1" />
-                ערוך
-              </Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => onDelete(apartment.id)}
-                className="bg-red-500 hover:bg-red-600 h-8 w-8 p-0"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
-        </div>
+        )}
       </CardContent>
     </Card>
   );
 };
 
 export default ApartmentCard;
-
