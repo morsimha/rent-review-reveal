@@ -9,15 +9,15 @@ interface MusicalKeyboardProps {
 const MusicalKeyboard: React.FC<MusicalKeyboardProps> = ({ bigButtons = false }) => {
   const { themeConfig } = useTheme();
 
-  // סדר: דו הגבוה עד דו הנמוך (כולל 2 תווים גבוהים נוספים)
+  // סדר: התו הכי נמוך משמאל, הכי גבוה מימין (כולל 2 תווים גבוהים נוספים)
   const notes = [
-    { name: 'סי', frequency: 493.88, emoji: '🎻' },
-    { name: 'לה', frequency: 440.00, emoji: '🎷' },
-    { name: 'סול', frequency: 392.00, emoji: '🎧' },
-    { name: 'פה', frequency: 349.23, emoji: '🎤' },
-    { name: 'מי', frequency: 329.63, emoji: '🎼' },
-    { name: 'רה', frequency: 293.66, emoji: '🎶' },
     { name: 'דו', frequency: 261.63, emoji: '🎵' },
+    { name: 'רה', frequency: 293.66, emoji: '🎶' },
+    { name: 'מי', frequency: 329.63, emoji: '🎼' },
+    { name: 'פה', frequency: 349.23, emoji: '🎤' },
+    { name: 'סול', frequency: 392.00, emoji: '🎧' },
+    { name: 'לה', frequency: 440.00, emoji: '🎷' },
+    { name: 'סי', frequency: 493.88, emoji: '🎻' },
   ];
 
   const playNote = (frequency: number) => {
@@ -51,7 +51,7 @@ const MusicalKeyboard: React.FC<MusicalKeyboardProps> = ({ bigButtons = false })
     : "text-base px-2 py-1 min-w-8 min-h-8";
 
   return (
-    <div className="flex items-center justify-center gap-1 mb-4">
+    <div className="h-screen w-full flex items-center justify-center">
       <div className="flex flex-wrap justify-center gap-1">
         {notes.map((note, idx) => (
           <Button
