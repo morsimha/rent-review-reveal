@@ -19,6 +19,8 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
   const [isLoading, setIsLoading] = useState(true);
   const [isRoutingMode, setIsRoutingMode] = useState(false);
   const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartTime, setDragStartTime] = useState(0);
   const { toast } = useToast();
 
   const mapboxToken = 'pk.eyJ1IjoibW9yb3k5IiwiYSI6ImNtYndnN2s5YzBrMm4ycXNkMGw3bDRtMW0ifQ.TfWPfMMUQfcjEy4OzGR9XA';
@@ -163,7 +165,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
       map.current.doubleClickZoom.enable();
       map.current.touchZoomRotate.enable();
     } else {
-      // Disable all interactions except for double-click (which we handle manually)
+      // Disable all interactions 
       map.current.scrollZoom.disable();
       map.current.boxZoom.disable();
       map.current.dragRotate.disable();
@@ -191,7 +193,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
       addRouteMarker(lngLat, 'A');
       toast({
         title: "נקודת התחלה נבחרה",
-        description: "לחץ לחיצה כפולה על המפה לבחירת נקודת הסיום",
+        description: "לחץ וגרור על המפה לבחירת נקודת הסיום",
       });
     } else if (routePoints.length === 1) {
       // Second point
@@ -205,16 +207,42 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     }
   };
 
-  const handleMapDoubleClick = (e: mapboxgl.MapMouseEvent) => {
-    // Prevent default double-click behavior
-    e.preventDefault();
-    const lngLat: [number, number] = [e.lngLat.lng, e.lngLat.lat];
-    handleRoutePointSelection(lngLat);
+  const handleMapMouseDown = (e: mapboxgl.MapMouseEvent) => {
+    if (!isRoutingMode) return;
+    
+    console.log('Mouse down in routing mode');
+    setIsDragging(false);
+    setDragStartTime(Date.now());
   };
 
-  const handleMapTouch = (e: mapboxgl.MapTouchEvent) => {
-    const lngLat: [number, number] = [e.lngLat.lng, e.lngLat.lat];
-    handleRoutePointSelection(lngLat);
+  const handleMapMouseMove = (e: mapboxgl.MapMouseEvent) => {
+    if (!isRoutingMode) return;
+    
+    if (dragStartTime > 0) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleMapMouseUp = (e: mapboxgl.MapMouseEvent) => {
+    if (!isRoutingMode) return;
+    
+    console.log('Mouse up in routing mode, isDragging:', isDragging, 'dragStartTime:', dragStartTime);
+    
+    const dragDuration = Date.now() - dragStartTime;
+    const wasShortClick = dragDuration < 200 && !isDragging;
+    
+    if (wasShortClick) {
+      // This was a quick click without dragging - ignore
+      console.log('Short click detected, ignoring');
+    } else if (isDragging || dragDuration >= 200) {
+      // This was a drag or a long press - select point
+      console.log('Drag or long press detected, selecting point');
+      const lngLat: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+      handleRoutePointSelection(lngLat);
+    }
+    
+    setIsDragging(false);
+    setDragStartTime(0);
   };
 
   const toggleRoutingMode = () => {
@@ -233,7 +261,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
       toggleMapInteractions(false); // Disable map interactions
       toast({
         title: "מצב מסלול הופעל",
-        description: "לחץ לחיצה כפולה על המפה לבחירת נקודת התחלה",
+        description: "לחץ וגרור על המפה לבחירת נקודת התחלה",
       });
     }
   };
@@ -385,22 +413,12 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
         });
       });
 
-      // Add double-click handler for routing mode with proper type handling
-      map.current.on('dblclick', handleMapDoubleClick);
+      // Add mouse event handlers for drag-based route point selection
+      map.current.on('mousedown', handleMapMouseDown);
+      map.current.on('mousemove', handleMapMouseMove);
+      map.current.on('mouseup', handleMapMouseUp);
       
-      // Also handle touch events for mobile with proper type handling
-      let touchTime = 0;
-      map.current.on('touchstart', (e) => {
-        const currentTime = new Date().getTime();
-        const tapLength = currentTime - touchTime;
-        if (tapLength < 500 && tapLength > 0) {
-          // Double tap detected
-          handleMapTouch(e);
-        }
-        touchTime = currentTime;
-      });
-      
-      console.log('Map double-click and touch handlers added');
+      console.log('Map drag handlers added for routing');
 
     } catch (error) {
       console.error('Map initialization error:', error);
@@ -478,8 +496,8 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
                 <div className="text-green-600 font-bold">מצב מסלול: פעיל</div>
                 <div>נקודות שנבחרו: {routePoints.length}</div>
                 <div className="text-blue-600">
-                  {routePoints.length === 0 && "לחיצה כפולה לנקודת התחלה"}
-                  {routePoints.length === 1 && "לחיצה כפולה לנקודת הסיום"}
+                  {routePoints.length === 0 && "לחץ וגרור לנקודת התחלה"}
+                  {routePoints.length === 1 && "לחץ וגרור לנקודת הסיום"}
                   {routePoints.length === 2 && "מסלול הושלם!"}
                 </div>
                 <div className="text-orange-600 font-bold">זום והזזה מבוטלים</div>
