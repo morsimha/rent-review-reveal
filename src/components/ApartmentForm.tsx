@@ -1,9 +1,10 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import ApartmentFormFields from './ApartmentFormFields';
 import type { Apartment } from '@/types/ApartmentTypes';
-import { supabase } from '@/integrations/supabase/client'; // ייבוא תקין של supabase
+import { supabase } from '@/integrations/supabase/client';
 
 interface ApartmentFormProps {
   onAddApartment: (apartmentData: any) => Promise<boolean>;
@@ -35,24 +36,65 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  // פונקציה לנקות ולהמיר נתוני תאריך
+  const cleanDateData = (dateString: string | null | undefined): string | null => {
+    if (!dateString) return null;
+    
+    // אם התאריך מכיל מילים כמו "מידית", "כעת", וכו' - נחזיר null
+    const hebrewWords = /מידית|כעת|עכשיו|תכף|בקרוב/;
+    if (hebrewWords.test(dateString)) {
+      return null;
+    }
+    
+    // ננסה להמיר לתאריך תקין
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+    
+    // נחזיר בפורמט YYYY-MM-DD
+    return date.toISOString().split('T')[0];
+  };
+
   // פיצ'ר חדש: העלאה וניתוח אוטומטי של תמונה ליצירת דירה חדשה
   const handleAnalyzeImage = async (imageUrlToAnalyze: string) => {
     setUploadingImage(true);
     try {
-      // שימוש נכון ב-supabase invoke
+      console.log('Starting image analysis for URL:', imageUrlToAnalyze);
+      
       const { data, error } = await supabase.functions.invoke('analyze-apartment-image', {
         body: { imageUrl: imageUrlToAnalyze }
       });
 
-      if (error) throw error;
+      console.log('Analysis response:', { data, error });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(`שגיאת ניתוח: ${error.message || 'בעיה בשרת'}`);
+      }
 
       if (data?.data) {
+        // נקה ונמיר את הנתונים
+        const cleanedData = {
+          ...data.data,
+          entry_date: cleanDateData(data.data.entry_date),
+          price: data.data.price ? Number(data.data.price) : null,
+          arnona: data.data.arnona ? Number(data.data.arnona) : null,
+          square_meters: data.data.square_meters ? Number(data.data.square_meters) : null,
+          floor: data.data.floor ? Number(data.data.floor) : null,
+        };
+
+        console.log('Cleaned data:', cleanedData);
+
         // מנסה להוסיף דירה חדשה אוטומטית לפי הנתונים שחולצו
         const newApartmentData = {
           ...INITIAL_STATE,
-          ...data.data,
+          ...cleanedData,
           image_url: imageUrlToAnalyze,
         };
+        
+        console.log('Final apartment data to add:', newApartmentData);
+        
         const success = await onAddApartment(newApartmentData);
 
         if (success) {
@@ -79,9 +121,10 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
         });
       }
     } catch (error: any) {
+      console.error('Analysis error:', error);
       toast({
         title: "שגיאה",
-        description: "לא הצלחנו להעלות או לנתח את התמונה",
+        description: `לא הצלחנו להעלות או לנתח את התמונה: ${error.message}`,
         variant: "destructive"
       });
     }
@@ -143,7 +186,7 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ onAddApartment, uploadIma
       status: formData.status,
       pets_allowed: formData.pets_allowed,
       has_shelter: formData.has_shelter,
-      entry_date: formData.entry_date ? formData.entry_date : null,
+      entry_date: cleanDateData(formData.entry_date),
     };
 
     const success = await onAddApartment(apartmentData);
