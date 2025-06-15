@@ -34,8 +34,8 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
             <Button
               variant="ghost"
               size="icon"
-              className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 text-4xl p-0 w-16 h-16 rounded-full shadow-lg flex items-center justify-center border-4 border-white animate-bounce hover:scale-110 transition-transform"
-              style={{ fontSize: '2.5rem', lineHeight: '1' }}
+              className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 text-3xl p-0 w-12 h-12 rounded-full flex items-center justify-center transition-transform"
+              style={{ fontSize: '2rem', lineHeight: '1' }}
               title="פסנתר חמוד!"
             >
               <span role="img" aria-label="Piano">🎹</span>
