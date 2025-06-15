@@ -40,13 +40,23 @@ const ImageAnalyzer: React.FC<ImageAnalyzerProps> = ({ onDataExtracted, uploadIm
           variant: "destructive"
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error analyzing image:', error);
-      toast({
-        title: "שגיאה",
-        description: "לא ניתן לנתח את התמונה",
-        variant: "destructive"
-      });
+      // הצגת הודעה ידידותית למקרה מגבלת קצב
+      const openAiRateLimit = error?.details?.includes?.('429') || error?.message?.includes?.('429');
+      if (openAiRateLimit) {
+        toast({
+          title: "מכסה OpenAI נוצלה",
+          description: "המכסה שלך ב-OpenAI נוצלה או שיש מגבלת קצב. נסה שוב מאוחר יותר.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "שגיאה",
+          description: "לא ניתן לנתח את התמונה",
+          variant: "destructive"
+        });
+      }
     } finally {
       setAnalyzing(false);
     }
