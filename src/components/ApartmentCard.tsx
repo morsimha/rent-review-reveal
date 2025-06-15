@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Trash2, Edit, Phone, Link, House } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -44,7 +45,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
   }
 
   return (
-    <Card className="bg-white/90 backdrop-blur-sm border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 h-[550px] flex flex-col">
+    <Card className="bg-white/90 backdrop-blur-sm border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 h-[580px] flex flex-col">
       <CardContent className="p-0 flex flex-col h-full">
         {/* Status Bar */}
         <div className={`h-2 w-full rounded-t-lg ${getStatusColor(apartment.status)}`}></div>
@@ -166,7 +167,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           </div>
 
           {/* Note */}
-          <div className="mb-3 flex-grow min-h-0">
+          <div className="mb-4 flex-grow min-h-0">
             <p className="text-sm text-gray-600 text-right break-words overflow-hidden">
               {apartment.note || 'אין הערות'}
             </p>
@@ -174,7 +175,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 
           {/* Actions */}
           {isAuthenticated && (
-            <div className="flex justify-between items-center mt-auto pt-2">
+            <div className="flex justify-between items-center mt-auto pt-3">
               {/* Edit button (right), then Delete (left) */}
               <Button
                 size="sm"
