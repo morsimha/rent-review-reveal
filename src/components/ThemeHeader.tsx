@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useThemeMusic } from '@/hooks/useThemeMusic';
+import MusicalKeyboard from '@/components/MusicalKeyboard';
 
 interface ThemeHeaderProps {
   onDrawingGameOpen: () => void;
@@ -15,6 +16,9 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
 
   return (
     <div className="text-center mb-8">
+      {/* Musical Keyboard */}
+      <MusicalKeyboard />
+      
       <div className="flex items-center justify-center gap-2 mb-2">
         <button
           onClick={cycleTheme}
