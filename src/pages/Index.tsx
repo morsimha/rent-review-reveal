@@ -19,6 +19,7 @@ const Index = () => {
   const [isCatGameOpen, setIsCatGameOpen] = useState(false);
   const [isDrawingGameOpen, setIsDrawingGameOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"rating" | "entry_date" | "created_at" | "status">("rating");
+  const [statusFilter, setStatusFilter] = useState<"all" | "spoke" | "not_spoke" | "no_answer">("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedApartmentId, setSelectedApartmentId] = useState<string | null>(null); // NEW
 
@@ -134,7 +135,13 @@ const Index = () => {
     );
   }
 
+  // סינון לפי סטטוס
   let filteredApartments = apartments;
+  if (statusFilter !== "all") {
+    filteredApartments = filteredApartments.filter(a => a.status === statusFilter);
+  }
+
+  // ממיין
   if (sortBy === "entry_date") {
     filteredApartments = [...filteredApartments].sort((a, b) => {
       if (!a.entry_date) return 1;
@@ -150,7 +157,6 @@ const Index = () => {
   } else if (sortBy === "created_at") {
     filteredApartments = [...filteredApartments].sort((a, b) => b.created_at.localeCompare(a.created_at));
   } else if (sortBy === "status") {
-    // סדר עדיפות: spoke > not_spoke > no_answer > undefined/other
     const statusOrder = { "spoke": 0, "not_spoke": 1, "no_answer": 2 };
     filteredApartments = [...filteredApartments].sort((a, b) => {
       const aOrder = statusOrder[a.status as keyof typeof statusOrder] ?? 3;
@@ -207,7 +213,7 @@ const Index = () => {
           </Button>
         </div>
 
-        {/* תפריט מיון */}
+        {/* תפריט מיון וסינון סטטוס */}
         <div className="flex flex-wrap justify-center items-center gap-3 mb-7">
           <div className="flex items-center gap-2">
             <label className="font-medium text-purple-700 text-sm">מיין לפי:</label>
@@ -220,6 +226,19 @@ const Index = () => {
               <option value="entry_date">תאריך כניסה 🗓️</option>
               <option value="created_at">מועד הוספה ⏰</option>
               <option value="status">סטטוס דיבור 📞</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="font-medium text-purple-700 text-sm">סנן לפי סטטוס:</label>
+            <select
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value as any)}
+              className="rounded border px-2 py-1 text-right"
+            >
+              <option value="all">הצג הכל</option>
+              <option value="spoke">דיברנו</option>
+              <option value="not_spoke">לא דיברנו</option>
+              <option value="no_answer">אין תשובה</option>
             </select>
           </div>
         </div>
