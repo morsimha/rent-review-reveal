@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Piano } from "lucide-react";
 import MusicalKeyboard from '@/components/MusicalKeyboard';
 
 interface ThemeHeaderProps {
@@ -12,8 +11,7 @@ interface ThemeHeaderProps {
 }
 
 const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameOpen }) => {
-  const { themeConfig, cycleTheme, currentTheme } = useTheme();
-  // מצב ה־Drawer של הפסנתר
+  const { themeConfig, cycleTheme } = useTheme();
   const [isPianoOpen, setIsPianoOpen] = useState(false);
 
   return (
@@ -31,14 +29,16 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
           <h1 className={`text-4xl font-bold ${themeConfig.textColor}`}>
             {themeConfig.title}
           </h1>
+          {/* Cute Piano Button */}
           <DrawerTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="text-2xl p-0 hover:bg-transparent transition-transform"
-              title="פסנתר"
+              className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 text-4xl p-0 w-16 h-16 rounded-full shadow-lg flex items-center justify-center border-4 border-white animate-bounce hover:scale-110 transition-transform"
+              style={{ fontSize: '2.5rem', lineHeight: '1' }}
+              title="פסנתר חמוד!"
             >
-              <Piano size={36} />
+              <span role="img" aria-label="Piano">🎹</span>
             </Button>
           </DrawerTrigger>
         </div>
