@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useTheme } from '@/contexts/ThemeContext';
 import MusicalKeyboard from '@/components/MusicalKeyboard';
 import AdvancedPiano from '@/components/AdvancedPiano';
@@ -28,15 +27,12 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
     <div className="text-center mb-8">
       {/* Dialog לפסנתר רגיל */}
       <Dialog open={isPianoOpen} onOpenChange={setIsPianoOpen}>
-        <DialogContent className="max-w-fit" aria-describedby="piano-description">
+        <DialogContent className="max-w-fit">
           <DialogHeader>
             <DialogTitle className="text-center text-xl">
               פסנתר אינטראקטיבי
               <span className="mx-2" role="img" aria-label="Piano">🎹</span>
             </DialogTitle>
-            <DialogDescription id="piano-description" className="text-center">
-              נגן על הפסנתר הקטן והחמוד שלנו
-            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4">
             <MusicalKeyboard bigButtons />
@@ -55,14 +51,14 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
 
       {/* Dialog לפסנתר מתקדם */}
       <Dialog open={isAdvancedPianoOpen} onOpenChange={setIsAdvancedPianoOpen}>
-        <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto" aria-describedby="advanced-piano-description">
+        <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-center text-2xl font-bold">
               🎹 סטודיו הקלטות עם זיהוי מנגינות AI 🎵
+              <p className="text-sm font-normal text-gray-600 mt-2">
+                נגן, הקלט, ותן ל-AI לזהות את המנגינה שלך!
+              </p>
             </DialogTitle>
-            <DialogDescription id="advanced-piano-description" className="text-sm font-normal text-gray-600 mt-2 text-center">
-              נגן, הקלט, ותן ל-AI לזהות את המנגינה שלך!
-            </DialogDescription>
           </DialogHeader>
           <div className="flex items-center justify-center mt-2">
             <AdvancedPiano />

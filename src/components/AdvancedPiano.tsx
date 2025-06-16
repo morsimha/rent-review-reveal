@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -44,10 +43,10 @@ const AdvancedPiano: React.FC = () => {
   ];
 
   const soundTypes = [
-    { value: 'sine' as const, label: 'פסנתר קלאסי', emoji: '🎹' },
-    { value: 'square' as const, label: 'סינתיסייזר', emoji: '🎛️' },
-    { value: 'sawtooth' as const, label: 'כינור חשמלי', emoji: '🎻' },
-    { value: 'triangle' as const, label: 'חליל', emoji: '🎺' }
+    { value: 'sine', label: 'פסנתר קלאסי', emoji: '🎹' },
+    { value: 'square', label: 'סינתיסייזר', emoji: '🎛️' },
+    { value: 'sawtooth', label: 'כינור חשמלי', emoji: '🎻' },
+    { value: 'triangle', label: 'חליל', emoji: '🎺' }
   ];
 
   // חישוב תדר לפי אוקטבה
@@ -65,13 +64,7 @@ const AdvancedPiano: React.FC = () => {
     }
 
     try {
-      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContext) {
-        console.log('AudioContext not supported');
-        return;
-      }
-
-      const audioContext = new AudioContext();
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
       
@@ -79,7 +72,7 @@ const AdvancedPiano: React.FC = () => {
       gainNode.connect(audioContext.destination);
       
       oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-      oscillator.type = soundType;
+      oscillator.type = soundType; // שימוש בסוג הצליל שנבחר
       
       // צליל ארוך יותר לחוויית נגינה
       gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
@@ -148,7 +141,7 @@ ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
 
       toast({
         title: "ניתוח המנגינה",
-        description: data?.analysis || "לא הצלחנו לזהות את המנגינה",
+        description: data.analysis || "לא הצלחנו לזהות את המנגינה",
       });
     } catch (error) {
       console.error('Error analyzing melody:', error);
@@ -161,10 +154,6 @@ ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
       setIsAnalyzing(false);
     }
   };
-
-  if (!themeConfig) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <div className="flex flex-col items-center gap-4 p-4">
