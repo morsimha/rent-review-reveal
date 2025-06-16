@@ -223,32 +223,61 @@ const VoiceRecorder: React.FC = () => {
     return basicResponses[Math.floor(Math.random() * basicResponses.length)];
   };
 
-  const analyzeRecording = async () => {
-    if (!audioBlob.current) {
-      toast({
-        title: "רגע, מה? 🤔",
-        description: "אין הקלטה! תנסה להקליט משהו קודם",
-        variant: "destructive"
-      });
-      return;
-    }
+const analyzeRecording = async () => {
+  if (!audioBlob.current) {
+    toast({
+      title: "רגע, מה? 🤔",
+      description: "אין הקלטה! תנסה להקליט משהו קודם",
+      variant: "destructive"
+    });
+    return;
+  }
 
-    setIsAnalyzing(true);
-    setAnalysisResult(null); // איפוס תוצאה קודמת
+  setIsAnalyzing(true);
+  setAnalysisResult(null);
+  
+  try {
+    // ניסיון ראשון: שליחה לשרת עם Whisper + GPT
+    const base64Audio = await blobToBase64(audioBlob.current);
     
-    try {
-      // ניתוח בסיסי של ההקלטה
-      const analysis = await analyzeAudioBasic(audioBlob.current, recordingDuration);
-      
-      setAnalysisResult(analysis); // שמירת התוצאה להצגה
+    const { data, error } = await supabase.functions.invoke('analyze-voice', {
+      body: { 
+        audioData: base64Audio,
+        duration: recordingDuration
+      }
+    });
+
+    if (error) throw error;
+
+    // אם הניתוח הצליח - הצג את התוצאה מהשרת
+    if (data?.analysis) {
+      setAnalysisResult(data.analysis);
       
       toast({
-        title: "🎭 הניתוח הסתיים!",
-        description: "גלול למטה לראות את התוצאות המלאות",
+        title: "🎭 ניתוח AI הושלם!",
+        description: "הניתוח המתקדם מוכן למטה",
         duration: 5000
       });
-    } catch (error) {
-      console.error('Error analyzing voice:', error);
+    } else {
+      // אם השרת לא החזיר תוצאה - נסה ניתוח מקומי
+      throw new Error("No analysis from server");
+    }
+    
+  } catch (error) {
+    console.error('Server analysis failed:', error);
+    
+    // נסיון שני: ניתוח מקומי כ-fallback
+    try {
+      const localAnalysis = await analyzeAudioBasic(audioBlob.current, recordingDuration);
+      setAnalysisResult(`${localAnalysis}\n\n💡 (ניתוח מקומי - השרת לא זמין כרגע)`);
+      
+      toast({
+        title: "🤖 ניתוח מקומי הושלם",
+        description: "השרת לא זמין, אבל עדיין יש לנו משהו!",
+        duration: 6000
+      });
+    } catch (localError) {
+      // אם גם הניתוח המקומי נכשל
       setAnalysisResult("אופס! משהו השתבש בניתוח. נסה שוב! 🤖");
       
       toast({
@@ -256,10 +285,11 @@ const VoiceRecorder: React.FC = () => {
         description: "נראה שה-AI שלנו יצא להפסקת קפה. נסה שוב!",
         variant: "destructive"
       });
-    } finally {
-      setIsAnalyzing(false);
     }
-  };
+  } finally {
+    setIsAnalyzing(false);
+  }
+};
 
   // איפוס הקלטה
   const resetRecording = () => {
@@ -460,4 +490,17 @@ const VoiceRecorder: React.FC = () => {
   );
 };
 
+const blobToBase64 = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // הסר את החלק "data:audio/webm;base64," ותשאיר רק את ה-base64
+      const base64 = result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
 export default VoiceRecorder;
