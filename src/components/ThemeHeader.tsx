@@ -56,7 +56,7 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
               className={`bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white ${isMobile ? 'px-4 py-3 text-sm' : 'px-6 py-3 text-base'} rounded-full shadow-lg transform transition-all duration-200 hover:scale-105 hover:shadow-xl`}
             >
               <Sparkles className="w-5 h-5 mr-2" />
-              AI סטודיו הקלטות מתקדם
+              🎹 עם זיהוי מנגינות AI סטודיו הקלטות 🎵
             </Button>
           </div>
         </DialogContent>
