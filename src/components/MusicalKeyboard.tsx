@@ -54,29 +54,34 @@ const MusicalKeyboard: React.FC<MusicalKeyboardProps> = ({ bigButtons = false })
     }
   };
 
-  // responsive button sizes
+  // responsive button sizes with modern circular design
   const getButtonClasses = () => {
     if (isMobile) {
       return bigButtons 
-        ? "text-xl px-2 py-3 min-w-10 min-h-12 text-sm" 
-        : "text-base px-1 py-2 min-w-8 min-h-10 text-xs";
+        ? "text-xl px-3 py-3 min-w-12 min-h-12 text-sm" 
+        : "text-base px-2 py-2 min-w-10 min-h-10 text-xs";
     }
     return bigButtons
-      ? "text-2xl px-4 py-2 min-w-12 min-h-12"
-      : "text-base px-2 py-1 min-w-8 min-h-8";
+      ? "text-2xl px-4 py-4 min-w-14 min-h-14"
+      : "text-base px-3 py-3 min-w-10 min-h-10";
   };
 
   return (
-    <div className="flex items-center justify-center gap-1 mb-4 w-full overflow-x-auto">
-      <div className={`flex ${isMobile ? 'flex-wrap' : 'flex-row'} justify-center gap-1 ${isMobile ? 'max-w-sm mx-auto' : ''}`}>
+    <div className="flex items-center justify-center gap-2 mb-6 w-full overflow-x-auto">
+      <div className={`flex ${isMobile ? 'flex-wrap' : 'flex-row'} justify-center gap-2 ${isMobile ? 'max-w-sm mx-auto' : ''}`}>
         {notes.map((note, idx) => (
           <Button
             key={idx}
             onClick={() => playNote(note.frequency)}
-            className={`${themeConfig.buttonGradient} text-white ${getButtonClasses()} rounded-full transition-all duration-200 hover:scale-110 active:scale-95 touch-manipulation`}
+            className={`${themeConfig.buttonGradient} text-white ${getButtonClasses()} rounded-full transition-all duration-300 hover:scale-110 active:scale-95 touch-manipulation shadow-lg hover:shadow-xl transform hover:-translate-y-1`}
             title={`נגן ${note.name}`}
           >
-            {note.emoji}
+            <div className="flex flex-col items-center">
+              <span className={isMobile ? (bigButtons ? "text-lg" : "text-base") : (bigButtons ? "text-xl" : "text-lg")}>{note.emoji}</span>
+              {bigButtons && (
+                <span className={isMobile ? "text-xs font-semibold" : "text-sm font-semibold"}>{note.name}</span>
+              )}
+            </div>
           </Button>
         ))}
       </div>
