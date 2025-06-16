@@ -77,17 +77,14 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
         <h1 className={`text-4xl font-bold ${themeConfig.textColor}`}>
           {themeConfig.title}
         </h1>
-        {/* כפתור פסנתר רגיל */}
-        <Button
-          variant="ghost"
-          size="icon"
+        {/* כפתור פסנתר רגיל - בלי רקע */}
+        <button
           onClick={() => setIsPianoOpen(true)}
-          className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 text-3xl p-0 w-12 h-12 rounded-full flex items-center justify-center transition-transform"
-          style={{ fontSize: '2rem', lineHeight: '1' }}
+          className="text-4xl hover:scale-110 transition-transform duration-200 cursor-pointer"
           title="פסנתר חמוד!"
         >
-          <span role="img" aria-label="Piano">🎹</span>
-        </Button>
+          🎹
+        </button>
       </div>
       
       <p className={`${themeConfig.accentColor} text-lg mb-2`}>{themeConfig.subtitle}</p>

@@ -1,15 +1,24 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
-import { ChevronLeft, ChevronRight, Mic, Square, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Mic, Square, Send, Piano } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface RecordedNote {
   note: string;
   frequency: number;
   timestamp: number;
 }
+
+type SoundType = 'sine' | 'square' | 'sawtooth' | 'triangle';
 
 const AdvancedPiano: React.FC = () => {
   const { themeConfig } = useTheme();
@@ -18,6 +27,7 @@ const AdvancedPiano: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordedNotes, setRecordedNotes] = useState<RecordedNote[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [soundType, setSoundType] = useState<SoundType>('sine');
   const recordingStartTime = useRef<number>(0);
 
   // תווים פשוטים - רק הלבנים
@@ -30,6 +40,13 @@ const AdvancedPiano: React.FC = () => {
     { name: 'לה', baseFreq: 440.00, emoji: '🎸' },
     { name: 'סי', baseFreq: 493.88, emoji: '🎺' },
     { name: 'דו', baseFreq: 523.25, emoji: '🎹' }
+  ];
+
+  const soundTypes = [
+    { value: 'sine', label: 'פסנתר קלאסי', emoji: '🎹' },
+    { value: 'square', label: 'סינתיסייזר', emoji: '🎛️' },
+    { value: 'sawtooth', label: 'כינור חשמלי', emoji: '🎻' },
+    { value: 'triangle', label: 'חליל', emoji: '🎺' }
   ];
 
   // חישוב תדר לפי אוקטבה
@@ -55,7 +72,7 @@ const AdvancedPiano: React.FC = () => {
       gainNode.connect(audioContext.destination);
       
       oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-      oscillator.type = 'sine';
+      oscillator.type = soundType; // שימוש בסוג הצליל שנבחר
       
       // צליל ארוך יותר לחוויית נגינה
       gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
@@ -140,29 +157,48 @@ ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
 
   return (
     <div className="flex flex-col items-center gap-4 p-4">
-      {/* בקרות אוקטבה */}
-      <div className="flex items-center gap-2 mb-2">
-        <Button
-          onClick={() => setOctave(Math.max(1, octave - 1))}
-          disabled={octave <= 1}
-          size="sm"
-          variant="outline"
-          className="h-8"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </Button>
-        
-        <span className="font-medium text-sm px-3">אוקטבה {octave}</span>
-        
-        <Button
-          onClick={() => setOctave(Math.min(7, octave + 1))}
-          disabled={octave >= 7}
-          size="sm"
-          variant="outline"
-          className="h-8"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </Button>
+      {/* בקרות אוקטבה וסוג צליל */}
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setOctave(Math.max(1, octave - 1))}
+            disabled={octave <= 1}
+            size="sm"
+            variant="outline"
+            className="h-8"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          
+          <span className="font-medium text-sm px-3">אוקטבה {octave}</span>
+          
+          <Button
+            onClick={() => setOctave(Math.min(7, octave + 1))}
+            disabled={octave >= 7}
+            size="sm"
+            variant="outline"
+            className="h-8"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* בחירת סוג צליל */}
+        <Select value={soundType} onValueChange={(value: SoundType) => setSoundType(value)}>
+          <SelectTrigger className="w-[180px] h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {soundTypes.map((type) => (
+              <SelectItem key={type.value} value={type.value}>
+                <span className="flex items-center gap-2">
+                  <span>{type.emoji}</span>
+                  <span>{type.label}</span>
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* פסנתר */}

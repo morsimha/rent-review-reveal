@@ -29,6 +29,10 @@ const MusicalKeyboard: React.FC<MusicalKeyboardProps> = ({ bigButtons = false })
       
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
+
+            // צליל ארוך יותר לחוויית נגינה
+      gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.2);
       
       oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
       oscillator.type = 'sine';
