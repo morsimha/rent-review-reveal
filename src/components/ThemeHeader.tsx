@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useTheme } from '@/contexts/ThemeContext';
 import MusicalKeyboard from '@/components/MusicalKeyboard';
 import AdvancedPiano from '@/components/AdvancedPiano';
-import { Music } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 interface ThemeHeaderProps {
   onDrawingGameOpen: () => void;
@@ -15,6 +15,13 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
   const { themeConfig, cycleTheme } = useTheme();
   const [isPianoOpen, setIsPianoOpen] = useState(false);
   const [isAdvancedPianoOpen, setIsAdvancedPianoOpen] = useState(false);
+
+  const openAdvancedPiano = () => {
+    setIsPianoOpen(false); // סגור את הפסנתר הרגיל
+    setTimeout(() => {
+      setIsAdvancedPianoOpen(true); // פתח את המתקדם
+    }, 100);
+  };
 
   return (
     <div className="text-center mb-8">
@@ -27,8 +34,17 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
               <span className="mx-2" role="img" aria-label="Piano">🎹</span>
             </DialogTitle>
           </DialogHeader>
-          <div className="flex items-center justify-center mt-4">
+          <div className="flex flex-col items-center gap-4">
             <MusicalKeyboard bigButtons />
+            
+            {/* כפתור לפסנתר מתקדם */}
+            <Button
+              onClick={openAdvancedPiano}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-4 py-2 rounded-full shadow-md transform transition-all duration-200 hover:scale-105"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              סטודיו הקלטות AI
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -76,9 +92,7 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
       
       <p className={`${themeConfig.accentColor} text-lg mb-2`}>{themeConfig.subtitle}</p>
       
-      {/* שורת הכפתורים המיוחדים */}
-      <div className="flex items-center justify-center gap-4 mt-4">
-        {/* כפתור ציור */}
+      <div className="flex items-center justify-center gap-4 mt-2">
         <Button
           onClick={onDrawingGameOpen}
           className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white text-2xl p-3 rounded-full animate-pulse"
@@ -86,29 +100,9 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
         >
           🎨
         </Button>
-
-        {/* כפתור פסנתר מתקדם - חדש! */}
-        <Button
-          onClick={() => setIsAdvancedPianoOpen(true)}
-          className="relative group bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 text-white px-4 py-3 rounded-full shadow-lg transform transition-all duration-300 hover:scale-105"
-          title="סטודיו הקלטות AI!"
-        >
-          <div className="flex items-center gap-2">
-            <Music className="w-5 h-5" />
-            <span className="text-sm font-bold">סטודיו AI</span>
-            <span className="absolute -top-1 -right-1 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
-            </span>
-          </div>
-        </Button>
-
-        {/* טקסט העונש */}
-        <p className={`text-sm ${themeConfig.accentColor} max-w-xs`}>
+        <p className={`text-sm ${themeConfig.accentColor}`}>
           {themeConfig.punishment}
         </p>
-
-        {/* כפתור חתולים */}
         <Button
           onClick={onCatGameOpen}
           className={`${themeConfig.headerGradient} text-white text-2xl p-3 rounded-full animate-bounce`}
