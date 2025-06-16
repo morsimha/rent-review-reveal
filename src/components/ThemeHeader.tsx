@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useTheme } from '@/contexts/ThemeContext';
 import MusicalKeyboard from '@/components/MusicalKeyboard';
 
@@ -16,8 +15,8 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
 
   return (
     <div className="text-center mb-8">
-      {/* Drawer לפסנתר */}
-      <Drawer open={isPianoOpen} onOpenChange={setIsPianoOpen}>
+      {/* Dialog לפסנתר */}
+      <Dialog open={isPianoOpen} onOpenChange={setIsPianoOpen}>
         <div className="flex items-center justify-center gap-2 mb-2">
           <button
             onClick={cycleTheme}
@@ -30,30 +29,29 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
             {themeConfig.title}
           </h1>
           {/* Cute Piano Button */}
-          <DrawerTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 text-3xl p-0 w-12 h-12 rounded-full flex items-center justify-center transition-transform"
-              style={{ fontSize: '2rem', lineHeight: '1' }}
-              title="פסנתר חמוד!"
-            >
-              <span role="img" aria-label="Piano">🎹</span>
-            </Button>
-          </DrawerTrigger>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsPianoOpen(true)}
+            className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 text-3xl p-0 w-12 h-12 rounded-full flex items-center justify-center transition-transform"
+            style={{ fontSize: '2rem', lineHeight: '1' }}
+            title="פסנתר חמוד!"
+          >
+            <span role="img" aria-label="Piano">🎹</span>
+          </Button>
         </div>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>
+        <DialogContent className="max-w-fit">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl">
               פסנתר אינטראקטיבי
               <span className="mx-2" role="img" aria-label="Piano">🎹</span>
-            </DrawerTitle>
-          </DrawerHeader>
-          <div className="flex items-center justify-center mt-2">
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center mt-4">
             <MusicalKeyboard bigButtons />
           </div>
-        </DrawerContent>
-      </Drawer>
+        </DialogContent>
+      </Dialog>
       <p className={`${themeConfig.accentColor} text-lg mb-2`}>{themeConfig.subtitle}</p>
       <div className="flex items-center justify-center gap-4 mt-2">
         <Button
