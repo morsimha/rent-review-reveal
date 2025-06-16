@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -175,8 +176,6 @@ const AdvancedPiano: React.FC<AdvancedPianoProps> = ({ onMelodyAnalysis }) => {
     setIsAnalyzing(true);
     
     try {
-      let result;
-      
       if (hasVoiceRecording && voiceRecordingData.current) {
         // ניתוח הקלטת קול
         const reader = new FileReader();
@@ -266,3 +265,116 @@ ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
           </Button>
           
           <span className={`font-medium ${isMobile ? 'text-xs px-2' : 'text-sm px-3'}`}>
+            אוקטבה {octave}
+          </span>
+          
+          <Button
+            onClick={() => setOctave(Math.min(7, octave + 1))}
+            disabled={octave >= 7}
+            size="sm"
+            variant="outline"
+            className={`h-8 ${isMobile ? 'px-2' : 'px-3'}`}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* בורר סוג צליל */}
+        <div className="flex items-center gap-2">
+          <span className={`font-medium ${isMobile ? 'text-xs' : 'text-sm'}`}>סוג צליל:</span>
+          <Select value={soundType} onValueChange={(value: SoundType) => setSoundType(value)}>
+            <SelectTrigger className={`w-auto ${isMobile ? 'text-xs' : 'text-sm'}`}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {soundTypes.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.emoji} {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* תצוגת פסנתר */}
+      <div className="bg-gradient-to-b from-gray-100 to-white rounded-xl p-4 shadow-inner border-2 border-gray-200 w-full">
+        <div className={`grid gap-1 ${isMobile ? 'grid-cols-4' : 'grid-cols-8'} w-full justify-items-center`}>
+          {notes.map((note, idx) => (
+            <Button
+              key={idx}
+              onClick={() => playNote(note.baseFreq, note.name)}
+              className={`${themeConfig.buttonGradient} text-white ${getButtonSize()} rounded-lg transition-all duration-200 hover:scale-110 active:scale-95 shadow-lg hover:shadow-xl`}
+              title={`נגן ${note.name}`}
+            >
+              <div className="flex flex-col items-center">
+                <span className={isMobile ? "text-xl" : "text-2xl"}>{note.emoji}</span>
+                <span className={isMobile ? "text-xs" : "text-sm"}>{note.name}</span>
+              </div>
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* כפתורי הקלטה */}
+      <div className="flex flex-col gap-3 w-full">
+        {/* הקלטת פסנתר */}
+        <div className="flex items-center gap-2 justify-center">
+          <Button
+            onClick={isRecording ? stopPianoRecording : startPianoRecording}
+            className={`${isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'} text-white ${getControlSize()} rounded-full shadow-lg transition-all duration-200`}
+          >
+            {isRecording ? <Square className="w-4 h-4 mr-1" /> : <Piano className="w-4 h-4 mr-1" />}
+            {isRecording ? 'עצור הקלטת פסנתר' : 'הקלט פסנתר'}
+          </Button>
+          
+          {recordedNotes.length > 0 && (
+            <span className={`text-green-600 font-medium ${isMobile ? 'text-xs' : 'text-sm'}`}>
+              {recordedNotes.length} תווים הוקלטו
+            </span>
+          )}
+        </div>
+
+        {/* הקלטת קול */}
+        <div className="flex items-center gap-2 justify-center">
+          <Button
+            onClick={isVoiceRecording ? stopVoiceRecording : startVoiceRecording}
+            className={`${isVoiceRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-purple-500 hover:bg-purple-600'} text-white ${getControlSize()} rounded-full shadow-lg transition-all duration-200`}
+          >
+            {isVoiceRecording ? <Square className="w-4 h-4 mr-1" /> : <Mic className="w-4 h-4 mr-1" />}
+            {isVoiceRecording ? 'עצור הקלטת קול' : 'הקלט קול'}
+          </Button>
+          
+          {hasVoiceRecording && (
+            <span className={`text-green-600 font-medium ${isMobile ? 'text-xs' : 'text-sm'}`}>
+              קול הוקלט ✓
+            </span>
+          )}
+        </div>
+
+        {/* כפתור ניתוח */}
+        <div className="flex justify-center">
+          <Button
+            onClick={analyzeMelody}
+            disabled={isAnalyzing || (recordedNotes.length === 0 && !hasVoiceRecording)}
+            className={`bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white ${getControlSize()} rounded-full shadow-lg transition-all duration-200 disabled:opacity-50`}
+          >
+            {isAnalyzing ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                מנתח...
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4 mr-1" />
+                נתח מנגינה
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AdvancedPiano;
