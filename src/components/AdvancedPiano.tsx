@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -22,7 +21,11 @@ interface RecordedNote {
 
 type SoundType = 'sine' | 'square' | 'sawtooth' | 'triangle';
 
-const AdvancedPiano: React.FC = () => {
+interface AdvancedPianoProps {
+  onMelodyAnalysis?: (analysis: string) => void;
+}
+
+const AdvancedPiano: React.FC<AdvancedPianoProps> = ({ onMelodyAnalysis }) => {
   const { themeConfig } = useTheme();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -30,11 +33,13 @@ const AdvancedPiano: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isVoiceRecording, setIsVoiceRecording] = useState(false);
   const [recordedNotes, setRecordedNotes] = useState<RecordedNote[]>([]);
+  const [hasVoiceRecording, setHasVoiceRecording] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [soundType, setSoundType] = useState<SoundType>('sine');
   const recordingStartTime = useRef<number>(0);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
+  const voiceRecordingData = useRef<Blob | null>(null);
 
   // תווים פשוטים - רק הלבנים
   const notes = [
@@ -124,7 +129,8 @@ const AdvancedPiano: React.FC = () => {
 
       mediaRecorder.current.onstop = async () => {
         const audioBlob = new Blob(audioChunks.current, { type: 'audio/wav' });
-        await processVoiceRecording(audioBlob);
+        voiceRecordingData.current = audioBlob;
+        setHasVoiceRecording(true);
       };
 
       mediaRecorder.current.start();
@@ -151,47 +157,16 @@ const AdvancedPiano: React.FC = () => {
       
       toast({
         title: "הקלטת קול הסתיימה",
-        description: "מעבד את ההקלטה...",
-      });
-    }
-  };
-
-  const processVoiceRecording = async (audioBlob: Blob) => {
-    try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Audio = (reader.result as string).split(',')[1];
-        
-        const { data, error } = await supabase.functions.invoke('analyze-melody', {
-          body: { 
-            audioData: base64Audio,
-            prompt: "נא לנתח את המנגינה שנשרקה או נושרה. זהה את התווים והמנגינה אם היא מוכרת."
-          }
-        });
-
-        if (error) throw error;
-
-        toast({
-          title: "ניתוח הקלטת קול",
-          description: data.analysis || "לא הצלחנו לזהות את המנגינה",
-        });
-      };
-      reader.readAsDataURL(audioBlob);
-    } catch (error) {
-      console.error('Error processing voice recording:', error);
-      toast({
-        title: "שגיאה",
-        description: "לא הצלחנו לעבד את הקלטת הקול",
-        variant: "destructive"
+        description: "ההקלטה מוכנה לניתוח!",
       });
     }
   };
 
   const analyzeMelody = async () => {
-    if (recordedNotes.length === 0) {
+    if (recordedNotes.length === 0 && !hasVoiceRecording) {
       toast({
         title: "אין מנגינה",
-        description: "קודם הקלט מנגינה בפסנתר!",
+        description: "קודם הקלט מנגינה בפסנתר או בקול!",
         variant: "destructive"
       });
       return;
@@ -200,29 +175,65 @@ const AdvancedPiano: React.FC = () => {
     setIsAnalyzing(true);
     
     try {
-      const melodyData = recordedNotes.map(note => ({
-        note: note.note,
-        time: note.timestamp / 1000
-      }));
+      let result;
+      
+      if (hasVoiceRecording && voiceRecordingData.current) {
+        // ניתוח הקלטת קול
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64Audio = (reader.result as string).split(',')[1];
+          
+          const { data, error } = await supabase.functions.invoke('analyze-melody', {
+            body: { 
+              audioData: base64Audio,
+              prompt: "נא לנתח את המנגינה שנשרקה או נושרה. זהה את התווים והמנגינה אם היא מוכרת."
+            }
+          });
 
-      const prompt = `נא לנתח את המנגינה הבאה שנוגנה בפסנתר:
+          if (error) throw error;
+          
+          const analysis = data.analysis || "לא הצלחנו לזהות את המנגינה";
+          if (onMelodyAnalysis) {
+            onMelodyAnalysis(analysis);
+          }
+          
+          toast({
+            title: "ניתוח הקלטת קול הושלם",
+            description: "התוצאה מוצגת למעלה!",
+          });
+        };
+        reader.readAsDataURL(voiceRecordingData.current);
+      } else {
+        // ניתוח הקלטת פסנתר
+        const melodyData = recordedNotes.map(note => ({
+          note: note.note,
+          time: note.timestamp / 1000
+        }));
+
+        const prompt = `נא לנתח את המנגינה הבאה שנוגנה בפסנתר:
 ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
 
 האם זו מנגינה מוכרת? אם כן, מה שמה? תן ניתוח קצר של המנגינה.`;
 
-      const { data, error } = await supabase.functions.invoke('analyze-melody', {
-        body: { 
-          melody: melodyData,
-          prompt: prompt 
+        const { data, error } = await supabase.functions.invoke('analyze-melody', {
+          body: { 
+            melody: melodyData,
+            prompt: prompt 
+          }
+        });
+
+        if (error) throw error;
+
+        const analysis = data.analysis || "לא הצלחנו לזהות את המנגינה";
+        if (onMelodyAnalysis) {
+          onMelodyAnalysis(analysis);
         }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "ניתוח המנגינה",
-        description: data.analysis || "לא הצלחנו לזהות את המנגינה",
-      });
+        
+        toast({
+          title: "ניתוח המנגינה הושלם",
+          description: "התוצאה מוצגת למעלה!",
+        });
+      }
     } catch (error) {
       console.error('Error analyzing melody:', error);
       toast({
@@ -254,119 +265,4 @@ ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
             <ChevronLeft className="w-4 h-4" />
           </Button>
           
-          <span className={`font-medium ${isMobile ? 'text-xs px-2' : 'text-sm px-3'}`}>אוקטבה {octave}</span>
-          
-          <Button
-            onClick={() => setOctave(Math.min(7, octave + 1))}
-            disabled={octave >= 7}
-            size="sm"
-            variant="outline"
-            className={`h-8 ${isMobile ? 'px-2' : 'px-3'}`}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {/* בחירת סוג צליל */}
-        <Select value={soundType} onValueChange={(value: SoundType) => setSoundType(value)}>
-          <SelectTrigger className={`${isMobile ? 'w-[150px] h-8 text-xs' : 'w-[180px] h-8'}`}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {soundTypes.map((type) => (
-              <SelectItem key={type.value} value={type.value}>
-                <span className="flex items-center gap-2">
-                  <span>{type.emoji}</span>
-                  <span className={isMobile ? 'text-xs' : 'text-sm'}>{type.label}</span>
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* פסנתר */}
-      <div className={`flex ${isMobile ? 'flex-wrap justify-center max-w-sm' : 'flex-row'} gap-1 w-full overflow-x-auto`}>
-        {notes.map((note, index) => (
-          <Button
-            key={index}
-            onClick={() => playNote(note.baseFreq, note.name)}
-            className={`${themeConfig.buttonGradient} text-white ${getButtonSize()} rounded-full transition-all duration-200 hover:scale-110 active:scale-95 touch-manipulation`}
-            title={`${note.name}${octave}`}
-          >
-            {note.emoji}
-          </Button>
-        ))}
-      </div>
-
-      {/* בקרות הקלטה */}
-      <div className={`flex flex-col items-center gap-3 mt-2 ${isMobile ? 'w-full' : ''}`} dir="rtl">
-        {/* הקלטת פסנתר */}
-        <div className="flex items-center gap-2">
-          {!isRecording ? (
-            <Button
-              onClick={startPianoRecording}
-              size="sm"
-              className={`bg-blue-500 hover:bg-blue-600 text-white ${getControlSize()}`}
-            >
-              <Piano className="w-4 h-4 mr-1" />
-              הקלט פסנתר
-            </Button>
-          ) : (
-            <Button
-              onClick={stopPianoRecording}
-              size="sm"
-              className={`bg-gray-600 hover:bg-gray-700 text-white animate-pulse ${getControlSize()}`}
-            >
-              <Square className="w-4 h-4 mr-1" />
-              עצור פסנתר
-            </Button>
-          )}
-        </div>
-
-        {/* הקלטת קול */}
-        <div className="flex items-center gap-2">
-          {!isVoiceRecording ? (
-            <Button
-              onClick={startVoiceRecording}
-              size="sm"
-              className={`bg-red-500 hover:bg-red-600 text-white ${getControlSize()}`}
-            >
-              <Mic className="w-4 h-4 mr-1" />
-              הקלט קול
-            </Button>
-          ) : (
-            <Button
-              onClick={stopVoiceRecording}
-              size="sm"
-              className={`bg-red-700 hover:bg-red-800 text-white animate-pulse ${getControlSize()}`}
-            >
-              <Square className="w-4 h-4 mr-1" />
-              עצור קול
-            </Button>
-          )}
-        </div>
-        
-        {/* ניתוח מנגינה */}
-        <Button
-          onClick={analyzeMelody}
-          disabled={recordedNotes.length === 0 || isAnalyzing}
-          size="sm"
-          className={`bg-purple-500 hover:bg-purple-600 text-white ${getControlSize()}`}
-        >
-          <Send className="w-4 h-4 mr-1" />
-          {isAnalyzing ? 'מנתח...' : 'נתח מנגינה'}
-        </Button>
-      </div>
-
-      {/* מצב הקלטה */}
-      {recordedNotes.length > 0 && (
-        <div className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600 text-center`}>
-          הוקלטו {recordedNotes.length} תווים בפסנתר
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default AdvancedPiano;
+          <span className={`font-medium ${isMobile ? 'text-xs px-2' : 'text-sm px-3'}`}>
