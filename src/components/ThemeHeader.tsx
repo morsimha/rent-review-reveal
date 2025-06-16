@@ -69,28 +69,28 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
         </DialogContent>
       </Dialog>
 
-      {/* Dialog לפסנתר מתקדם */}
+      {/* Dialog לפסנתר מתקדם - ממשק קומפקטי */}
       <Dialog open={isAdvancedPianoOpen} onOpenChange={setIsAdvancedPianoOpen}>
-        <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-center text-2xl font-bold">
-              🎹 סטודיו הקלטות עם זיהוי מנגינות AI 🎵
-              <p className="text-sm font-normal text-gray-600 mt-2">
+            <DialogTitle className="text-center text-lg font-bold">
+              🎹 סטודיו הקלטות AI 🎵
+              <p className="text-xs font-normal text-gray-600 mt-1">
                 נגן, הקלט, ותן ל-AI לזהות את המנגינה שלך!
               </p>
             </DialogTitle>
           </DialogHeader>
-          <div className="flex items-center justify-center mt-2">
+          <div className="flex items-center justify-center">
             <AdvancedPiano />
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog להקלטת קול */}
+      {/* Dialog להקלטת קול - ממשק קומפקטי */}
       <Dialog open={isVoiceRecorderOpen} onOpenChange={setIsVoiceRecorderOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-center text-2xl font-bold">
+            <DialogTitle className="text-center text-lg font-bold">
               🎤 מה קורה? בוא נשמע אותך! 🎵
             </DialogTitle>
           </DialogHeader>

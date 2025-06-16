@@ -28,8 +28,8 @@ const AdvancedPiano: React.FC = () => {
   const [recordedNotes, setRecordedNotes] = useState<RecordedNote[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [soundType, setSoundType] = useState<SoundType>('sine');
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   const recordingStartTime = useRef<number>(0);
-  const [analysisResult, setAnalysisResult] = useState<string | null>(null); // תוצאת הניתוח לתצוגה
 
   // תווים פשוטים - רק הלבנים
   const notes = [
@@ -73,9 +73,8 @@ const AdvancedPiano: React.FC = () => {
       gainNode.connect(audioContext.destination);
       
       oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-      oscillator.type = soundType; // שימוש בסוג הצליל שנבחר
+      oscillator.type = soundType;
       
-      // צליל ארוך יותר לחוויית נגינה
       gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.2);
       
@@ -93,6 +92,7 @@ const AdvancedPiano: React.FC = () => {
   const startRecording = () => {
     setIsRecording(true);
     setRecordedNotes([]);
+    setAnalysisResult(null); // איפוס תוצאה קודמת
     recordingStartTime.current = Date.now();
     toast({
       title: "התחלת הקלטה 🎵",
@@ -108,108 +108,106 @@ const AdvancedPiano: React.FC = () => {
     });
   };
 
-const analyzeMelody = async () => {
-  if (recordedNotes.length === 0) {
-    toast({
-      title: "אין מנגינה",
-      description: "קודם הקלט מנגינה!",
-      variant: "destructive"
-    });
-    return;
-  }
+  const analyzeMelody = async () => {
+    if (recordedNotes.length === 0) {
+      toast({
+        title: "אין מנגינה",
+        description: "קודם הקלט מנגינה!",
+        variant: "destructive"
+      });
+      return;
+    }
 
-  setIsAnalyzing(true);
-  setAnalysisResult(null); // איפוס תוצאה קודמת
-  
-  try {
-    const melodyData = recordedNotes.map(note => ({
-      note: note.note,
-      time: note.timestamp / 1000
-    }));
-
-    const prompt = `נא לנתח את המנגינה הבאה שנוגנה בפסנתר:
-    ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
-
-    האם זו מנגינה מוכרת? אם כן, מה שמה? תן ניתוח קצר של המנגינה.`;
-
-    const { data, error } = await supabase.functions.invoke('analyze-melody', {
-      body: { 
-        melody: melodyData,
-        prompt: prompt 
-      }
-    });
-
-    if (error) throw error;
-
-    // הצג את התוצאה על המסך במקום טוסט
-    setAnalysisResult(data.analysis || "לא הצלחנו לזהות את המנגינה");
+    setIsAnalyzing(true);
+    setAnalysisResult(null);
     
-    toast({
-      title: "🎭 ניתוח הושלם!",
-      description: "התוצאות מוצגות למטה",
-      duration: 3000
-    });
-  } catch (error) {
-    console.error('Error analyzing melody:', error);
-    setAnalysisResult("אופס! משהו השתבש בניתוח. נסה שוב! 🤖");
-    
-    toast({
-      title: "שגיאה",
-      description: "לא הצלחנו לנתח את המנגינה",
-      variant: "destructive"
-    });
-  } finally {
-    setIsAnalyzing(false);
-  }
-};
+    try {
+      const melodyData = recordedNotes.map(note => ({
+        note: note.note,
+        time: note.timestamp / 1000
+      }));
 
-// הוסף פונקציה לאיפוס
-const resetAnalysis = () => {
-  setAnalysisResult(null);
-  setRecordedNotes([]);
-  toast({
-    title: "🔄 איפוס הושלם",
-    description: "מוכן להקלטה חדשה!",
-  });
-};
+      const prompt = `נא לנתח את המנגינה הבאה שנוגנה בפסנתר:
+${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
+
+האם זו מנגינה מוכרת? אם כן, מה שמה? תן ניתוח קצר של המנגינה.`;
+
+      const { data, error } = await supabase.functions.invoke('analyze-melody', {
+        body: { 
+          melody: melodyData,
+          prompt: prompt 
+        }
+      });
+
+      if (error) throw error;
+
+      setAnalysisResult(data.analysis || "לא הצלחנו לזהות את המנגינה");
+      
+      toast({
+        title: "🎭 ניתוח הושלם!",
+        description: "התוצאות מוצגות למטה",
+        duration: 3000
+      });
+    } catch (error) {
+      console.error('Error analyzing melody:', error);
+      setAnalysisResult("אופס! משהו השתבש בניתוח. נסה שוב! 🤖");
+      
+      toast({
+        title: "שגיאה",
+        description: "לא הצלחנו לנתח את המנגינה",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const resetAnalysis = () => {
+    setAnalysisResult(null);
+    setRecordedNotes([]);
+    toast({
+      title: "🔄 איפוס הושלם",
+      description: "מוכן להקלטה חדשה!",
+    });
+  };
 
   return (
-    <div className="flex flex-col items-center gap-4 p-4">
+    <div className="flex flex-col items-center gap-3 p-3 max-w-lg mx-auto max-h-[80vh] overflow-y-auto">
       {/* בקרות אוקטבה וסוג צליל */}
-      <div className="flex flex-col items-center gap-3">
+      <div className="flex flex-col items-center gap-2">
         <div className="flex items-center gap-2">
           <Button
             onClick={() => setOctave(Math.max(1, octave - 1))}
             disabled={octave <= 1}
             size="sm"
             variant="outline"
-            className="h-8"
+            className="h-7 w-7 p-0"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-3 h-3" />
           </Button>
           
-          <span className="font-medium text-sm px-3">אוקטבה {octave}</span>
+          <span className="font-medium text-xs px-2">אוקטבה {octave}</span>
           
           <Button
             onClick={() => setOctave(Math.min(7, octave + 1))}
             disabled={octave >= 7}
             size="sm"
             variant="outline"
-            className="h-8"
+            className="h-7 w-7 p-0"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3 h-3" />
           </Button>
         </div>
 
         {/* בחירת סוג צליל */}
         <Select value={soundType} onValueChange={(value: SoundType) => setSoundType(value)}>
-          <SelectTrigger className="w-[180px] h-8">
+          <SelectTrigger className="w-40 h-7 text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {soundTypes.map((type) => (
               <SelectItem key={type.value} value={type.value}>
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-1 text-xs">
                   <span>{type.emoji}</span>
                   <span>{type.label}</span>
                 </span>
@@ -220,12 +218,12 @@ const resetAnalysis = () => {
       </div>
 
       {/* פסנתר */}
-      <div className="flex flex-row gap-1">
+      <div className="flex flex-row gap-1 flex-wrap justify-center max-w-xs">
         {notes.map((note, idx) => (
           <Button
             key={idx}
             onClick={() => playNote(note.baseFreq, note.name)}
-            className={`${themeConfig.buttonGradient} text-white text-2xl px-4 py-2 min-w-12 min-h-12 rounded-full transition-all duration-200 hover:scale-110 active:scale-95`}
+            className={`${themeConfig.buttonGradient} text-white text-lg px-2 py-2 min-w-8 min-h-8 rounded-full transition-all duration-200 hover:scale-110 active:scale-95`}
             title={`${note.name}${octave}`}
           >
             {note.emoji}
@@ -234,23 +232,23 @@ const resetAnalysis = () => {
       </div>
 
       {/* בקרת הקלטה */}
-      <div className="flex items-center gap-3 mt-2">
+      <div className="flex items-center gap-2 mt-1">
         {!isRecording ? (
           <Button
             onClick={startRecording}
             size="sm"
-            className="bg-red-500 hover:bg-red-600 text-white"
+            className="bg-red-500 hover:bg-red-600 text-white h-8 text-xs"
           >
-            <Piano className="w-4 h-4 mr-1" />
+            <Piano className="w-3 h-3 mr-1" />
             הקלט
           </Button>
         ) : (
           <Button
             onClick={stopRecording}
             size="sm"
-            className="bg-gray-600 hover:bg-gray-700 text-white animate-pulse"
+            className="bg-gray-600 hover:bg-gray-700 text-white animate-pulse h-8 text-xs"
           >
-            <Square className="w-4 h-4 mr-1" />
+            <Square className="w-3 h-3 mr-1" />
             עצור
           </Button>
         )}
@@ -259,10 +257,10 @@ const resetAnalysis = () => {
           onClick={analyzeMelody}
           disabled={recordedNotes.length === 0 || isAnalyzing}
           size="sm"
-          className="bg-purple-500 hover:bg-purple-600 text-white"
+          className="bg-purple-500 hover:bg-purple-600 text-white h-8 text-xs"
         >
-          <Send className="w-4 h-4 mr-1" />
-          {isAnalyzing ? 'מנתח...' : 'נתח מנגינה'}
+          <Send className="w-3 h-3 mr-1" />
+          {isAnalyzing ? 'מנתח...' : 'נתח'}
         </Button>
       </div>
 
@@ -275,18 +273,18 @@ const resetAnalysis = () => {
 
       {/* תוצאות ניתוח המנגינה */}
       {analysisResult && !isAnalyzing && (
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 mt-6 border-2 border-purple-200 max-w-md mx-auto">
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-3 mt-2 border-2 border-purple-200 w-full max-w-xs">
           <div className="text-center">
-            <div className="text-3xl mb-3">🎹</div>
-            <h4 className="font-bold text-purple-800 mb-3">ניתוח המנגינה</h4>
-            <p className="text-purple-700 leading-relaxed text-right">
+            <div className="text-lg mb-2">🎹</div>
+            <h4 className="font-bold text-purple-800 mb-2 text-xs">ניתוח המנגינה</h4>
+            <p className="text-purple-700 leading-relaxed text-right text-xs">
               {analysisResult}
             </p>
-            <div className="flex justify-center gap-2 mt-4">
+            <div className="flex justify-center gap-1 mt-2">
               {['🎵', '🎶', '🎼', '🎹', '🎸'].map((emoji, i) => (
                 <span
                   key={i}
-                  className="text-lg animate-bounce"
+                  className="text-sm animate-bounce"
                   style={{ animationDelay: `${i * 0.1}s` }}
                 >
                   {emoji}
@@ -295,18 +293,11 @@ const resetAnalysis = () => {
             </div>
             <button
               onClick={resetAnalysis}
-              className="mt-4 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white py-2 px-4 rounded-full text-sm transform transition-all duration-200 hover:scale-105"
+              className="mt-2 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white py-1 px-2 rounded-full text-xs transform transition-all duration-200 hover:scale-105"
             >
-              🔄 נקה ותתחיל מחדש
+              🔄 נקה
             </button>
           </div>
-        </div>
-      )}
-
-      {/* מצב הקלטה */}
-      {recordedNotes.length > 0 && (
-        <div className="text-xs text-gray-600 text-center mt-2">
-          הוקלטו {recordedNotes.length} תווים
         </div>
       )}
     </div>
