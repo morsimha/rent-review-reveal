@@ -40,10 +40,10 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
           <DialogHeader>
             <DialogTitle className={`text-center ${isMobile ? 'text-lg' : 'text-2xl'} font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent`}>
               <Sparkles className="w-5 h-5 mr-2" />
-              🎹 פסנתר אינטראקטיבי
+              פסנתר אינטראקטיבי
             </DialogTitle>
             <DialogDescription className={`text-center ${isMobile ? 'text-sm' : 'text-base'} text-gray-600 mt-2`}>
-              נגן את המנגינות הישמיות שלך!
+              יאללה יאנג מוצארט אנחנו מקשיבים
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-6 p-4">
@@ -56,8 +56,7 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
               onClick={openAdvancedPiano}
               className={`bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white ${isMobile ? 'px-4 py-3 text-sm' : 'px-6 py-3 text-base'} rounded-full shadow-lg transform transition-all duration-200 hover:scale-105 hover:shadow-xl`}
             >
-              <Sparkles className="w-5 h-5 mr-2" />
-              עם זיהוי מנגינות AI סטודיו הקלטות 🎵
+              AI סטודיו הקלטות 🎵
             </Button>
           </div>
         </DialogContent>
@@ -68,8 +67,7 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
         <DialogContent className={`${isMobile ? 'max-w-[95vw] max-h-[95vh] p-3' : 'max-w-6xl max-h-[95vh] p-6'} overflow-y-auto rounded-2xl border-2 shadow-2xl bg-gradient-to-br from-white via-purple-50 to-pink-50`}>
           <DialogHeader>
             <DialogTitle className={`text-center ${isMobile ? 'text-lg' : 'text-3xl'} font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 bg-clip-text text-transparent`}>
-            <Sparkles className="w-5 h-5 mr-2" />
-            עם זיהוי מנגינותAI סטודיו הקלטות 🎵
+           🎵 עם זיהוי מנגינות AI סטודיו הקלטות 🎵
             </DialogTitle>
             <DialogDescription className={`text-center ${isMobile ? 'text-xs' : 'text-base'} text-gray-600 mt-2 font-medium`}>
               !נגן, הקלט, ותן לצ'אטי לזהות את המנגינה שלך
