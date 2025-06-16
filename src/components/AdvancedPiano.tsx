@@ -29,6 +29,7 @@ const AdvancedPiano: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [soundType, setSoundType] = useState<SoundType>('sine');
   const recordingStartTime = useRef<number>(0);
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null); // תוצאת הניתוח לתצוגה
 
   // תווים פשוטים - רק הלבנים
   const notes = [
@@ -107,53 +108,70 @@ const AdvancedPiano: React.FC = () => {
     });
   };
 
-  const analyzeMelody = async () => {
-    if (recordedNotes.length === 0) {
-      toast({
-        title: "אין מנגינה",
-        description: "קודם הקלט מנגינה!",
-        variant: "destructive"
-      });
-      return;
-    }
+const analyzeMelody = async () => {
+  if (recordedNotes.length === 0) {
+    toast({
+      title: "אין מנגינה",
+      description: "קודם הקלט מנגינה!",
+      variant: "destructive"
+    });
+    return;
+  }
 
-    setIsAnalyzing(true);
+  setIsAnalyzing(true);
+  setAnalysisResult(null); // איפוס תוצאה קודמת
+  
+  try {
+    const melodyData = recordedNotes.map(note => ({
+      note: note.note,
+      time: note.timestamp / 1000
+    }));
+
+    const prompt = `נא לנתח את המנגינה הבאה שנוגנה בפסנתר:
+    ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
+
+    האם זו מנגינה מוכרת? אם כן, מה שמה? תן ניתוח קצר של המנגינה.`;
+
+    const { data, error } = await supabase.functions.invoke('analyze-melody', {
+      body: { 
+        melody: melodyData,
+        prompt: prompt 
+      }
+    });
+
+    if (error) throw error;
+
+    // הצג את התוצאה על המסך במקום טוסט
+    setAnalysisResult(data.analysis || "לא הצלחנו לזהות את המנגינה");
     
-    try {
-      const melodyData = recordedNotes.map(note => ({
-        note: note.note,
-        time: note.timestamp / 1000
-      }));
+    toast({
+      title: "🎭 ניתוח הושלם!",
+      description: "התוצאות מוצגות למטה",
+      duration: 3000
+    });
+  } catch (error) {
+    console.error('Error analyzing melody:', error);
+    setAnalysisResult("אופס! משהו השתבש בניתוח. נסה שוב! 🤖");
+    
+    toast({
+      title: "שגיאה",
+      description: "לא הצלחנו לנתח את המנגינה",
+      variant: "destructive"
+    });
+  } finally {
+    setIsAnalyzing(false);
+  }
+};
 
-      const prompt = `נא לנתח את המנגינה הבאה שנוגנה בפסנתר:
-${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
-
-האם זו מנגינה מוכרת? אם כן, מה שמה? תן ניתוח קצר של המנגינה.`;
-
-      const { data, error } = await supabase.functions.invoke('analyze-melody', {
-        body: { 
-          melody: melodyData,
-          prompt: prompt 
-        }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "ניתוח המנגינה",
-        description: data.analysis || "לא הצלחנו לזהות את המנגינה",
-      });
-    } catch (error) {
-      console.error('Error analyzing melody:', error);
-      toast({
-        title: "שגיאה",
-        description: "לא הצלחנו לנתח את המנגינה",
-        variant: "destructive"
-      });
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
+// הוסף פונקציה לאיפוס
+const resetAnalysis = () => {
+  setAnalysisResult(null);
+  setRecordedNotes([]);
+  toast({
+    title: "🔄 איפוס הושלם",
+    description: "מוכן להקלטה חדשה!",
+  });
+};
 
   return (
     <div className="flex flex-col items-center gap-4 p-4">
@@ -203,7 +221,7 @@ ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
 
       {/* פסנתר */}
       <div className="flex flex-row gap-1">
-        {[...notes].reverse().map((note, idx) => (
+        {notes.map((note, idx) => (
           <Button
             key={idx}
             onClick={() => playNote(note.baseFreq, note.name)}
@@ -251,6 +269,43 @@ ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
       {/* מצב הקלטה */}
       {recordedNotes.length > 0 && (
         <div className="text-xs text-gray-600 text-center">
+          הוקלטו {recordedNotes.length} תווים
+        </div>
+      )}
+
+      {/* תוצאות ניתוח המנגינה */}
+      {analysisResult && !isAnalyzing && (
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 mt-6 border-2 border-purple-200 max-w-md mx-auto">
+          <div className="text-center">
+            <div className="text-3xl mb-3">🎹</div>
+            <h4 className="font-bold text-purple-800 mb-3">ניתוח המנגינה</h4>
+            <p className="text-purple-700 leading-relaxed text-right">
+              {analysisResult}
+            </p>
+            <div className="flex justify-center gap-2 mt-4">
+              {['🎵', '🎶', '🎼', '🎹', '🎸'].map((emoji, i) => (
+                <span
+                  key={i}
+                  className="text-lg animate-bounce"
+                  style={{ animationDelay: `${i * 0.1}s` }}
+                >
+                  {emoji}
+                </span>
+              ))}
+            </div>
+            <button
+              onClick={resetAnalysis}
+              className="mt-4 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white py-2 px-4 rounded-full text-sm transform transition-all duration-200 hover:scale-105"
+            >
+              🔄 נקה ותתחיל מחדש
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* מצב הקלטה */}
+      {recordedNotes.length > 0 && (
+        <div className="text-xs text-gray-600 text-center mt-2">
           הוקלטו {recordedNotes.length} תווים
         </div>
       )}

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mic, Square, Send, Music2, Sparkles } from 'lucide-react';
+import { Mic, Square, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -10,13 +10,14 @@ const VoiceRecorder: React.FC = () => {
   const [hasRecording, setHasRecording] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
-  const [volumeLevel, setVolumeLevel] = useState(0); // רמת עוצמה בזמן אמת
-  const [analysisResult, setAnalysisResult] = useState<string | null>(null); // תוצאת הניתוח לתצוגה
+  const [volumeLevel, setVolumeLevel] = useState(0);
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
   const audioBlob = useRef<Blob | null>(null);
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   // פונקציה לניטור עוצמה בזמן אמת
   const monitorVolume = (stream: MediaStream) => {
@@ -29,16 +30,19 @@ const VoiceRecorder: React.FC = () => {
     analyser.fftSize = 256;
     
     const updateVolume = () => {
-      if (!isRecording) return;
+      if (!isRecording) {
+        audioContext.close();
+        return;
+      }
       
       analyser.getByteFrequencyData(dataArray);
       const average = dataArray.reduce((sum, value) => sum + value) / dataArray.length;
-      const normalizedVolume = Math.min(average / 128, 1); // נרמול בין 0-1
+      const normalizedVolume = Math.min(average / 128, 1);
       
       setVolumeLevel(normalizedVolume);
       
       if (isRecording) {
-        requestAnimationFrame(updateVolume);
+        animationFrameRef.current = requestAnimationFrame(updateVolume);
       }
     };
     
@@ -52,12 +56,12 @@ const VoiceRecorder: React.FC = () => {
       audioChunks.current = [];
       setRecordingDuration(0);
       setVolumeLevel(0);
-      setAnalysisResult(null); // איפוס תוצאה קודמת
+      setAnalysisResult(null);
 
       // התחל ניטור עוצמה
       monitorVolume(stream);
 
-      // Start timer
+      // התחל טיימר
       timerInterval.current = setInterval(() => {
         setRecordingDuration(prev => prev + 1);
       }, 1000);
@@ -70,12 +74,15 @@ const VoiceRecorder: React.FC = () => {
         if (timerInterval.current) {
           clearInterval(timerInterval.current);
         }
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+        }
         
         audioBlob.current = new Blob(audioChunks.current, { type: 'audio/webm' });
         setHasRecording(true);
-        setVolumeLevel(0); // איפוס רמת העוצמה
+        setVolumeLevel(0);
         
-        // Stop all tracks
+        // עצור את כל הטראקים
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -100,6 +107,10 @@ const VoiceRecorder: React.FC = () => {
       mediaRecorder.current.stop();
       setIsRecording(false);
       
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      
       toast({
         title: "🎵 הקלטה נשמרה!",
         description: `${recordingDuration} שניות של קסם מוזיקלי`,
@@ -110,16 +121,13 @@ const VoiceRecorder: React.FC = () => {
   // ניתוח בסיסי של ההקלטה
   const analyzeAudioBasic = async (audioBlob: Blob, duration: number): Promise<string> => {
     try {
-      // ניתוח בסיסי של הקול
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const arrayBuffer = await audioBlob.arrayBuffer();
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
       
-      // חישוב עוצמה ממוצעת
       const channelData = audioBuffer.getChannelData(0);
       const avgVolume = channelData.reduce((sum, sample) => sum + Math.abs(sample), 0) / channelData.length;
       
-      // חישוב שינויים בעוצמה (דינמיקה)
       let volumeChanges = 0;
       let prevVolume = Math.abs(channelData[0]);
       for (let i = 1000; i < channelData.length; i += 1000) {
@@ -130,23 +138,19 @@ const VoiceRecorder: React.FC = () => {
         prevVolume = currentVolume;
       }
       
-      // ניתוח מאפיינים
-      const isDynamic = volumeChanges > duration * 2; // הרבה שינויים
+      const isDynamic = volumeChanges > duration * 2;
       const isLoud = avgVolume > 0.1;
       const isSoft = avgVolume < 0.03;
       const isLong = duration > 8;
       const isShort = duration < 3;
       
-      // יצירת תיאור חכם
       return generateSmartDescription(duration, isLoud, isSoft, isDynamic, isLong, isShort);
       
     } catch (error) {
-      // אם הניתוח נכשל, תחזור לתיאור בסיסי
       return generateBasicDescription(duration);
     }
   };
 
-  // יצירת תיאור חכם
   const generateSmartDescription = (
     duration: number, 
     isLoud: boolean, 
@@ -199,18 +203,15 @@ const VoiceRecorder: React.FC = () => {
       }
     ];
     
-    // מצא את הסוג הראשון שמתאים
     for (const type of personalityTypes) {
       if (type.condition) {
         return type.responses[Math.floor(Math.random() * type.responses.length)];
       }
     }
     
-    // ברירת מחדל
     return generateBasicDescription(duration);
   };
 
-  // תיאור בסיסי (כ-fallback)
   const generateBasicDescription = (duration: number): string => {
     const basicResponses = [
       `🎵 הקלטת ${Math.floor(duration)} שניות של מוזיקה! נשמע כמו... משהו מקסים!`,
@@ -223,75 +224,82 @@ const VoiceRecorder: React.FC = () => {
     return basicResponses[Math.floor(Math.random() * basicResponses.length)];
   };
 
-const analyzeRecording = async () => {
-  if (!audioBlob.current) {
-    toast({
-      title: "רגע, מה? 🤔",
-      description: "אין הקלטה! תנסה להקליט משהו קודם",
-      variant: "destructive"
-    });
-    return;
-  }
-
-  setIsAnalyzing(true);
-  setAnalysisResult(null);
-  
-  try {
-    // ניסיון ראשון: שליחה לשרת עם Whisper + GPT
-    const base64Audio = await blobToBase64(audioBlob.current);
-    
-    const { data, error } = await supabase.functions.invoke('analyze-voice', {
-      body: { 
-        audioData: base64Audio,
-        duration: recordingDuration
-      }
-    });
-
-    if (error) throw error;
-
-    // אם הניתוח הצליח - הצג את התוצאה מהשרת
-    if (data?.analysis) {
-      setAnalysisResult(data.analysis);
-      
+  const analyzeRecording = async () => {
+    if (!audioBlob.current) {
       toast({
-        title: "🎭 ניתוח AI הושלם!",
-        description: "הניתוח המתקדם מוכן למטה",
-        duration: 5000
-      });
-    } else {
-      // אם השרת לא החזיר תוצאה - נסה ניתוח מקומי
-      throw new Error("No analysis from server");
-    }
-    
-  } catch (error) {
-    console.error('Server analysis failed:', error);
-    
-    // נסיון שני: ניתוח מקומי כ-fallback
-    try {
-      const localAnalysis = await analyzeAudioBasic(audioBlob.current, recordingDuration);
-      setAnalysisResult(`${localAnalysis}\n\n💡 (ניתוח מקומי - השרת לא זמין כרגע)`);
-      
-      toast({
-        title: "🤖 ניתוח מקומי הושלם",
-        description: "השרת לא זמין, אבל עדיין יש לנו משהו!",
-        duration: 6000
-      });
-    } catch (localError) {
-      // אם גם הניתוח המקומי נכשל
-      setAnalysisResult("אופס! משהו השתבש בניתוח. נסה שוב! 🤖");
-      
-      toast({
-        title: "שגיאה בניתוח 🤖",
-        description: "נראה שה-AI שלנו יצא להפסקת קפה. נסה שוב!",
+        title: "רגע, מה? 🤔",
+        description: "אין הקלטה! תנסה להקליט משהו קודם",
         variant: "destructive"
       });
+      return;
     }
-  } finally {
-    setIsAnalyzing(false);
-  }
-};
 
-  // איפוס הקלטה
+    setIsAnalyzing(true);
+    setAnalysisResult(null);
+    
+    try {
+      const base64Audio = await blobToBase64(audioBlob.current);
+      
+      const { data, error } = await supabase.functions.invoke('analyze-voice', {
+        body: { 
+          audioData: base64Audio,
+          duration: recordingDuration
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.analysis) {
+        setAnalysisResult(data.analysis);
+        
+        toast({
+          title: "🎭 ניתוח AI הושלם!",
+          description: "הניתוח המתקדם מוכן למטה",
+          duration: 5000
+        });
+      } else {
+        throw new Error("No analysis from server");
+      }
+      
+    } catch (error) {
+      console.error('Server analysis failed:', error);
+      
+      try {
+        const localAnalysis = await analyzeAudioBasic(audioBlob.current, recordingDuration);
+        setAnalysisResult(`${localAnalysis}\n\n💡 (ניתוח מקומי - השרת לא זמין כרגע)`);
+        
+        toast({
+          title: "🤖 ניתוח מקומי הושלם",
+          description: "השרת לא זמין, אבל עדיין יש לנו משהו!",
+          duration: 6000
+        });
+      } catch (localError) {
+        setAnalysisResult("אופס! משהו השתבש בניתוח. נסה שוב! 🤖");
+        
+        toast({
+          title: "שגיאה בניתוח 🤖",
+          description: "נראה שה-AI שלנו יצא להפסקת קפה. נסה שוב!",
+          variant: "destructive"
+        });
+      }
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
   const resetRecording = () => {
     setHasRecording(false);
     setAnalysisResult(null);
@@ -312,20 +320,20 @@ const analyzeRecording = async () => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-6 p-8 max-w-md mx-auto">
-      {/* כותרת מצחיקה */}
+    <div className="flex flex-col items-center gap-4 p-4 max-w-sm mx-auto overflow-hidden">
+      {/* כותרת */}
       <div className="text-center space-y-2">
-        <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+        <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
           🎤 אולפן הזמרה הביתי 🎤
         </h3>
-        <p className="text-gray-600 text-sm">
+        <p className="text-gray-600 text-xs">
           שיר, שרוק, זמזם, או פשוט תעשה קולות מוזרים!
         </p>
       </div>
 
-      {/* ויזואליזציה משופרת של הקלטה */}
-      <div className="relative">
-        <div className={`w-32 h-32 rounded-full flex items-center justify-center transition-all duration-300 ${
+      {/* ויזואליזציה */}
+      <div className="relative flex justify-center">
+        <div className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 ${
           isRecording 
             ? 'bg-gradient-to-r from-red-400 to-pink-400 shadow-lg shadow-red-300' 
             : hasRecording
@@ -340,7 +348,7 @@ const analyzeRecording = async () => {
             ? '0 0 20px rgba(34, 197, 94, 0.3)'
             : 'none'
         }}>
-          <Mic className={`w-16 h-16 text-white ${isRecording ? 'animate-pulse' : ''}`} />
+          <Mic className={`w-12 h-12 text-white ${isRecording ? 'animate-pulse' : ''}`} />
         </div>
         
         {/* אנימציה של גלי קול */}
@@ -351,8 +359,8 @@ const analyzeRecording = async () => {
                 key={ring}
                 className="absolute rounded-full border-2 border-red-300 animate-ping"
                 style={{
-                  width: `${132 + ring * 20 + volumeLevel * 40}px`,
-                  height: `${132 + ring * 20 + volumeLevel * 40}px`,
+                  width: `${100 + ring * 15 + volumeLevel * 30}px`,
+                  height: `${100 + ring * 15 + volumeLevel * 30}px`,
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
@@ -364,19 +372,10 @@ const analyzeRecording = async () => {
           </>
         )}
         
-        {/* טיימר */}
-        {isRecording && (
-          <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
-            <span className="text-2xl font-mono font-bold text-red-500 animate-pulse">
-              {formatTime(recordingDuration)}
-            </span>
-          </div>
-        )}
-        
-        {/* מד עוצמה */}
-        {isRecording && (
-          <div className="absolute -right-16 top-1/2 transform -translate-y-1/2">
-            <div className="w-3 h-24 bg-gray-200 rounded-full overflow-hidden">
+        {/* מד עוצמה - רק כשמקליט ויש עוצמה */}
+        {isRecording && volumeLevel > 0.05 && (
+          <div className="absolute -left-12 top-1/2 transform -translate-y-1/2">
+            <div className="w-2 h-16 bg-gray-200 rounded-full overflow-hidden">
               <div 
                 className="w-full bg-gradient-to-t from-green-400 via-yellow-400 to-red-400 transition-all duration-100 rounded-full"
                 style={{ 
@@ -385,46 +384,53 @@ const analyzeRecording = async () => {
                 }}
               />
             </div>
-            <div className="text-xs text-center mt-1 text-gray-600">עוצמה</div>
+            <div className="text-xs text-center mt-1 text-gray-600">🔊</div>
           </div>
         )}
       </div>
 
+      {/* טיימר */}
+      {isRecording && (
+        <div className="text-lg font-mono font-bold text-red-500 animate-pulse">
+          {formatTime(recordingDuration)}
+        </div>
+      )}
+
       {/* כפתורי פעולה */}
-      <div className="flex flex-col gap-4 w-full mt-4">
+      <div className="flex flex-col gap-3 w-full">
         {!isRecording ? (
           <Button
             onClick={startRecording}
-            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white py-6 text-lg rounded-full shadow-lg transform transition-all duration-200 hover:scale-105"
+            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white py-4 text-base rounded-full shadow-lg transform transition-all duration-200 hover:scale-105"
           >
-            <Mic className="w-6 h-6 mr-2" />
+            <Mic className="w-5 h-5 mr-2" />
             התחל הקלטה
           </Button>
         ) : (
           <Button
             onClick={stopRecording}
-            className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-6 text-lg rounded-full shadow-lg animate-pulse"
+            className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-4 text-base rounded-full shadow-lg animate-pulse"
           >
-            <Square className="w-6 h-6 mr-2" />
+            <Square className="w-5 h-5 mr-2" />
             עצור הקלטה
           </Button>
         )}
         
         {hasRecording && !isRecording && (
-          <div className="flex gap-3 w-full">
+          <div className="flex gap-2 w-full">
             <Button
               onClick={analyzeRecording}
               disabled={isAnalyzing}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-6 text-lg rounded-full shadow-lg transform transition-all duration-200 hover:scale-105 flex-1"
+              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-4 text-sm rounded-full shadow-lg transform transition-all duration-200 hover:scale-105 flex-1"
             >
               {isAnalyzing ? (
                 <>
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-2" />
-                  מנתח את היצירה...
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-1" />
+                  מנתח...
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-6 h-6 mr-2" />
+                  <Sparkles className="w-4 h-4 mr-1" />
                   בוא נראה מה הקלטת!
                 </>
               )}
@@ -432,7 +438,7 @@ const analyzeRecording = async () => {
             
             <Button
               onClick={resetRecording}
-              className="bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white py-6 px-4 rounded-full shadow-lg transform transition-all duration-200 hover:scale-105"
+              className="bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white py-4 px-3 rounded-full shadow-lg transform transition-all duration-200 hover:scale-105"
               title="התחל מחדש"
             >
               🔄
@@ -443,18 +449,18 @@ const analyzeRecording = async () => {
 
       {/* תוצאות ניתוח */}
       {analysisResult && !isAnalyzing && (
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 mt-6 border-2 border-purple-200 max-w-md">
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 mt-4 border-2 border-purple-200 w-full max-w-sm">
           <div className="text-center">
-            <div className="text-2xl mb-3">🎭</div>
-            <h4 className="font-bold text-purple-800 mb-3">תוצאות הניתוח</h4>
-            <p className="text-purple-700 leading-relaxed">
+            <div className="text-2xl mb-2">🎭</div>
+            <h4 className="font-bold text-purple-800 mb-2 text-sm">תוצאות הניתוח</h4>
+            <p className="text-purple-700 leading-relaxed text-xs text-right">
               {analysisResult}
             </p>
-            <div className="flex justify-center gap-2 mt-4">
+            <div className="flex justify-center gap-1 mt-3">
               {['🎵', '🎶', '🎼', '🎤', '🎸'].map((emoji, i) => (
                 <span
                   key={i}
-                  className="text-lg animate-bounce"
+                  className="text-sm animate-bounce"
                   style={{ animationDelay: `${i * 0.1}s` }}
                 >
                   {emoji}
@@ -465,20 +471,20 @@ const analyzeRecording = async () => {
         </div>
       )}
 
-      {/* טיפים מצחיקים */}
-      <div className="bg-purple-50 rounded-2xl p-4 mt-4 border-2 border-purple-200">
-        <p className="text-center text-sm text-purple-700 font-medium">
+      {/* טיפים */}
+      <div className="bg-purple-50 rounded-xl p-3 mt-2 border-2 border-purple-200 w-full">
+        <p className="text-center text-xs text-purple-700 font-medium">
           💡 טיפ: אפשר גם לשרוק כמו ציפור, לזמזם כמו דבורה, או פשוט להגיד "לה לה לה" בקצב!
         </p>
       </div>
 
-      {/* אנימציה מצחיקה */}
+      {/* אנימציה כשמקליט */}
       {isRecording && (
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-1 mt-2">
           {['🎵', '🎶', '🎼', '🎤', '🎸'].map((emoji, i) => (
             <span
               key={i}
-              className="text-2xl animate-bounce"
+              className="text-lg animate-bounce"
               style={{ animationDelay: `${i * 0.1}s` }}
             >
               {emoji}
@@ -490,17 +496,4 @@ const analyzeRecording = async () => {
   );
 };
 
-const blobToBase64 = (blob: Blob): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      // הסר את החלק "data:audio/webm;base64," ותשאיר רק את ה-base64
-      const base64 = result.split(',')[1];
-      resolve(base64);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-};
 export default VoiceRecorder;
