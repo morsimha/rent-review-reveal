@@ -205,7 +205,7 @@ ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
       <div className="flex flex-row gap-1">
         {[...notes].reverse().map((note, idx) => (
           <Button
-            key={index}
+            key={idx}
             onClick={() => playNote(note.baseFreq, note.name)}
             className={`${themeConfig.buttonGradient} text-white text-2xl px-4 py-2 min-w-12 min-h-12 rounded-full transition-all duration-200 hover:scale-110 active:scale-95`}
             title={`${note.name}${octave}`}
