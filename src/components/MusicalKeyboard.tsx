@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MusicalKeyboardProps {
   bigButtons?: boolean;
@@ -8,6 +10,7 @@ interface MusicalKeyboardProps {
 
 const MusicalKeyboard: React.FC<MusicalKeyboardProps> = ({ bigButtons = false }) => {
   const { themeConfig } = useTheme();
+  const isMobile = useIsMobile();
 
   // סדר: דו הגבוה עד דו הנמוך (כולל 2 תווים גבוהים נוספים)
   const notes = [
@@ -30,7 +33,7 @@ const MusicalKeyboard: React.FC<MusicalKeyboardProps> = ({ bigButtons = false })
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
 
-            // צליל ארוך יותר לחוויית נגינה
+      // צליל ארוך יותר לחוויית נגינה
       gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.2);
       
@@ -51,18 +54,26 @@ const MusicalKeyboard: React.FC<MusicalKeyboardProps> = ({ bigButtons = false })
     }
   };
 
-  const buttonSizeClasses = bigButtons
-    ? "text-2xl px-4 py-2 min-w-12 min-h-12"
-    : "text-base px-2 py-1 min-w-8 min-h-8";
+  // responsive button sizes
+  const getButtonClasses = () => {
+    if (isMobile) {
+      return bigButtons 
+        ? "text-xl px-2 py-3 min-w-10 min-h-12 text-sm" 
+        : "text-base px-1 py-2 min-w-8 min-h-10 text-xs";
+    }
+    return bigButtons
+      ? "text-2xl px-4 py-2 min-w-12 min-h-12"
+      : "text-base px-2 py-1 min-w-8 min-h-8";
+  };
 
   return (
-    <div className="flex items-center justify-center gap-1 mb-4">
-      <div className="flex flex-wrap justify-center gap-1">
+    <div className="flex items-center justify-center gap-1 mb-4 w-full overflow-x-auto">
+      <div className={`flex ${isMobile ? 'flex-wrap' : 'flex-row'} justify-center gap-1 ${isMobile ? 'max-w-sm mx-auto' : ''}`}>
         {notes.map((note, idx) => (
           <Button
             key={idx}
             onClick={() => playNote(note.frequency)}
-            className={`${themeConfig.buttonGradient} text-white ${buttonSizeClasses} rounded-full transition-all duration-200 hover:scale-110 active:scale-95`}
+            className={`${themeConfig.buttonGradient} text-white ${getButtonClasses()} rounded-full transition-all duration-200 hover:scale-110 active:scale-95 touch-manipulation`}
             title={`נגן ${note.name}`}
           >
             {note.emoji}

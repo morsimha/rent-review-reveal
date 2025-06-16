@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import MusicalKeyboard from '@/components/MusicalKeyboard';
 import AdvancedPiano from '@/components/AdvancedPiano';
 import { Sparkles } from 'lucide-react';
@@ -13,13 +15,14 @@ interface ThemeHeaderProps {
 
 const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameOpen }) => {
   const { themeConfig, cycleTheme } = useTheme();
+  const isMobile = useIsMobile();
   const [isPianoOpen, setIsPianoOpen] = useState(false);
   const [isAdvancedPianoOpen, setIsAdvancedPianoOpen] = useState(false);
 
   const openAdvancedPiano = () => {
-    setIsPianoOpen(false); // סגור את הפסנתר הרגיל
+    setIsPianoOpen(false);
     setTimeout(() => {
-      setIsAdvancedPianoOpen(true); // פתח את המתקדם
+      setIsAdvancedPianoOpen(true);
     }, 100);
   };
 
@@ -27,12 +30,15 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
     <div className="text-center mb-8">
       {/* Dialog לפסנתר רגיל */}
       <Dialog open={isPianoOpen} onOpenChange={setIsPianoOpen}>
-        <DialogContent className="max-w-fit">
+        <DialogContent className={`${isMobile ? 'max-w-[95vw] max-h-[90vh] overflow-y-auto' : 'max-w-fit'}`}>
           <DialogHeader>
-            <DialogTitle className="text-center text-xl">
+            <DialogTitle className={`text-center ${isMobile ? 'text-lg' : 'text-xl'}`}>
               פסנתר אינטראקטיבי
               <span className="mx-2" role="img" aria-label="Piano">🎹</span>
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              פסנתר אינטראקטיבי לנגינה
+            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4">
             <MusicalKeyboard bigButtons />
@@ -40,7 +46,7 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
             {/* כפתור לפסנתר מתקדם */}
             <Button
               onClick={openAdvancedPiano}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-4 py-2 rounded-full shadow-md transform transition-all duration-200 hover:scale-105"
+              className={`bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white ${isMobile ? 'px-3 py-2 text-sm' : 'px-4 py-2'} rounded-full shadow-md transform transition-all duration-200 hover:scale-105`}
             >
               <Sparkles className="w-4 h-4 mr-2" />
               AI סטודיו הקלטות
@@ -51,14 +57,17 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
 
       {/* Dialog לפסנתר מתקדם */}
       <Dialog open={isAdvancedPianoOpen} onOpenChange={setIsAdvancedPianoOpen}>
-        <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
+        <DialogContent className={`${isMobile ? 'max-w-[95vw] max-h-[95vh] overflow-y-auto p-3' : 'max-w-5xl max-h-[95vh] overflow-y-auto'}`}>
           <DialogHeader>
-            <DialogTitle className="text-center text-2xl font-bold">
+            <DialogTitle className={`text-center ${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>
               🎹 סטודיו הקלטות AI עם זיהוי מנגינות 🎵
-              <p className="text-sm font-normal text-gray-600 mt-2">
+              <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-normal text-gray-600 mt-2`}>
                 !נגן, הקלט, ותן לצ'אט לזהות את המנגינה שלך
               </p>
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              סטודיו הקלטות מתקדם עם זיהוי מנגינות AI
+            </DialogDescription>
           </DialogHeader>
           <div className="flex items-center justify-center mt-2">
             <AdvancedPiano />
@@ -77,7 +86,7 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
         <h1 className={`text-4xl font-bold ${themeConfig.textColor}`}>
           {themeConfig.title}
         </h1>
-        {/* כפתור פסנתר רגיל - בלי רקע */}
+        {/* כפתור פסנתר רגיל */}
         <button
           onClick={() => setIsPianoOpen(true)}
           className="text-4xl hover:scale-110 transition-transform duration-200 cursor-pointer"

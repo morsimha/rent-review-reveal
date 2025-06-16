@@ -1,7 +1,9 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
-import { ChevronLeft, ChevronRight, Mic, Square, Send, Piano } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { ChevronLeft, ChevronRight, Mic, Square, Send, Piano, Play } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -23,12 +25,16 @@ type SoundType = 'sine' | 'square' | 'sawtooth' | 'triangle';
 const AdvancedPiano: React.FC = () => {
   const { themeConfig } = useTheme();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [octave, setOctave] = useState(4);
   const [isRecording, setIsRecording] = useState(false);
+  const [isVoiceRecording, setIsVoiceRecording] = useState(false);
   const [recordedNotes, setRecordedNotes] = useState<RecordedNote[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [soundType, setSoundType] = useState<SoundType>('sine');
   const recordingStartTime = useRef<number>(0);
+  const mediaRecorder = useRef<MediaRecorder | null>(null);
+  const audioChunks = useRef<Blob[]>([]);
 
   // תווים פשוטים - רק הלבנים
   const notes = [
@@ -72,9 +78,8 @@ const AdvancedPiano: React.FC = () => {
       gainNode.connect(audioContext.destination);
       
       oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-      oscillator.type = soundType; // שימוש בסוג הצליל שנבחר
+      oscillator.type = soundType;
       
-      // צליל ארוך יותר לחוויית נגינה
       gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.2);
       
@@ -89,29 +94,104 @@ const AdvancedPiano: React.FC = () => {
     }
   };
 
-  const startRecording = () => {
+  const startPianoRecording = () => {
     setIsRecording(true);
     setRecordedNotes([]);
     recordingStartTime.current = Date.now();
     toast({
-      title: "התחלת הקלטה 🎵",
+      title: "התחלת הקלטת פסנתר 🎹",
       description: "נגן את המנגינה שלך!",
     });
   };
 
-  const stopRecording = () => {
+  const stopPianoRecording = () => {
     setIsRecording(false);
     toast({
-      title: "הקלטה הסתיימה",
+      title: "הקלטת פסנתר הסתיימה",
       description: `הוקלטו ${recordedNotes.length} תווים`,
     });
+  };
+
+  const startVoiceRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder.current = new MediaRecorder(stream);
+      audioChunks.current = [];
+
+      mediaRecorder.current.ondataavailable = (event) => {
+        audioChunks.current.push(event.data);
+      };
+
+      mediaRecorder.current.onstop = async () => {
+        const audioBlob = new Blob(audioChunks.current, { type: 'audio/wav' });
+        await processVoiceRecording(audioBlob);
+      };
+
+      mediaRecorder.current.start();
+      setIsVoiceRecording(true);
+      
+      toast({
+        title: "התחלת הקלטת קול 🎤",
+        description: "שיר או נשרוק את המנגינה!",
+      });
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: "לא הצלחנו לגשת למיקרופון",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const stopVoiceRecording = () => {
+    if (mediaRecorder.current && isVoiceRecording) {
+      mediaRecorder.current.stop();
+      mediaRecorder.current.stream.getTracks().forEach(track => track.stop());
+      setIsVoiceRecording(false);
+      
+      toast({
+        title: "הקלטת קול הסתיימה",
+        description: "מעבד את ההקלטה...",
+      });
+    }
+  };
+
+  const processVoiceRecording = async (audioBlob: Blob) => {
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Audio = (reader.result as string).split(',')[1];
+        
+        const { data, error } = await supabase.functions.invoke('analyze-melody', {
+          body: { 
+            audioData: base64Audio,
+            prompt: "נא לנתח את המנגינה שנשרקה או נושרה. זהה את התווים והמנגינה אם היא מוכרת."
+          }
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "ניתוח הקלטת קול",
+          description: data.analysis || "לא הצלחנו לזהות את המנגינה",
+        });
+      };
+      reader.readAsDataURL(audioBlob);
+    } catch (error) {
+      console.error('Error processing voice recording:', error);
+      toast({
+        title: "שגיאה",
+        description: "לא הצלחנו לעבד את הקלטת הקול",
+        variant: "destructive"
+      });
+    }
   };
 
   const analyzeMelody = async () => {
     if (recordedNotes.length === 0) {
       toast({
         title: "אין מנגינה",
-        description: "קודם הקלט מנגינה!",
+        description: "קודם הקלט מנגינה בפסנתר!",
         variant: "destructive"
       });
       return;
@@ -155,29 +235,33 @@ ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
     }
   };
 
+  // responsive styles
+  const getButtonSize = () => isMobile ? "text-lg px-2 py-3 min-w-8 min-h-10" : "text-2xl px-4 py-2 min-w-12 min-h-12";
+  const getControlSize = () => isMobile ? "text-xs px-2 py-1" : "text-sm px-3 py-2";
+
   return (
-    <div className="flex flex-col items-center gap-4 p-4">
+    <div className="flex flex-col items-center gap-4 p-4 max-w-full overflow-hidden">
       {/* בקרות אוקטבה וסוג צליל */}
-      <div className="flex flex-col items-center gap-3">
+      <div className="flex flex-col items-center gap-3 w-full">
         <div className="flex items-center gap-2">
           <Button
             onClick={() => setOctave(Math.max(1, octave - 1))}
             disabled={octave <= 1}
             size="sm"
             variant="outline"
-            className="h-8"
+            className={`h-8 ${isMobile ? 'px-2' : 'px-3'}`}
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
           
-          <span className="font-medium text-sm px-3">אוקטבה {octave}</span>
+          <span className={`font-medium ${isMobile ? 'text-xs px-2' : 'text-sm px-3'}`}>אוקטבה {octave}</span>
           
           <Button
             onClick={() => setOctave(Math.min(7, octave + 1))}
             disabled={octave >= 7}
             size="sm"
             variant="outline"
-            className="h-8"
+            className={`h-8 ${isMobile ? 'px-2' : 'px-3'}`}
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
@@ -185,7 +269,7 @@ ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
 
         {/* בחירת סוג צליל */}
         <Select value={soundType} onValueChange={(value: SoundType) => setSoundType(value)}>
-          <SelectTrigger className="w-[180px] h-8">
+          <SelectTrigger className={`${isMobile ? 'w-[150px] h-8 text-xs' : 'w-[180px] h-8'}`}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -193,7 +277,7 @@ ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
               <SelectItem key={type.value} value={type.value}>
                 <span className="flex items-center gap-2">
                   <span>{type.emoji}</span>
-                  <span>{type.label}</span>
+                  <span className={isMobile ? 'text-xs' : 'text-sm'}>{type.label}</span>
                 </span>
               </SelectItem>
             ))}
@@ -202,12 +286,12 @@ ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
       </div>
 
       {/* פסנתר */}
-      <div className="flex flex-row gap-1">
+      <div className={`flex ${isMobile ? 'flex-wrap justify-center max-w-sm' : 'flex-row'} gap-1 w-full overflow-x-auto`}>
         {notes.map((note, index) => (
           <Button
             key={index}
             onClick={() => playNote(note.baseFreq, note.name)}
-            className={`${themeConfig.buttonGradient} text-white text-2xl px-4 py-2 min-w-12 min-h-12 rounded-full transition-all duration-200 hover:scale-110 active:scale-95`}
+            className={`${themeConfig.buttonGradient} text-white ${getButtonSize()} rounded-full transition-all duration-200 hover:scale-110 active:scale-95 touch-manipulation`}
             title={`${note.name}${octave}`}
           >
             {note.emoji}
@@ -215,33 +299,60 @@ ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
         ))}
       </div>
 
-      {/* בקרת הקלטה */}
-      <div className="flex items-center gap-3 mt-2" dir="rtl">
-        {!isRecording ? (
-          <Button
-            onClick={startRecording}
-            size="sm"
-            className="bg-red-500 hover:bg-red-600 text-white"
-          >
-            <Mic className="w-4 h-4 mr-1" />
-            הקלט
-          </Button>
-        ) : (
-          <Button
-            onClick={stopRecording}
-            size="sm"
-            className="bg-gray-600 hover:bg-gray-700 text-white animate-pulse"
-          >
-            <Square className="w-4 h-4 mr-1" />
-            עצור
-          </Button>
-        )}
+      {/* בקרות הקלטה */}
+      <div className={`flex flex-col items-center gap-3 mt-2 ${isMobile ? 'w-full' : ''}`} dir="rtl">
+        {/* הקלטת פסנתר */}
+        <div className="flex items-center gap-2">
+          {!isRecording ? (
+            <Button
+              onClick={startPianoRecording}
+              size="sm"
+              className={`bg-blue-500 hover:bg-blue-600 text-white ${getControlSize()}`}
+            >
+              <Piano className="w-4 h-4 mr-1" />
+              הקלט פסנתר
+            </Button>
+          ) : (
+            <Button
+              onClick={stopPianoRecording}
+              size="sm"
+              className={`bg-gray-600 hover:bg-gray-700 text-white animate-pulse ${getControlSize()}`}
+            >
+              <Square className="w-4 h-4 mr-1" />
+              עצור פסנתר
+            </Button>
+          )}
+        </div>
+
+        {/* הקלטת קול */}
+        <div className="flex items-center gap-2">
+          {!isVoiceRecording ? (
+            <Button
+              onClick={startVoiceRecording}
+              size="sm"
+              className={`bg-red-500 hover:bg-red-600 text-white ${getControlSize()}`}
+            >
+              <Mic className="w-4 h-4 mr-1" />
+              הקלט קול
+            </Button>
+          ) : (
+            <Button
+              onClick={stopVoiceRecording}
+              size="sm"
+              className={`bg-red-700 hover:bg-red-800 text-white animate-pulse ${getControlSize()}`}
+            >
+              <Square className="w-4 h-4 mr-1" />
+              עצור קול
+            </Button>
+          )}
+        </div>
         
+        {/* ניתוח מנגינה */}
         <Button
           onClick={analyzeMelody}
           disabled={recordedNotes.length === 0 || isAnalyzing}
           size="sm"
-          className="bg-purple-500 hover:bg-purple-600 text-white"
+          className={`bg-purple-500 hover:bg-purple-600 text-white ${getControlSize()}`}
         >
           <Send className="w-4 h-4 mr-1" />
           {isAnalyzing ? 'מנתח...' : 'נתח מנגינה'}
@@ -250,8 +361,8 @@ ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
 
       {/* מצב הקלטה */}
       {recordedNotes.length > 0 && (
-        <div className="text-xs text-gray-600 text-center">
-          הוקלטו {recordedNotes.length} תווים
+        <div className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600 text-center`}>
+          הוקלטו {recordedNotes.length} תווים בפסנתר
         </div>
       )}
     </div>
