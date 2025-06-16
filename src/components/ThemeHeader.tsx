@@ -43,7 +43,7 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
               className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-4 py-2 rounded-full shadow-md transform transition-all duration-200 hover:scale-105"
             >
               <Sparkles className="w-4 h-4 mr-2" />
-              סטודיו הקלטות AI
+              AI סטודיו הקלטות
             </Button>
           </div>
         </DialogContent>
@@ -54,9 +54,9 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
         <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-center text-2xl font-bold">
-              🎹 סטודיו הקלטות עם זיהוי מנגינות AI 🎵
+              🎹 סטודיו הקלטות AI עם זיהוי מנגינות 🎵
               <p className="text-sm font-normal text-gray-600 mt-2">
-                נגן, הקלט, ותן ל-AI לזהות את המנגינה שלך!
+                !נגן, הקלט, ותן לצ'אט לזהות את המנגינה שלך
               </p>
             </DialogTitle>
           </DialogHeader>

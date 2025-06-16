@@ -216,7 +216,7 @@ ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
       </div>
 
       {/* בקרת הקלטה */}
-      <div className="flex items-center gap-3 mt-2">
+      <div className="flex items-center gap-3 mt-2" dir="rtl">
         {!isRecording ? (
           <Button
             onClick={startRecording}
