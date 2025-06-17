@@ -9,12 +9,10 @@ import VoiceRecorder from '@/components/VoiceRecorder';
 import ApartmentDesigner from '@/components/ApartmentDesigner';
 import { Sparkles, Mic, Palette, LayoutGrid } from 'lucide-react';
 
-
 interface ThemeHeaderProps {
   onDrawingGameOpen: () => void;
   onCatGameOpen: () => void;
   onLayoutToggle: () => void;
-  requestProtectedAction: (callback: () => void) => void;
   layoutMode: 'regular' | 'functional' | 'tinder';
 }
 
@@ -220,7 +218,7 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({
         {/* כפתור מעצב דירות */}
         <div className="relative group">
           <button
-            onClick={() => requestProtectedAction(() => setIsDesignerOpen(true))}
+            onClick={() => setIsDesignerOpen(true)}
             className="relative text-4xl hover:scale-110 transition-all duration-300 cursor-pointer p-2 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200 shadow-lg hover:shadow-xl border-2 border-purple-200 hover:border-purple-300"
             title="מעצב דירות AI - הפוך כל חלל למושלם!"
           >

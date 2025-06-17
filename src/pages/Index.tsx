@@ -34,8 +34,6 @@ const Index = () => {
   const { toast } = useToast();
   const { themeConfig } = useTheme();
 
-  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
-
   useEffect(() => {
     if (!isAuthenticated && !authAttempted) {
       setTimeout(() => {
@@ -99,15 +97,6 @@ const Index = () => {
     await deleteApartment(apartmentId);
   };
 
-  const requestProtectedAction = (action: () => void) => {
-    if (isAuthenticated) {
-      action();
-    } else {
-      setPendingAction(() => action);
-      setIsPasswordDialogOpen(true);
-    }
-  };
-
   const handlePasswordSubmit = (password: string) => {
     setAuthAttempted(true);
     const success = login(password);
@@ -117,10 +106,6 @@ const Index = () => {
         title: "התחברת בהצלחה!",
         description: "כעת באפשרותך לערוך את רשימת הדירות.",
       });
-      if (pendingAction) {
-        pendingAction();
-        setPendingAction(null);
-      }
     } else {
       toast({
         title: "סיסמא שגויה",
@@ -223,7 +208,6 @@ const Index = () => {
           onCatGameOpen={() => setIsCatGameOpen(true)}
           onLayoutToggle={handleLayoutToggle}
           layoutMode={layoutMode}
-          requestProtectedAction={requestProtectedAction}
         />
 
         {/* כפתור הוסף דירה */}
