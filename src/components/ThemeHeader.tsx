@@ -175,15 +175,6 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
           🎨
         </Button>
         
-        <Button
-          onClick={() => setIsDesignerOpen(true)}
-          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-4 py-2 rounded-full shadow-lg transform transition-all duration-200 hover:scale-105"
-          title="מעצב דירות AI!"
-        >
-          <Palette className="w-4 h-4 mr-2" />
-          עיצוב AI
-        </Button>
-        
         <p className={`text-sm ${themeConfig.accentColor}`}>
           {themeConfig.punishment}
         </p>

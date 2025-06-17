@@ -37,9 +37,9 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose }
       const fileExt = file.name.split('.').pop();
       const fileName = `apartment-${Date.now()}.${fileExt}`;
       
-      // Create a temporary storage bucket for apartment images (if not exists)
+      // שימוש ב-bucket קיים במקום יצירת חדש
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('apartment-designs')
+        .from('game-images') // השתמש ב-bucket קיים
         .upload(fileName, file);
 
       if (uploadError) {
@@ -48,7 +48,7 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose }
       }
 
       const { data: urlData } = supabase.storage
-        .from('apartment-designs')
+        .from('game-images')
         .getPublicUrl(fileName);
 
       return urlData.publicUrl;
