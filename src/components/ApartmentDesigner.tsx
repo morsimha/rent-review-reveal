@@ -1,5 +1,4 @@
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -10,9 +9,10 @@ import { Textarea } from '@/components/ui/textarea';
 interface ApartmentDesignerProps {
   isOpen: boolean;
   onClose: () => void;
+  uploadImage?: (file: File) => Promise<string | null>; // אופציונלי - אם מועבר מבחוץ
 }
 
-const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose }) => {
+const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose, uploadImage }) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [originalImageUrl, setOriginalImageUrl] = useState<string>('');
   const [designedImageData, setDesignedImageData] = useState<string>('');
@@ -21,6 +21,59 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose }
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Rate limiting state
+  const [usageCount, setUsageCount] = useState(0);
+  const [lastResetTime, setLastResetTime] = useState(Date.now());
+
+  // בדיקת rate limit
+  const checkRateLimit = () => {
+    const now = Date.now();
+    const thirtyMinutes = 30 * 60 * 1000; // 30 דקות במילישניות
+    
+    // אם עברו 30 דקות, אפס את המונה
+    if (now - lastResetTime > thirtyMinutes) {
+      setUsageCount(0);
+      setLastResetTime(now);
+      localStorage.setItem('designerLastReset', now.toString());
+      localStorage.setItem('designerUsageCount', '0');
+    }
+    
+    // בדוק אם המשתמש הגיע למגבלה
+    if (usageCount >= 2) {
+      const timeLeft = Math.ceil((thirtyMinutes - (now - lastResetTime)) / 60000); // דקות שנותרו
+      toast({
+        title: "הגעת למגבלת השימוש 🔒",
+        description: `תוכל לעצב עוד ${timeLeft} דקות. המגבלה היא 2 עיצובים כל 30 דקות.`,
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    return true;
+  };
+
+  // טעינת נתוני rate limit מ-localStorage בטעינה ראשונית
+  useEffect(() => {
+    const savedLastReset = localStorage.getItem('designerLastReset');
+    const savedUsageCount = localStorage.getItem('designerUsageCount');
+    
+    if (savedLastReset) {
+      const resetTime = parseInt(savedLastReset);
+      const now = Date.now();
+      const thirtyMinutes = 30 * 60 * 1000;
+      
+      // אם עברו 30 דקות, אפס
+      if (now - resetTime > thirtyMinutes) {
+        localStorage.setItem('designerLastReset', now.toString());
+        localStorage.setItem('designerUsageCount', '0');
+      } else {
+        // אחרת, טען את הנתונים השמורים
+        setLastResetTime(resetTime);
+        setUsageCount(parseInt(savedUsageCount || '0'));
+      }
+    }
+  }, []);
 
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -33,27 +86,64 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose }
   };
 
   const uploadImageToSupabase = async (file: File): Promise<string | null> => {
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `apartment-design-${Date.now()}.${fileExt}`;
-      
-      console.log('Uploading to apartments bucket...');
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('apartments')
-        .upload(fileName, file);
+    // אם יש פונקציית uploadImage מבחוץ, נשתמש בה
+    if (uploadImage) {
+      return await uploadImage(file);
+    }
 
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw new Error(`Upload failed: ${uploadError.message}`);
+    // אחרת, ננסה לבד
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('יש להתחבר כדי להעלות תמונות');
       }
 
-      const { data: urlData } = supabase.storage
-        .from('apartments')
-        .getPublicUrl(fileName);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      console.log('Uploading file:', fileName);
+      
+      // ננסה כמה אפשרויות של bucket names
+      const bucketOptions = ['apartments', 'apartment_images', 'apartment-images'];
+      let uploadSuccess = false;
+      let publicUrl = '';
+      let lastError: any = null;
+      
+      for (const bucketName of bucketOptions) {
+        try {
+          console.log(`Trying bucket: ${bucketName}`);
+          
+          const { data, error } = await supabase.storage
+            .from(bucketName)
+            .upload(fileName, file);
 
-      console.log('Upload successful, public URL:', urlData.publicUrl);
-      return urlData.publicUrl;
+          if (error) {
+            console.log(`Failed with ${bucketName}:`, error.message);
+            lastError = error;
+            continue;
+          }
+
+          // הצלחנו!
+          const { data: urlData } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(fileName);
+          
+          publicUrl = urlData.publicUrl;
+          uploadSuccess = true;
+          console.log('Upload successful to bucket:', bucketName);
+          break;
+        } catch (err) {
+          console.log(`Error with ${bucketName}:`, err);
+          lastError = err;
+        }
+      }
+      
+      if (!uploadSuccess) {
+        throw new Error(lastError?.message || 'לא הצלחנו להעלות לאף אחד מה-buckets. אנא בדוק את הגדרות ה-Storage ב-Supabase.');
+      }
+      
+      return publicUrl;
+      
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({
@@ -75,58 +165,90 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose }
       return;
     }
 
+    // בדוק rate limit
+    if (!checkRateLimit()) {
+      return;
+    }
+
     setIsUploading(true);
     setIsDesigning(true);
 
     try {
-      console.log('Starting upload process...');
+      console.log('Starting design process...');
       
-      // Upload image to Supabase Storage
-      const uploadedUrl = await uploadImageToSupabase(selectedImage);
+      // במקום להעלות ל-storage, נמיר את התמונה ל-base64
+      const reader = new FileReader();
+      reader.readAsDataURL(selectedImage);
       
-      if (!uploadedUrl) {
-        throw new Error('Failed to upload image to storage');
-      }
+      reader.onload = async () => {
+        try {
+          const base64Image = reader.result as string;
+          setIsUploading(false);
+          
+          console.log('Calling design-apartment function...');
+          
+          // נשתמש ב-base64 במקום URL
+          const { data, error } = await supabase.functions.invoke('design-apartment', {
+            body: { 
+              imageUrl: base64Image, // שולחים את ה-base64 ישירות
+              customPrompt: customPrompt.trim()
+            }
+          });
 
-      console.log('Image uploaded successfully:', uploadedUrl);
-      setIsUploading(false);
+          console.log('Function response:', { data, error });
 
-      // Call the design apartment function
-      console.log('Calling design-apartment function...');
-      const { data, error } = await supabase.functions.invoke('design-apartment', {
-        body: { 
-          imageUrl: uploadedUrl,
-          customPrompt: customPrompt.trim()
+          if (error) {
+            console.error('Supabase function error:', error);
+            throw new Error(`Function error: ${error.message}`);
+          }
+
+          if (data?.success) {
+            setDesignedImageData(data.designedImageData);
+            
+            // עדכן את המונה והשמור ב-localStorage
+            const newCount = usageCount + 1;
+            setUsageCount(newCount);
+            localStorage.setItem('designerUsageCount', newCount.toString());
+            
+            toast({
+              title: "🎨 העיצוב הושלם!",
+              description: `הדירה עוצבה מחדש בהצלחה! (${newCount}/2 השתמשת היום)`,
+            });
+          } else {
+            console.error('Design failed:', data);
+            throw new Error(data?.error || 'Design failed');
+          }
+        } catch (err) {
+          console.error('Error in design process:', err);
+          toast({
+            title: "שגיאה בעיצוב",
+            description: err instanceof Error ? err.message : "שגיאה לא ידועה",
+            variant: "destructive"
+          });
+        } finally {
+          setIsDesigning(false);
         }
-      });
-
-      console.log('Function response:', { data, error });
-
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw new Error(`Function error: ${error.message}`);
-      }
-
-      if (data?.success) {
-        setDesignedImageData(data.designedImageData);
+      };
+      
+      reader.onerror = () => {
+        setIsUploading(false);
+        setIsDesigning(false);
         toast({
-          title: "🎨 העיצוב הושלם!",
-          description: `הדירה עוצבה מחדש בהצלחה!`,
+          title: "שגיאה בקריאת הקובץ",
+          description: "לא הצלחנו לקרוא את הקובץ",
+          variant: "destructive"
         });
-      } else {
-        console.error('Design failed:', data);
-        throw new Error(data?.error || data?.details || 'Design failed without details');
-      }
+      };
+      
     } catch (error) {
-      console.error('Error designing apartment:', error);
-      toast({
-        title: "שגיאה בעיצוב",
-        description: `לא הצלחנו לעצב את הדירה: ${error.message}`,
-        variant: "destructive"
-      });
-    } finally {
+      console.error('Error:', error);
       setIsUploading(false);
       setIsDesigning(false);
+      toast({
+        title: "שגיאה",
+        description: error instanceof Error ? error.message : "שגיאה לא ידועה",
+        variant: "destructive"
+      });
     }
   };
 
@@ -201,6 +323,18 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose }
             🎨 מעצב דירות AI ✨
             <p className="text-sm font-normal text-gray-600 mt-1">
               העלה תמונת דירה וקבל עיצוב מודרני מדהים!
+            </p>
+            {/* הצגת מונה שימוש */}
+            <p className="text-xs font-normal text-gray-500 mt-2">
+              {usageCount < 2 ? (
+                <span className="text-green-600">
+                  נותרו לך {2 - usageCount} עיצובים מתוך 2 (מתאפס כל 30 דקות)
+                </span>
+              ) : (
+                <span className="text-red-600">
+                  הגעת למגבלת השימוש. נסה שוב בעוד {Math.ceil((30 * 60 * 1000 - (Date.now() - lastResetTime)) / 60000)} דקות
+                </span>
+              )}
             </p>
           </DialogTitle>
         </DialogHeader>
