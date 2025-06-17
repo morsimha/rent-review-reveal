@@ -179,10 +179,17 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
       map.current.on('load', async () => {
         await addApartmentMarkers();
         setIsLoading(false);
-        toast({
-          title: "המפה נטענה בהצלחה",
-          description: `נוספו ${apartments.length} דירות למפה`,
-        });
+        
+        // Don't show toast on map resize, only on initial load
+        if (!mapContainer.current?.dataset.initialized) {
+          toast({
+            title: "המפה נטענה בהצלחה",
+            description: `נוספו ${apartments.length} דירות למפה`,
+          });
+          if (mapContainer.current) {
+            mapContainer.current.dataset.initialized = 'true';
+          }
+        }
       });
 
     } catch (error) {
@@ -223,12 +230,17 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
 
   // Force map resize when size changes
   useEffect(() => {
-    if (map.current) {
-      setTimeout(() => {
+    if (map.current && mapSize && isCompact) {
+      // Small delay to let CSS animation complete
+      const timeoutId = setTimeout(() => {
         map.current?.resize();
-      }, 300); // Wait for CSS transition
+        // Re-center the map
+        map.current?.setCenter([34.7818, 32.0853]);
+      }, 350);
+      
+      return () => clearTimeout(timeoutId);
     }
-  }, [mapSize]);
+  }, [mapSize, isCompact]);
 
   // Map size configurations
   const getSizeClasses = () => {
