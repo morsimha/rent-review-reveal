@@ -179,17 +179,6 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
       map.current.on('load', async () => {
         await addApartmentMarkers();
         setIsLoading(false);
-        
-        // Don't show toast on map resize, only on initial load
-        if (!mapContainer.current?.dataset.initialized) {
-          toast({
-            title: "המפה נטענה בהצלחה",
-            description: `נוספו ${apartments.length} דירות למפה`,
-          });
-          if (mapContainer.current) {
-            mapContainer.current.dataset.initialized = 'true';
-          }
-        }
       });
 
     } catch (error) {
