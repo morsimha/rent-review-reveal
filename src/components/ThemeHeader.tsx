@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -150,65 +149,91 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
       
       <p className={`${themeConfig.accentColor} text-lg mb-4`}>{themeConfig.subtitle}</p>
       
-      {/* Creative Tools Section */}
-      <div className="flex flex-col items-center gap-4 mb-4">
-        {/* Main tools row */}
-        <div className="flex items-center justify-center gap-4">
-          {/* כפתור פסנתר */}
+      {/* Creative Tools Section - כל הכלים באותה שורה */}
+      <div className="flex items-center justify-center gap-4 mb-4">
+        {/* כפתור פסנתר */}
+        <div className="relative group">
           <button
             onClick={() => setIsPianoOpen(true)}
-            className="text-4xl hover:scale-110 transition-transform duration-300 cursor-pointer hover:drop-shadow-lg"
+            className="relative text-4xl hover:scale-110 transition-all duration-300 cursor-pointer p-2 rounded-2xl bg-gradient-to-br from-blue-100 to-purple-100 hover:from-blue-200 hover:to-purple-200 shadow-lg hover:shadow-xl border-2 border-blue-200 hover:border-blue-300"
             title="פסנתר אינטראקטיבי!"
           >
-            🎹
+            <span className="relative z-10">🎹</span>
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-2xl animate-pulse"
+                 style={{ animationDuration: '3s' }}></div>
           </button>
           
-          {/* כפתור מעצב דירות - עיצוב מיוחד */}
-          <div className="relative group">
-            <button
-              onClick={() => setIsDesignerOpen(true)}
-              className="relative text-4xl hover:scale-110 transition-all duration-300 cursor-pointer p-2 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200 shadow-lg hover:shadow-xl border-2 border-purple-200 hover:border-purple-300"
-              title="מעצב דירות AI - הפוך כל חלל למושלם!"
-            >
-              <span className="relative z-10">🖼️</span>
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-2xl animate-pulse"></div>
-            </button>
-            
-            {/* תווית מעוררת עניין */}
-            <div className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full animate-bounce font-bold shadow-lg">
-              חדש!
-            </div>
-            
-            {/* טקסט הסבר */}
-            <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-sm font-medium text-gray-700 shadow-lg border whitespace-nowrap z-20">
-              🎨 מעצב דירות AI ✨
-            </div>
+          {/* טקסט הסבר */}
+          <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-sm font-medium text-gray-700 shadow-lg border whitespace-nowrap z-20">
+            🎹 פסנתר אינטראקטיבי
           </div>
         </div>
         
-        {/* Game buttons row */}
-        <div className="flex items-center justify-center gap-4">
-          <Button
+        {/* כפתור מעצב דירות */}
+        <div className="relative group">
+          <button
+            onClick={() => setIsDesignerOpen(true)}
+            className="relative text-4xl hover:scale-110 transition-all duration-300 cursor-pointer p-2 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200 shadow-lg hover:shadow-xl border-2 border-purple-200 hover:border-purple-300"
+            title="מעצב דירות AI - הפוך כל חלל למושלם!"
+          >
+            <span className="relative z-10">🖼️</span>
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-2xl animate-pulse"
+                 style={{ animationDuration: '3s' }}></div>
+          </button>
+          
+          {/* תווית חדש */}
+          <div className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg animate-bounce"
+               style={{ animationDuration: '2s' }}>
+            חדש!
+          </div>
+          
+          {/* טקסט הסבר */}
+          <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-sm font-medium text-gray-700 shadow-lg border whitespace-nowrap z-20">
+            🎨 מעצב דירות AI ✨
+          </div>
+        </div>
+        
+        {/* כפתור משחק ציור */}
+        <div className="relative group">
+          <button
             onClick={onDrawingGameOpen}
-            className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white text-2xl p-3 rounded-full animate-pulse shadow-lg transform transition-all duration-200 hover:scale-105"
+            className="relative text-4xl hover:scale-110 transition-all duration-300 cursor-pointer p-2 rounded-2xl bg-gradient-to-br from-yellow-100 to-orange-100 hover:from-yellow-200 hover:to-orange-200 shadow-lg hover:shadow-xl border-2 border-yellow-200 hover:border-yellow-300"
             title="משחק ציור שיתופי!"
           >
-            🎨
-          </Button>
+            <span className="relative z-10">🎨</span>
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 to-orange-400/20 rounded-2xl animate-pulse"
+                 style={{ animationDuration: '3s' }}></div>
+          </button>
           
-          <p className={`text-sm ${themeConfig.accentColor} mx-4`}>
-            {themeConfig.punishment}
-          </p>
-          
-          <Button
+          {/* טקסט הסבר */}
+          <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-sm font-medium text-gray-700 shadow-lg border whitespace-nowrap z-20">
+            🎨 משחק ציור שיתופי
+          </div>
+        </div>
+        
+        {/* כפתור משחק חתול */}
+        <div className="relative group">
+          <button
             onClick={onCatGameOpen}
-            className={`${themeConfig.headerGradient} text-white text-2xl p-3 rounded-full animate-bounce shadow-lg transform transition-all duration-200 hover:scale-105`}
+            className="relative text-4xl hover:scale-110 transition-all duration-300 cursor-pointer p-2 rounded-2xl bg-gradient-to-br from-pink-100 to-purple-100 hover:from-pink-200 hover:to-purple-200 shadow-lg hover:shadow-xl border-2 border-pink-200 hover:border-pink-300"
             title="תפוס את החתול!"
           >
-            🐱
-          </Button>
+            <span className="relative z-10">🐱</span>
+            <div className="absolute inset-0 bg-gradient-to-br from-pink-400/20 to-purple-400/20 rounded-2xl animate-bounce"
+                 style={{ animationDuration: '3s' }}></div>
+          </button>
+          
+          {/* טקסט הסבר */}
+          <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-sm font-medium text-gray-700 shadow-lg border whitespace-nowrap z-20">
+            🐱 תפוס את החתול
+          </div>
         </div>
       </div>
+      
+      {/* Punishment text */}
+      <p className={`text-sm ${themeConfig.accentColor} mb-2`}>
+        {themeConfig.punishment}
+      </p>
     </div>
   );
 };
