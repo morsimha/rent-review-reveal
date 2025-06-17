@@ -135,7 +135,7 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
       {/* Dialog למעצב דירות */}
       <ApartmentDesigner isOpen={isDesignerOpen} onClose={() => setIsDesignerOpen(false)} />
 
-      <div className="flex items-center justify-center gap-2 mb-2">
+      <div className="flex items-center justify-center gap-2 mb-4">
         <button
           onClick={cycleTheme}
           className="text-4xl hover:scale-110 transition-transform duration-200 cursor-pointer"
@@ -146,45 +146,68 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
         <h1 className={`text-4xl font-bold ${themeConfig.textColor}`}>
           {themeConfig.title}
         </h1>
-        {/* כפתור פסנתר רגיל - בלי רקע */}
-        <button
-          onClick={() => setIsPianoOpen(true)}
-          className="text-4xl hover:scale-110 transition-transform duration-200 cursor-pointer"
-          title="פסנתר חמוד!"
-        >
-          🎹
-        </button>
-        {/* כפתור מעצב דירות */}
-        <button
-          onClick={() => setIsDesignerOpen(true)}
-          className="text-4xl hover:scale-110 transition-transform duration-200 cursor-pointer"
-          title="מעצב דירות AI!"
-        >
-          🖼️
-        </button>
       </div>
       
-      <p className={`${themeConfig.accentColor} text-lg mb-2`}>{themeConfig.subtitle}</p>
+      <p className={`${themeConfig.accentColor} text-lg mb-4`}>{themeConfig.subtitle}</p>
       
-      <div className="flex items-center justify-center gap-4 mt-2">
-        <Button
-          onClick={onDrawingGameOpen}
-          className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white text-2xl p-3 rounded-full animate-pulse shadow-lg"
-          title="משחק ציור שיתופי!"
-        >
-          🎨
-        </Button>
+      {/* Creative Tools Section */}
+      <div className="flex flex-col items-center gap-4 mb-4">
+        {/* Main tools row */}
+        <div className="flex items-center justify-center gap-4">
+          {/* כפתור פסנתר */}
+          <button
+            onClick={() => setIsPianoOpen(true)}
+            className="text-4xl hover:scale-110 transition-transform duration-300 cursor-pointer hover:drop-shadow-lg"
+            title="פסנתר אינטראקטיבי!"
+          >
+            🎹
+          </button>
+          
+          {/* כפתור מעצב דירות - עיצוב מיוחד */}
+          <div className="relative group">
+            <button
+              onClick={() => setIsDesignerOpen(true)}
+              className="relative text-4xl hover:scale-110 transition-all duration-300 cursor-pointer p-2 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200 shadow-lg hover:shadow-xl border-2 border-purple-200 hover:border-purple-300"
+              title="מעצב דירות AI - הפוך כל חלל למושלם!"
+            >
+              <span className="relative z-10">🖼️</span>
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-2xl animate-pulse"></div>
+            </button>
+            
+            {/* תווית מעוררת עניין */}
+            <div className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full animate-bounce font-bold shadow-lg">
+              חדש!
+            </div>
+            
+            {/* טקסט הסבר */}
+            <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-sm font-medium text-gray-700 shadow-lg border whitespace-nowrap z-20">
+              🎨 מעצב דירות AI ✨
+            </div>
+          </div>
+        </div>
         
-        <p className={`text-sm ${themeConfig.accentColor}`}>
-          {themeConfig.punishment}
-        </p>
-        <Button
-          onClick={onCatGameOpen}
-          className={`${themeConfig.headerGradient} text-white text-2xl p-3 rounded-full animate-bounce shadow-lg`}
-          title="תפוס את החתול!"
-        >
-          🐱
-        </Button>
+        {/* Game buttons row */}
+        <div className="flex items-center justify-center gap-4">
+          <Button
+            onClick={onDrawingGameOpen}
+            className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white text-2xl p-3 rounded-full animate-pulse shadow-lg transform transition-all duration-200 hover:scale-105"
+            title="משחק ציור שיתופי!"
+          >
+            🎨
+          </Button>
+          
+          <p className={`text-sm ${themeConfig.accentColor} mx-4`}>
+            {themeConfig.punishment}
+          </p>
+          
+          <Button
+            onClick={onCatGameOpen}
+            className={`${themeConfig.headerGradient} text-white text-2xl p-3 rounded-full animate-bounce shadow-lg transform transition-all duration-200 hover:scale-105`}
+            title="תפוס את החתול!"
+          >
+            🐱
+          </Button>
+        </div>
       </div>
     </div>
   );

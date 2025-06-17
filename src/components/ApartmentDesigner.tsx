@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -36,20 +37,14 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose }
       const fileExt = file.name.split('.').pop();
       const fileName = `apartment-design-${Date.now()}.${fileExt}`;
       
-      // בדיקה איזה buckets קיימים
       console.log('Uploading to apartments bucket...');
       
-      // שימוש ב-bucket 'apartments' שכנראה כבר קיים
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('apartments') // שינוי לשם ה-bucket הנכון
+        .from('apartments')
         .upload(fileName, file);
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        // אם הבעיה היא ש-bucket לא קיים, ננסה ליצור אותו
-        if (uploadError.message.includes('not found')) {
-          throw new Error('Storage bucket "apartments" not found. Please create it in Supabase dashboard.');
-        }
         throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
