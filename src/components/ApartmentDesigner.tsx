@@ -36,33 +36,18 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose }
       const fileExt = file.name.split('.').pop();
       const fileName = `apartment-${Date.now()}.${fileExt}`;
       
-      // שימוש ב-bucket קיים במקום יצירת חדש
+      // שימוש ב-bucket הקיים שלך לדירות
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('game-images') // השתמש ב-bucket קיים
+        .from('apartment-designs') // השם הנכון של ה-bucket שלך
         .upload(fileName, file);
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        
-        // אם גם game-images לא קיים, ננסה bucket אחר
-        const { data: uploadData2, error: uploadError2 } = await supabase.storage
-          .from('images') // נסה bucket בסיסי
-          .upload(fileName, file);
-          
-        if (uploadError2) {
-          console.error('Upload error 2:', uploadError2);
-          return null;
-        }
-        
-        const { data: urlData2 } = supabase.storage
-          .from('images')
-          .getPublicUrl(fileName);
-          
-        return urlData2.publicUrl;
+        throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
       const { data: urlData } = supabase.storage
-        .from('game-images')
+        .from('apartment-designs')
         .getPublicUrl(fileName);
 
       return urlData.publicUrl;
@@ -88,7 +73,7 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose }
     try {
       console.log('Starting upload process...');
       
-      // Upload image to Supabase Storage first
+      // Upload image to Supabase Storage
       const uploadedUrl = await uploadImageToSupabase(selectedImage);
       
       if (!uploadedUrl) {
@@ -118,7 +103,7 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose }
         setDesignedImageData(data.designedImageData);
         toast({
           title: "🎨 העיצוב הושלם!",
-          description: `הדירה עוצבה מחדש בהצלחה (${data.method || 'unknown'})`,
+          description: `הדירה עוצבה מחדש בהצלחה!`,
         });
       } else {
         console.error('Design failed:', data);
