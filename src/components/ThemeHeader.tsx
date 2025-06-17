@@ -160,7 +160,7 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
           className="text-4xl hover:scale-110 transition-transform duration-200 cursor-pointer"
           title="מעצב דירות AI!"
         >
-          🎨
+          🖼️
         </button>
       </div>
       

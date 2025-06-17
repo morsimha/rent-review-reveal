@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -44,7 +43,22 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose }
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        return null;
+        
+        // אם גם game-images לא קיים, ננסה bucket אחר
+        const { data: uploadData2, error: uploadError2 } = await supabase.storage
+          .from('images') // נסה bucket בסיסי
+          .upload(fileName, file);
+          
+        if (uploadError2) {
+          console.error('Upload error 2:', uploadError2);
+          return null;
+        }
+        
+        const { data: urlData2 } = supabase.storage
+          .from('images')
+          .getPublicUrl(fileName);
+          
+        return urlData2.publicUrl;
       }
 
       const { data: urlData } = supabase.storage
@@ -72,14 +86,20 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose }
     setIsDesigning(true);
 
     try {
+      console.log('Starting upload process...');
+      
       // Upload image to Supabase Storage first
       const uploadedUrl = await uploadImageToSupabase(selectedImage);
       
       if (!uploadedUrl) {
-        throw new Error('Failed to upload image');
+        throw new Error('Failed to upload image to storage');
       }
 
+      console.log('Image uploaded successfully:', uploadedUrl);
+      setIsUploading(false);
+
       // Call the design apartment function
+      console.log('Calling design-apartment function...');
       const { data, error } = await supabase.functions.invoke('design-apartment', {
         body: { 
           imageUrl: uploadedUrl,
@@ -87,22 +107,28 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose }
         }
       });
 
-      if (error) throw error;
+      console.log('Function response:', { data, error });
 
-      if (data.success) {
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(`Function error: ${error.message}`);
+      }
+
+      if (data?.success) {
         setDesignedImageData(data.designedImageData);
         toast({
           title: "🎨 העיצוב הושלם!",
-          description: "הדירה עוצבה מחדש בהצלחה",
+          description: `הדירה עוצבה מחדש בהצלחה (${data.method || 'unknown'})`,
         });
       } else {
-        throw new Error(data.error || 'Design failed');
+        console.error('Design failed:', data);
+        throw new Error(data?.error || data?.details || 'Design failed without details');
       }
     } catch (error) {
       console.error('Error designing apartment:', error);
       toast({
         title: "שגיאה בעיצוב",
-        description: "לא הצלחנו לעצב את הדירה. נסה שוב.",
+        description: `לא הצלחנו לעצב את הדירה: ${error.message}`,
         variant: "destructive"
       });
     } finally {
@@ -241,7 +267,7 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose }
               {isDesigning ? (
                 <>
                   <Sparkles className="w-5 h-5 mr-2 animate-spin" />
-                  {isUploading ? 'מעלה תמונה...' : 'מעצב...'}
+                  {isUploading ? 'מעלה תמונה...' : 'מעצב עם AI...'}
                 </>
               ) : (
                 <>
@@ -313,6 +339,13 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose }
               >
                 התחל מחדש
               </Button>
+            </div>
+          )}
+          
+          {/* Debug Info */}
+          {isDesigning && (
+            <div className="text-xs text-gray-500 text-center">
+              {isUploading ? 'מעלה תמונה לשרת...' : 'שולח ל-AI לעיצוב...'}
             </div>
           )}
         </div>
