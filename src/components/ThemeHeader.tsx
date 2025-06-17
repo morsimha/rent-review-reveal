@@ -12,14 +12,14 @@ interface ThemeHeaderProps {
   onDrawingGameOpen: () => void;
   onCatGameOpen: () => void;
   onLayoutToggle: () => void;
-  isFunctionalLayout: boolean;
+  layoutMode: 'regular' | 'functional' | 'tinder';
 }
 
 const ThemeHeader: React.FC<ThemeHeaderProps> = ({ 
   onDrawingGameOpen, 
   onCatGameOpen, 
   onLayoutToggle, 
-  isFunctionalLayout 
+  layoutMode 
 }) => {
   const { themeConfig, cycleTheme } = useTheme();
   const [isPianoOpen, setIsPianoOpen] = useState(false);
@@ -40,6 +40,32 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({
     setTimeout(() => {
       setIsVoiceRecorderOpen(true);
     }, 100);
+  };
+
+  const getLayoutIcon = () => {
+    switch (layoutMode) {
+      case 'regular':
+        return '🏠';
+      case 'functional':
+        return '📋';
+      case 'tinder':
+        return '💕';
+      default:
+        return '🏠';
+    }
+  };
+
+  const getLayoutTooltip = () => {
+    switch (layoutMode) {
+      case 'regular':
+        return "עבור למצב פונקציונלי";
+      case 'functional':
+        return "עבור למוד טינדר";
+      case 'tinder':
+        return "חזור למצב רגיל";
+      default:
+        return "החלף מצב תצוגה";
+    }
   };
 
   return (
@@ -145,10 +171,10 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({
         <button
           onClick={onLayoutToggle}
           className="relative text-2xl hover:scale-110 transition-all duration-300 cursor-pointer p-2 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 hover:from-indigo-200 hover:to-purple-200 shadow-lg hover:shadow-xl border-2 border-indigo-200 hover:border-indigo-300"
-          title={isFunctionalLayout ? "חזור למצב רגיל" : "מצב פונקציונלי"}
+          title={getLayoutTooltip()}
         >
-          <div className="relative z-10">
-            <LayoutGrid className="w-5 h-5" />
+          <div className="relative z-10 text-xl">
+            {getLayoutIcon()}
           </div>
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-xl animate-pulse"
                style={{ animationDuration: '2s' }}></div>

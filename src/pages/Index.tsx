@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -15,6 +14,7 @@ import PasswordDialog from '@/components/PasswordDialog';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import ThemeHeader from '@/components/ThemeHeader';
+import TinderMode from '@/components/TinderMode';
 
 const Index = () => {
   const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
@@ -26,6 +26,7 @@ const Index = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedApartmentId, setSelectedApartmentId] = useState<string | null>(null);
   const [isFunctionalLayout, setIsFunctionalLayout] = useState(false);
+  const [layoutMode, setLayoutMode] = useState<'regular' | 'functional' | 'tinder'>('regular');
 
   const { isAuthenticated, login } = useAuth();
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -128,7 +129,13 @@ const Index = () => {
   };
 
   const handleLayoutToggle = () => {
-    setIsFunctionalLayout(!isFunctionalLayout);
+    if (layoutMode === 'regular') {
+      setLayoutMode('functional');
+    } else if (layoutMode === 'functional') {
+      setLayoutMode('tinder');
+    } else {
+      setLayoutMode('regular');
+    }
   };
 
   if (loading) {
@@ -200,7 +207,7 @@ const Index = () => {
           onDrawingGameOpen={() => setIsDrawingGameOpen(true)}
           onCatGameOpen={() => setIsCatGameOpen(true)}
           onLayoutToggle={handleLayoutToggle}
-          isFunctionalLayout={isFunctionalLayout}
+          layoutMode={layoutMode}
         />
 
         {/* כפתור הוסף דירה */}
@@ -214,35 +221,37 @@ const Index = () => {
           </Button>
         </div>
 
-        {/* תפריט מיון וסינון סטטוס */}
-        <div className="flex flex-wrap justify-center items-center gap-3 mb-7">
-          <div className="flex items-center gap-2">
-            <label className={`font-medium ${themeConfig.textColor} text-sm`}>מיין לפי:</label>
-            <select
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value as any)}
-              className="rounded border px-2 py-1 text-right"
-            >
-              <option value="rating">דירוג {themeConfig.sortEmojis.rating}</option>
-              <option value="entry_date">תאריך כניסה {themeConfig.sortEmojis.entry_date}</option>
-              <option value="created_at">מועד הוספה {themeConfig.sortEmojis.created_at}</option>
-              <option value="status">סטטוס דיבור {themeConfig.sortEmojis.status}</option>
-            </select>
+        {/* תפריט מיון וסינון סטטוס - הסתר במוד טינדר */}
+        {layoutMode !== 'tinder' && (
+          <div className="flex flex-wrap justify-center items-center gap-3 mb-7">
+            <div className="flex items-center gap-2">
+              <label className={`font-medium ${themeConfig.textColor} text-sm`}>מיין לפי:</label>
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value as any)}
+                className="rounded border px-2 py-1 text-right"
+              >
+                <option value="rating">דירוג {themeConfig.sortEmojis.rating}</option>
+                <option value="entry_date">תאריך כניסה {themeConfig.sortEmojis.entry_date}</option>
+                <option value="created_at">מועד הוספה {themeConfig.sortEmojis.created_at}</option>
+                <option value="status">סטטוס דיבור {themeConfig.sortEmojis.status}</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className={`font-medium ${themeConfig.textColor} text-sm`}>סנן לפי סטטוס:</label>
+              <select
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value as any)}
+                className="rounded border px-2 py-1 text-right"
+              >
+                <option value="all">הצג הכל</option>
+                <option value="spoke">דיברנו</option>
+                <option value="not_spoke">לא דיברנו</option>
+                <option value="no_answer">אין תשובה</option>
+              </select>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <label className={`font-medium ${themeConfig.textColor} text-sm`}>סנן לפי סטטוס:</label>
-            <select
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value as any)}
-              className="rounded border px-2 py-1 text-right"
-            >
-              <option value="all">הצג הכל</option>
-              <option value="spoke">דיברנו</option>
-              <option value="not_spoke">לא דיברנו</option>
-              <option value="no_answer">אין תשובה</option>
-            </select>
-          </div>
-        </div>
+        )}
 
         {/* Modal להוספת דירה */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -262,7 +271,20 @@ const Index = () => {
         </Dialog>
 
         {/* Layout Content */}
-        {isFunctionalLayout ? (
+        {layoutMode === 'tinder' ? (
+          /* Tinder Mode */
+          <div className="space-y-6">
+            <h2 className={`text-2xl font-bold ${themeConfig.textColor} mb-6 text-center`}>
+              💕 מוד טינדר - החלק ימינה לחיבה, שמאלה לדחייה
+            </h2>
+            <TinderMode
+              apartments={filteredApartments}
+              onMorRatingChange={handleMorRatingChange}
+              onGabiRatingChange={handleGabiRatingChange}
+              isAuthenticated={isAuthenticated}
+            />
+          </div>
+        ) : layoutMode === 'functional' ? (
           /* Functional Layout */
           <div className="space-y-6">
             {/* Compact Map */}
@@ -275,6 +297,7 @@ const Index = () => {
                   apartments={apartments}
                   selectedApartmentId={selectedApartmentId}
                   setSelectedApartmentId={setSelectedApartmentId}
+                  isCompact={true}
                 />
               </div>
             </div>
@@ -336,7 +359,7 @@ const Index = () => {
           </>
         )}
 
-        {filteredApartments.length === 0 && (
+        {filteredApartments.length === 0 && layoutMode !== 'tinder' && (
           <div className="text-center py-12">
             <p className={`${themeConfig.accentColor} text-lg`}>לא נמצאו דירות בהתאם לסינון {themeConfig.mainEmoji}</p>
           </div>
