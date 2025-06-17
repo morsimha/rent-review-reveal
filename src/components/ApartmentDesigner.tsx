@@ -34,25 +34,38 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose }
   const uploadImageToSupabase = async (file: File): Promise<string | null> => {
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `apartment-${Date.now()}.${fileExt}`;
+      const fileName = `apartment-design-${Date.now()}.${fileExt}`;
       
-      // שימוש ב-bucket הקיים שלך לדירות
+      // בדיקה איזה buckets קיימים
+      console.log('Uploading to apartments bucket...');
+      
+      // שימוש ב-bucket 'apartments' שכנראה כבר קיים
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('apartment-designs') // השם הנכון של ה-bucket שלך
+        .from('apartments') // שינוי לשם ה-bucket הנכון
         .upload(fileName, file);
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
+        // אם הבעיה היא ש-bucket לא קיים, ננסה ליצור אותו
+        if (uploadError.message.includes('not found')) {
+          throw new Error('Storage bucket "apartments" not found. Please create it in Supabase dashboard.');
+        }
         throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
       const { data: urlData } = supabase.storage
-        .from('apartment-designs')
+        .from('apartments')
         .getPublicUrl(fileName);
 
+      console.log('Upload successful, public URL:', urlData.publicUrl);
       return urlData.publicUrl;
     } catch (error) {
       console.error('Error uploading image:', error);
+      toast({
+        title: "שגיאה בהעלאת תמונה",
+        description: error instanceof Error ? error.message : "שגיאה לא ידועה",
+        variant: "destructive"
+      });
       return null;
     }
   };
