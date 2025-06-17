@@ -26,6 +26,38 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose, 
   const [usageCount, setUsageCount] = useState(0);
   const [lastResetTime, setLastResetTime] = useState(Date.now());
 
+  // טעינת נתוני rate limit מ-localStorage בטעינה ראשונית ובכל פתיחה
+  useEffect(() => {
+    if (isOpen) {
+      const savedLastReset = localStorage.getItem('designerLastReset');
+      const savedUsageCount = localStorage.getItem('designerUsageCount');
+      
+      if (savedLastReset) {
+        const resetTime = parseInt(savedLastReset);
+        const now = Date.now();
+        const thirtyMinutes = 30 * 60 * 1000;
+        
+        // אם עברו 30 דקות, אפס
+        if (now - resetTime > thirtyMinutes) {
+          setUsageCount(0);
+          setLastResetTime(now);
+          localStorage.setItem('designerLastReset', now.toString());
+          localStorage.setItem('designerUsageCount', '0');
+        } else {
+          // אחרת, טען את הנתונים השמורים
+          setLastResetTime(resetTime);
+          setUsageCount(parseInt(savedUsageCount || '0'));
+        }
+      } else {
+        // אם אין נתונים שמורים, אתחל
+        const now = Date.now();
+        setLastResetTime(now);
+        localStorage.setItem('designerLastReset', now.toString());
+        localStorage.setItem('designerUsageCount', '0');
+      }
+    }
+  }, [isOpen]);
+
   // בדיקת rate limit
   const checkRateLimit = () => {
     const now = Date.now();
@@ -37,6 +69,7 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose, 
       setLastResetTime(now);
       localStorage.setItem('designerLastReset', now.toString());
       localStorage.setItem('designerUsageCount', '0');
+      return true; // יכול להשתמש
     }
     
     // בדוק אם המשתמש הגיע למגבלה
@@ -52,28 +85,6 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose, 
     
     return true;
   };
-
-  // טעינת נתוני rate limit מ-localStorage בטעינה ראשונית
-  useEffect(() => {
-    const savedLastReset = localStorage.getItem('designerLastReset');
-    const savedUsageCount = localStorage.getItem('designerUsageCount');
-    
-    if (savedLastReset) {
-      const resetTime = parseInt(savedLastReset);
-      const now = Date.now();
-      const thirtyMinutes = 30 * 60 * 1000;
-      
-      // אם עברו 30 דקות, אפס
-      if (now - resetTime > thirtyMinutes) {
-        localStorage.setItem('designerLastReset', now.toString());
-        localStorage.setItem('designerUsageCount', '0');
-      } else {
-        // אחרת, טען את הנתונים השמורים
-        setLastResetTime(resetTime);
-        setUsageCount(parseInt(savedUsageCount || '0'));
-      }
-    }
-  }, []);
 
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -210,9 +221,16 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose, 
             setUsageCount(newCount);
             localStorage.setItem('designerUsageCount', newCount.toString());
             
+            // אם זה הפעם הראשונה, שמור גם את הזמן
+            if (usageCount === 0) {
+              const now = Date.now();
+              setLastResetTime(now);
+              localStorage.setItem('designerLastReset', now.toString());
+            }
+            
             toast({
               title: "🎨 העיצוב הושלם!",
-              description: `הדירה עוצבה מחדש בהצלחה! (${newCount}/2 השתמשת היום)`,
+              description: `הדירה עוצבה מחדש בהצלחה! (${newCount}/2 השתמשת)`,
             });
           } else {
             console.error('Design failed:', data);
@@ -325,16 +343,33 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose, 
               העלה תמונת דירה וקבל עיצוב מודרני מדהים!
             </p>
             {/* הצגת מונה שימוש */}
-            <p className="text-xs font-normal text-gray-500 mt-2">
-              {usageCount < 2 ? (
-                <span className="text-green-600">
-                  נותרו לך {2 - usageCount} עיצובים מתוך 2 (מתאפס כל 30 דקות)
-                </span>
-              ) : (
-                <span className="text-red-600">
-                  הגעת למגבלת השימוש. נסה שוב בעוד {Math.ceil((30 * 60 * 1000 - (Date.now() - lastResetTime)) / 60000)} דקות
-                </span>
-              )}
+            <p className="text-xs font-normal mt-2">
+              {(() => {
+                // בדיקה דינמית של המצב הנוכחי
+                const now = Date.now();
+                const thirtyMinutes = 30 * 60 * 1000;
+                const timePassed = now - lastResetTime;
+                
+                // אם עברו 30 דקות, הצג שיש 2 שימושים פנויים
+                if (timePassed > thirtyMinutes) {
+                  return <span className="text-green-600">יש לך 2 עיצובים זמינים (מתאפס כל 30 דקות)</span>;
+                }
+                
+                // אחרת, הצג לפי המונה
+                if (usageCount < 2) {
+                  return (
+                    <span className="text-green-600">
+                      נותרו לך {2 - usageCount} עיצובים מתוך 2 (מתאפס בעוד {Math.ceil((thirtyMinutes - timePassed) / 60000)} דקות)
+                    </span>
+                  );
+                } else {
+                  return (
+                    <span className="text-red-600">
+                      הגעת למגבלת השימוש. נסה שוב בעוד {Math.ceil((thirtyMinutes - timePassed) / 60000)} דקות
+                    </span>
+                  );
+                }
+              })()}
             </p>
           </DialogTitle>
         </DialogHeader>

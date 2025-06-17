@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -10,9 +9,10 @@ interface MapProps {
   apartments: Apartment[];
   selectedApartmentId?: string | null;
   setSelectedApartmentId?: (id: string | null) => void;
+  isCompact?: boolean; // New prop for functional layout
 }
 
-const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedApartmentId }) => {
+const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedApartmentId, isCompact = false }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -213,11 +213,12 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     }
   }, [apartments]);
 
-  return (
+  // Wrapper div for controlling width in compact mode
+  const mapContent = (
     <Card className="bg-white/90 backdrop-blur-sm border-purple-200">
       <CardContent className="p-0">
         <div className="relative">
-          <div ref={mapContainer} className="w-full h-96 rounded-lg" />
+          <div ref={mapContainer} className={`w-full ${isCompact ? 'h-64' : 'h-96'} rounded-lg`} />
           
           {/* Legend */}
           <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 text-xs" dir="rtl">
@@ -244,6 +245,17 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
       </CardContent>
     </Card>
   );
+
+  // If in compact mode, wrap in a container with max width
+  if (isCompact) {
+    return (
+      <div className="w-full max-w-2xl mx-auto">
+        {mapContent}
+      </div>
+    );
+  }
+
+  return mapContent;
 };
 
 export default Map;

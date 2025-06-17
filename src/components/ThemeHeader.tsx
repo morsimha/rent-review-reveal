@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -140,37 +139,32 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({
       {/* Dialog למעצב דירות */}
       <ApartmentDesigner isOpen={isDesignerOpen} onClose={() => setIsDesignerOpen(false)} />
 
-      {/* Header with layout toggle */}
-      <div className="flex items-center justify-between mb-4">
-        {/* Layout Toggle Button - Left Side */}
+      {/* Header with title and layout toggle */}
+      <div className="flex items-center justify-center gap-2 mb-4">
+        {/* Layout Toggle Button - Left of title */}
         <button
           onClick={onLayoutToggle}
-          className="relative text-2xl hover:scale-110 transition-all duration-300 cursor-pointer p-3 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 hover:from-indigo-200 hover:to-purple-200 shadow-lg hover:shadow-xl border-2 border-indigo-200 hover:border-indigo-300"
+          className="relative text-2xl hover:scale-110 transition-all duration-300 cursor-pointer p-2 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 hover:from-indigo-200 hover:to-purple-200 shadow-lg hover:shadow-xl border-2 border-indigo-200 hover:border-indigo-300"
           title={isFunctionalLayout ? "חזור למצב רגיל" : "מצב פונקציונלי"}
         >
           <div className="relative z-10">
-            <LayoutGrid className="w-6 h-6" />
+            <LayoutGrid className="w-5 h-5" />
           </div>
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-full animate-pulse"
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-xl animate-pulse"
                style={{ animationDuration: '2s' }}></div>
         </button>
 
-        {/* Center Title */}
-        <div className="flex items-center justify-center gap-2">
-          <button
-            onClick={cycleTheme}
-            className="text-4xl hover:scale-110 transition-transform duration-200 cursor-pointer"
-            title="לחץ לשינוי ערכת נושא"
-          >
-            {themeConfig.mainEmoji}
-          </button>
-          <h1 className={`text-4xl font-bold ${themeConfig.textColor}`}>
-            {themeConfig.title}
-          </h1>
-        </div>
-
-        {/* Empty div for layout balance */}
-        <div className="w-14"></div>
+        {/* Theme emoji and title */}
+        <button
+          onClick={cycleTheme}
+          className="text-4xl hover:scale-110 transition-transform duration-200 cursor-pointer"
+          title="לחץ לשינוי ערכת נושא"
+        >
+          {themeConfig.mainEmoji}
+        </button>
+        <h1 className={`text-4xl font-bold ${themeConfig.textColor}`}>
+          {themeConfig.title}
+        </h1>
       </div>
       
       <p className={`${themeConfig.accentColor} text-lg mb-4`}>{themeConfig.subtitle}</p>
