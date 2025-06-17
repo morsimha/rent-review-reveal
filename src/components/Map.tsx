@@ -12,10 +12,13 @@ interface MapProps {
   isCompact?: boolean; // New prop for functional layout
 }
 
+type MapSize = 'full' | 'half' | 'third';
+
 const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedApartmentId, isCompact = false }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [mapSize, setMapSize] = useState<MapSize>(isCompact ? 'third' : 'full');
   const { toast } = useToast();
 
   const mapboxToken = 'pk.eyJ1IjoibW9yb3k5IiwiYSI6ImNtYndnN2s5YzBrMm4ycXNkMGw3bDRtMW0ifQ.TfWPfMMUQfcjEy4OzGR9XA';
@@ -213,12 +216,69 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     }
   }, [apartments]);
 
-  // Wrapper div for controlling width in compact mode
+  // Update map size when isCompact changes
+  useEffect(() => {
+    setMapSize(isCompact ? 'third' : 'full');
+  }, [isCompact]);
+
+  // Map size configurations
+  const getSizeClasses = () => {
+    switch (mapSize) {
+      case 'third':
+        return { wrapper: 'max-w-md', height: 'h-64' };
+      case 'half':
+        return { wrapper: 'max-w-2xl', height: 'h-80' };
+      case 'full':
+      default:
+        return { wrapper: '', height: 'h-96' };
+    }
+  };
+
+  const sizeClasses = getSizeClasses();
+
+  // Wrapper div for controlling width
   const mapContent = (
     <Card className="bg-white/90 backdrop-blur-sm border-purple-200">
       <CardContent className="p-0">
         <div className="relative">
-          <div ref={mapContainer} className={`w-full ${isCompact ? 'h-64' : 'h-96'} rounded-lg`} />
+          {/* Map Size Selector */}
+          <div className="absolute top-2 left-2 z-10 flex gap-1">
+            <button
+              onClick={() => setMapSize('full')}
+              className={`p-1.5 rounded-lg transition-all duration-300 ${
+                mapSize === 'full' 
+                  ? 'bg-purple-500 text-white shadow-md' 
+                  : 'bg-white/90 hover:bg-purple-100 text-gray-700'
+              }`}
+              title="מפה מלאה"
+            >
+              <span className="text-sm">📍</span>
+            </button>
+            <button
+              onClick={() => setMapSize('half')}
+              className={`p-1.5 rounded-lg transition-all duration-300 ${
+                mapSize === 'half' 
+                  ? 'bg-purple-500 text-white shadow-md' 
+                  : 'bg-white/90 hover:bg-purple-100 text-gray-700'
+              }`}
+              title="חצי גודל"
+            >
+              <span className="text-xs">📍</span>
+            </button>
+            <button
+              onClick={() => setMapSize('third')}
+              className={`p-1.5 rounded-lg transition-all duration-300 ${
+                mapSize === 'third' 
+                  ? 'bg-purple-500 text-white shadow-md' 
+                  : 'bg-white/90 hover:bg-purple-100 text-gray-700'
+              }`}
+              title="שליש גודל"
+            >
+              <span className="text-xs" style={{ fontSize: '0.6rem' }}>📍</span>
+            </button>
+          </div>
+
+          <div ref={mapContainer} className={`w-full ${sizeClasses.height} rounded-lg`} />
           
           {/* Legend */}
           <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 text-xs" dir="rtl">
@@ -246,10 +306,10 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     </Card>
   );
 
-  // If in compact mode, wrap in a container with max width
-  if (isCompact) {
+  // Apply wrapper based on size
+  if (sizeClasses.wrapper) {
     return (
-      <div className="w-1/3 mx-auto">
+      <div className={`w-full ${sizeClasses.wrapper} mx-auto transition-all duration-300`}>
         {mapContent}
       </div>
     );
