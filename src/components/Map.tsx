@@ -249,7 +249,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
   // If in compact mode, wrap in a container with max width
   if (isCompact) {
     return (
-      <div className="w-full max-w-2xl mx-auto">
+      <div className="w-1/3 mx-auto">
         {mapContent}
       </div>
     );
