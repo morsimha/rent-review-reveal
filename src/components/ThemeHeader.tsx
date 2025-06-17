@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -145,7 +146,7 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({
             </DialogTitle>
           </DialogHeader>
           <div className="flex items-center justify-center">
-            <AdvancedPiano onMelodyAnalysis={setMelodyAnalysis} />
+            <AdvancedPiano />
           </div>
         </DialogContent>
       </Dialog>
@@ -167,19 +168,6 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({
 
       {/* Header with title and layout toggle */}
       <div className="flex items-center justify-center gap-2 mb-4">
-        {/* Layout Toggle Button - Left of title */}
-        <button
-          onClick={onLayoutToggle}
-          className="relative text-2xl hover:scale-110 transition-all duration-300 cursor-pointer p-2 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 hover:from-indigo-200 hover:to-purple-200 shadow-lg hover:shadow-xl border-2 border-indigo-200 hover:border-indigo-300"
-          title={getLayoutTooltip()}
-        >
-          <div className="relative z-10 text-xl">
-            {getLayoutIcon()}
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-xl animate-pulse"
-               style={{ animationDuration: '2s' }}></div>
-        </button>
-
         {/* Theme emoji and title */}
         <button
           onClick={cycleTheme}
@@ -191,6 +179,19 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({
         <h1 className={`text-4xl font-bold ${themeConfig.textColor}`}>
           {themeConfig.title}
         </h1>
+
+        {/* Layout Toggle Button - Right of title */}
+        <button
+          onClick={onLayoutToggle}
+          className="relative text-2xl hover:scale-110 transition-all duration-300 cursor-pointer p-2 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 hover:from-indigo-200 hover:to-purple-200 shadow-lg hover:shadow-xl border-2 border-indigo-200 hover:border-indigo-300"
+          title={getLayoutTooltip()}
+        >
+          <div className="relative z-10 text-xl">
+            {getLayoutIcon()}
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-xl animate-pulse"
+               style={{ animationDuration: '2s' }}></div>
+        </button>
       </div>
       
       <p className={`${themeConfig.accentColor} text-lg mb-4`}>{themeConfig.subtitle}</p>

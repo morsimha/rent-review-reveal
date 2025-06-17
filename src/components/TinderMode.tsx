@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -105,18 +104,12 @@ const TinderMode: React.FC<TinderModeProps> = ({
   };
 
   const handleLike = () => {
-    if (isAuthenticated && currentApartment) {
-      onMorRatingChange(currentApartment.id, 5);
-      onGabiRatingChange(currentApartment.id, 5);
-    }
+    // In Tinder mode, don't actually update ratings - just for viewing
     nextCard();
   };
 
   const handleDislike = () => {
-    if (isAuthenticated && currentApartment) {
-      onMorRatingChange(currentApartment.id, 1);
-      onGabiRatingChange(currentApartment.id, 1);
-    }
+    // In Tinder mode, don't actually update ratings - just for viewing
     nextCard();
   };
 
@@ -324,39 +317,35 @@ const TinderMode: React.FC<TinderModeProps> = ({
         )}
       </div>
 
-      {/* Action Buttons */}
+      {/* Action Buttons - Swapped order */}
       <div className="flex justify-center gap-4">
-        <Button
-          onClick={handleDislike}
-          variant="outline"
-          size="lg"
-          className="rounded-full w-16 h-16 border-red-500 text-red-500 hover:bg-red-50"
-          disabled={!isAuthenticated}
-        >
-          <X className="w-8 h-8" />
-        </Button>
-        
         <Button
           onClick={handleLike}
           variant="outline"
           size="lg"
           className="rounded-full w-16 h-16 border-green-500 text-green-500 hover:bg-green-50"
-          disabled={!isAuthenticated}
         >
           <Heart className="w-8 h-8" />
+        </Button>
+        
+        <Button
+          onClick={handleDislike}
+          variant="outline"
+          size="lg"
+          className="rounded-full w-16 h-16 border-red-500 text-red-500 hover:bg-red-50"
+        >
+          <X className="w-8 h-8" />
         </Button>
       </div>
 
       {/* Instructions */}
       <div className="text-center mt-4">
         <p className="text-sm text-gray-600">
-          🤏 גרור שמאלה לדחייה, ימינה לחיבה
+          🤏 גרור ימינה לחיבה, שמאלה לדחייה
         </p>
-        {!isAuthenticated && (
-          <p className="text-xs text-orange-600 mt-1">
-            התחבר כדי לשמור דירוגים
-          </p>
-        )}
+        <p className="text-xs text-blue-600 mt-1">
+          מצב צפייה בלבד - הדירוגים לא נשמרים
+        </p>
       </div>
     </div>
   );
