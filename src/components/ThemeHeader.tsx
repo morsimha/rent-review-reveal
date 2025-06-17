@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -6,14 +7,21 @@ import MusicalKeyboard from '@/components/MusicalKeyboard';
 import AdvancedPiano from '@/components/AdvancedPiano';
 import VoiceRecorder from '@/components/VoiceRecorder';
 import ApartmentDesigner from '@/components/ApartmentDesigner';
-import { Sparkles, Mic, Palette } from 'lucide-react';
+import { Sparkles, Mic, Palette, LayoutGrid } from 'lucide-react';
 
 interface ThemeHeaderProps {
   onDrawingGameOpen: () => void;
   onCatGameOpen: () => void;
+  onLayoutToggle: () => void;
+  isFunctionalLayout: boolean;
 }
 
-const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameOpen }) => {
+const ThemeHeader: React.FC<ThemeHeaderProps> = ({ 
+  onDrawingGameOpen, 
+  onCatGameOpen, 
+  onLayoutToggle, 
+  isFunctionalLayout 
+}) => {
   const { themeConfig, cycleTheme } = useTheme();
   const [isPianoOpen, setIsPianoOpen] = useState(false);
   const [isAdvancedPianoOpen, setIsAdvancedPianoOpen] = useState(false);
@@ -80,7 +88,6 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
             <MusicalKeyboard bigButtons />
             
             <div className="flex gap-3">
-              {/* כפתור לפסנתר מתקדם */}
               <Button
                 onClick={openAdvancedPiano}
                 className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-4 py-2 rounded-full shadow-lg transform transition-all duration-200 hover:scale-105"
@@ -89,7 +96,6 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
                 סטודיו הקלטות AI
               </Button>
               
-              {/* כפתור להקלטת קול */}
               <Button
                 onClick={openVoiceRecorder}
                 className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-4 py-2 rounded-full shadow-lg transform transition-all duration-200 hover:scale-105"
@@ -102,7 +108,7 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
         </DialogContent>
       </Dialog>
 
-      {/* Dialog לפסנתר מתקדם - ממשק קומפקטי */}
+      {/* Dialog לפסנתר מתקדם */}
       <Dialog open={isAdvancedPianoOpen} onOpenChange={setIsAdvancedPianoOpen}>
         <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200">
           <DialogHeader>
@@ -119,7 +125,7 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
         </DialogContent>
       </Dialog>
 
-      {/* Dialog להקלטת קול - ממשק קומפקטי */}
+      {/* Dialog להקלטת קול */}
       <Dialog open={isVoiceRecorderOpen} onOpenChange={setIsVoiceRecorderOpen}>
         <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto bg-gradient-to-br from-orange-50 to-red-50 border-2 border-orange-200">
           <DialogHeader>
@@ -134,36 +140,55 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
       {/* Dialog למעצב דירות */}
       <ApartmentDesigner isOpen={isDesignerOpen} onClose={() => setIsDesignerOpen(false)} />
 
-      <div className="flex items-center justify-center gap-2 mb-4">
+      {/* Header with layout toggle */}
+      <div className="flex items-center justify-between mb-4">
+        {/* Layout Toggle Button - Left Side */}
         <button
-          onClick={cycleTheme}
-          className="text-4xl hover:scale-110 transition-transform duration-200 cursor-pointer"
-          title="לחץ לשינוי ערכת נושא"
+          onClick={onLayoutToggle}
+          className="relative text-2xl hover:scale-110 transition-all duration-300 cursor-pointer p-3 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 hover:from-indigo-200 hover:to-purple-200 shadow-lg hover:shadow-xl border-2 border-indigo-200 hover:border-indigo-300"
+          title={isFunctionalLayout ? "חזור למצב רגיל" : "מצב פונקציונלי"}
         >
-          {themeConfig.mainEmoji}
+          <div className="relative z-10">
+            <LayoutGrid className="w-6 h-6" />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-full animate-pulse"
+               style={{ animationDuration: '2s' }}></div>
         </button>
-        <h1 className={`text-4xl font-bold ${themeConfig.textColor}`}>
-          {themeConfig.title}
-        </h1>
+
+        {/* Center Title */}
+        <div className="flex items-center justify-center gap-2">
+          <button
+            onClick={cycleTheme}
+            className="text-4xl hover:scale-110 transition-transform duration-200 cursor-pointer"
+            title="לחץ לשינוי ערכת נושא"
+          >
+            {themeConfig.mainEmoji}
+          </button>
+          <h1 className={`text-4xl font-bold ${themeConfig.textColor}`}>
+            {themeConfig.title}
+          </h1>
+        </div>
+
+        {/* Empty div for layout balance */}
+        <div className="w-14"></div>
       </div>
       
       <p className={`${themeConfig.accentColor} text-lg mb-4`}>{themeConfig.subtitle}</p>
       
-      {/* Creative Tools Section - כל הכלים באותה שורה */}
+      {/* Creative Tools Section */}
       <div className="flex items-center justify-center gap-4 mb-4">
         {/* כפתור פסנתר */}
         <div className="relative group">
           <button
             onClick={() => setIsPianoOpen(true)}
-            className="relative text-4xl hover:scale-110 transition-all duration-300 cursor-pointer p-2 rounded-2xl bg-gradient-to-br from-blue-100 to-purple-100 hover:from-blue-200 hover:to-purple-200 shadow-lg hover:shadow-xl border-2 border-blue-200 hover:border-blue-300"
+            className="relative text-4xl hover:scale-110 transition-all duration-300 cursor-pointer p-2 rounded-2xl bg-gradient-to-br from-blue-100 to-purple-100 hover:from-blue-200 hover:to-purple-200 shadow-lg hover:shadow-xl border-2 border-blue-200 hover:border-blue-300 animate-pulse"
             title="פסנתר אינטראקטיבי!"
+            style={{ animationDuration: '3s' }}
           >
             <span className="relative z-10">🎹</span>
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-2xl animate-pulse"
-                 style={{ animationDuration: '3s' }}></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-2xl"></div>
           </button>
           
-          {/* טקסט הסבר */}
           <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-sm font-medium text-gray-700 shadow-lg border whitespace-nowrap z-20">
             🎹 פסנתר אינטראקטיבי
           </div>
@@ -176,18 +201,16 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
             className="relative text-4xl hover:scale-110 transition-all duration-300 cursor-pointer p-2 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200 shadow-lg hover:shadow-xl border-2 border-purple-200 hover:border-purple-300"
             title="מעצב דירות AI - הפוך כל חלל למושלם!"
           >
-            <span className="relative z-10">🖼️</span>
+            <span className="relative z-10 inline-block animate-bounce" style={{ animationDuration: '2s' }}>🖼️</span>
             <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-2xl animate-pulse"
                  style={{ animationDuration: '3s' }}></div>
           </button>
           
-          {/* תווית חדש */}
           <div className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg animate-bounce"
                style={{ animationDuration: '2s' }}>
             חדש!
           </div>
           
-          {/* טקסט הסבר */}
           <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-sm font-medium text-gray-700 shadow-lg border whitespace-nowrap z-20">
             🎨 מעצב דירות AI ✨
           </div>
@@ -200,12 +223,11 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
             className="relative text-4xl hover:scale-110 transition-all duration-300 cursor-pointer p-2 rounded-2xl bg-gradient-to-br from-yellow-100 to-orange-100 hover:from-yellow-200 hover:to-orange-200 shadow-lg hover:shadow-xl border-2 border-yellow-200 hover:border-yellow-300"
             title="משחק ציור שיתופי!"
           >
-            <span className="relative z-10">🎨</span>
+            <span className="relative z-10 inline-block animate-pulse" style={{ animationDuration: '1.5s' }}>🎨</span>
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 to-orange-400/20 rounded-2xl animate-pulse"
                  style={{ animationDuration: '3s' }}></div>
           </button>
           
-          {/* טקסט הסבר */}
           <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-sm font-medium text-gray-700 shadow-lg border whitespace-nowrap z-20">
             🎨 משחק ציור שיתופי
           </div>
@@ -218,12 +240,11 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({ onDrawingGameOpen, onCatGameO
             className="relative text-4xl hover:scale-110 transition-all duration-300 cursor-pointer p-2 rounded-2xl bg-gradient-to-br from-pink-100 to-purple-100 hover:from-pink-200 hover:to-purple-200 shadow-lg hover:shadow-xl border-2 border-pink-200 hover:border-pink-300"
             title="תפוס את החתול!"
           >
-            <span className="relative z-10">🐱</span>
-            <div className="absolute inset-0 bg-gradient-to-br from-pink-400/20 to-purple-400/20 rounded-2xl animate-bounce"
-                 style={{ animationDuration: '3s' }}></div>
+            <span className="relative z-10 inline-block animate-bounce" style={{ animationDuration: '1s' }}>🐱</span>
+            <div className="absolute inset-0 bg-gradient-to-br from-pink-400/20 to-purple-400/20 rounded-2xl animate-pulse"
+                 style={{ animationDuration: '2.5s' }}></div>
           </button>
           
-          {/* טקסט הסבר */}
           <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-sm font-medium text-gray-700 shadow-lg border whitespace-nowrap z-20">
             🐱 תפוס את החתול
           </div>

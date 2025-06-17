@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -24,6 +25,7 @@ const Index = () => {
   const [statusFilter, setStatusFilter] = useState<"all" | "spoke" | "not_spoke" | "no_answer">("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedApartmentId, setSelectedApartmentId] = useState<string | null>(null);
+  const [isFunctionalLayout, setIsFunctionalLayout] = useState(false);
 
   const { isAuthenticated, login } = useAuth();
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -33,7 +35,6 @@ const Index = () => {
 
   useEffect(() => {
     if (!isAuthenticated && !authAttempted) {
-      // Use timeout to prevent dialog from opening before AuthProvider initializes
       setTimeout(() => {
         if (!sessionStorage.getItem('isAuthenticated')) {
           setIsPasswordDialogOpen(true);
@@ -53,9 +54,7 @@ const Index = () => {
     uploadImage
   } = useApartments();
 
-  // handleAddApartment now supports arnona
   const handleAddApartment = async (apartmentData: any) => {
-    // נתמך גם arnona
     const result = await addApartment(apartmentData);
     return result.success;
   };
@@ -74,6 +73,7 @@ const Index = () => {
     if (!isAuthenticated) return;
     await updateApartment(apartmentId, { spoke_with_mor: value });
   };
+  
   const handleGabiTalkedChange = async (apartmentId: string, value: boolean) => {
     if (!isAuthenticated) return;
     await updateApartment(apartmentId, { spoke_with_gabi: value });
@@ -125,6 +125,10 @@ const Index = () => {
         });
       }
     }
+  };
+
+  const handleLayoutToggle = () => {
+    setIsFunctionalLayout(!isFunctionalLayout);
   };
 
   if (loading) {
@@ -195,6 +199,8 @@ const Index = () => {
         <ThemeHeader 
           onDrawingGameOpen={() => setIsDrawingGameOpen(true)}
           onCatGameOpen={() => setIsCatGameOpen(true)}
+          onLayoutToggle={handleLayoutToggle}
+          isFunctionalLayout={isFunctionalLayout}
         />
 
         {/* כפתור הוסף דירה */}
@@ -255,35 +261,80 @@ const Index = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Map Section */}
-        <div className="mb-8">
-          <h2 className={`text-2xl font-bold ${themeConfig.textColor} mb-4 text-center`}>
-            {themeConfig.mapTitle}
-          </h2>
-          <Map
-            apartments={apartments}
-            selectedApartmentId={selectedApartmentId}
-            setSelectedApartmentId={setSelectedApartmentId}
-          />
-        </div>
+        {/* Layout Content */}
+        {isFunctionalLayout ? (
+          /* Functional Layout */
+          <div className="space-y-6">
+            {/* Compact Map */}
+            <div className="mb-6">
+              <h2 className={`text-xl font-bold ${themeConfig.textColor} mb-3 text-center`}>
+                מפה קומפקטית 📍
+              </h2>
+              <div className="h-64 rounded-lg overflow-hidden shadow-lg">
+                <Map
+                  apartments={apartments}
+                  selectedApartmentId={selectedApartmentId}
+                  setSelectedApartmentId={setSelectedApartmentId}
+                />
+              </div>
+            </div>
 
-        {/* Apartments Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredApartments.map((apartment) => (
-            <ApartmentCard
-              key={apartment.id}
-              apartment={apartment}
-              onEdit={handleEditApartment}
-              onDelete={handleDelete}
-              onMorRatingChange={handleMorRatingChange}
-              onGabiRatingChange={handleGabiRatingChange}
-              isAuthenticated={isAuthenticated}
-              onCardClick={() => setSelectedApartmentId(apartment.id)}
-              onMorTalkedChange={handleMorTalkedChange}
-              onGabiTalkedChange={handleGabiTalkedChange}
-            />
-          ))}
-        </div>
+            {/* Apartments List View */}
+            <div className="space-y-4">
+              <h2 className={`text-xl font-bold ${themeConfig.textColor} mb-3 text-center`}>
+                רשימת דירות 🏠
+              </h2>
+              {filteredApartments.map((apartment) => (
+                <div key={apartment.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow">
+                  <ApartmentCard
+                    apartment={apartment}
+                    onEdit={handleEditApartment}
+                    onDelete={handleDelete}
+                    onMorRatingChange={handleMorRatingChange}
+                    onGabiRatingChange={handleGabiRatingChange}
+                    isAuthenticated={isAuthenticated}
+                    onCardClick={() => setSelectedApartmentId(apartment.id)}
+                    onMorTalkedChange={handleMorTalkedChange}
+                    onGabiTalkedChange={handleGabiTalkedChange}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* Regular Layout */
+          <>
+            {/* Map Section */}
+            <div className="mb-8">
+              <h2 className={`text-2xl font-bold ${themeConfig.textColor} mb-4 text-center`}>
+                {themeConfig.mapTitle}
+              </h2>
+              <Map
+                apartments={apartments}
+                selectedApartmentId={selectedApartmentId}
+                setSelectedApartmentId={setSelectedApartmentId}
+              />
+            </div>
+
+            {/* Apartments Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredApartments.map((apartment) => (
+                <ApartmentCard
+                  key={apartment.id}
+                  apartment={apartment}
+                  onEdit={handleEditApartment}
+                  onDelete={handleDelete}
+                  onMorRatingChange={handleMorRatingChange}
+                  onGabiRatingChange={handleGabiRatingChange}
+                  isAuthenticated={isAuthenticated}
+                  onCardClick={() => setSelectedApartmentId(apartment.id)}
+                  onMorTalkedChange={handleMorTalkedChange}
+                  onGabiTalkedChange={handleGabiTalkedChange}
+                />
+              ))}
+            </div>
+          </>
+        )}
 
         {filteredApartments.length === 0 && (
           <div className="text-center py-12">
