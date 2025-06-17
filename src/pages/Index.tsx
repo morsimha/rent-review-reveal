@@ -275,7 +275,7 @@ const Index = () => {
           /* Tinder Mode */
           <div className="space-y-6">
             <h2 className={`text-2xl font-bold ${themeConfig.textColor} mb-6 text-center`}>
-              💕 מוד טינדר - החלק ימינה לחיבה, שמאלה לדחייה
+              💕Tindira Is Back 💕
             </h2>
             <TinderMode
               apartments={filteredApartments}

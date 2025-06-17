@@ -221,6 +221,15 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     setMapSize(isCompact ? 'third' : 'full');
   }, [isCompact]);
 
+  // Force map resize when size changes
+  useEffect(() => {
+    if (map.current) {
+      setTimeout(() => {
+        map.current?.resize();
+      }, 300); // Wait for CSS transition
+    }
+  }, [mapSize]);
+
   // Map size configurations
   const getSizeClasses = () => {
     switch (mapSize) {
@@ -241,42 +250,44 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     <Card className="bg-white/90 backdrop-blur-sm border-purple-200">
       <CardContent className="p-0">
         <div className="relative">
-          {/* Map Size Selector */}
-          <div className="absolute top-2 left-2 z-10 flex gap-1">
-            <button
-              onClick={() => setMapSize('full')}
-              className={`p-1.5 rounded-lg transition-all duration-300 ${
-                mapSize === 'full' 
-                  ? 'bg-purple-500 text-white shadow-md' 
-                  : 'bg-white/90 hover:bg-purple-100 text-gray-700'
-              }`}
-              title="מפה מלאה"
-            >
-              <span className="text-sm">📍</span>
-            </button>
-            <button
-              onClick={() => setMapSize('half')}
-              className={`p-1.5 rounded-lg transition-all duration-300 ${
-                mapSize === 'half' 
-                  ? 'bg-purple-500 text-white shadow-md' 
-                  : 'bg-white/90 hover:bg-purple-100 text-gray-700'
-              }`}
-              title="חצי גודל"
-            >
-              <span className="text-xs">📍</span>
-            </button>
-            <button
-              onClick={() => setMapSize('third')}
-              className={`p-1.5 rounded-lg transition-all duration-300 ${
-                mapSize === 'third' 
-                  ? 'bg-purple-500 text-white shadow-md' 
-                  : 'bg-white/90 hover:bg-purple-100 text-gray-700'
-              }`}
-              title="שליש גודל"
-            >
-              <span className="text-xs" style={{ fontSize: '0.6rem' }}>📍</span>
-            </button>
-          </div>
+          {/* Map Size Selector - Only show in compact mode */}
+          {isCompact && (
+            <div className="absolute top-2 left-2 z-10 flex gap-1">
+              <button
+                onClick={() => setMapSize('full')}
+                className={`p-1.5 rounded-lg transition-all duration-300 ${
+                  mapSize === 'full' 
+                    ? 'bg-purple-500 text-white shadow-md' 
+                    : 'bg-white/90 hover:bg-purple-100 text-gray-700'
+                }`}
+                title="מפה מלאה"
+              >
+                <span className="text-sm">📍</span>
+              </button>
+              <button
+                onClick={() => setMapSize('half')}
+                className={`p-1.5 rounded-lg transition-all duration-300 ${
+                  mapSize === 'half' 
+                    ? 'bg-purple-500 text-white shadow-md' 
+                    : 'bg-white/90 hover:bg-purple-100 text-gray-700'
+                }`}
+                title="חצי גודל"
+              >
+                <span className="text-xs">📍</span>
+              </button>
+              <button
+                onClick={() => setMapSize('third')}
+                className={`p-1.5 rounded-lg transition-all duration-300 ${
+                  mapSize === 'third' 
+                    ? 'bg-purple-500 text-white shadow-md' 
+                    : 'bg-white/90 hover:bg-purple-100 text-gray-700'
+                }`}
+                title="שליש גודל"
+              >
+                <span className="text-xs" style={{ fontSize: '0.6rem' }}>📍</span>
+              </button>
+            </div>
+          )}
 
           <div ref={mapContainer} className={`w-full ${sizeClasses.height} rounded-lg`} />
           
@@ -306,8 +317,8 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     </Card>
   );
 
-  // Apply wrapper based on size
-  if (sizeClasses.wrapper) {
+  // Apply wrapper based on size - only in compact mode
+  if (isCompact && sizeClasses.wrapper) {
     return (
       <div className={`w-full ${sizeClasses.wrapper} mx-auto transition-all duration-300`}>
         {mapContent}
