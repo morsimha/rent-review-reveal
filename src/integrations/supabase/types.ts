@@ -214,54 +214,6 @@ export type Database = {
           },
         ]
       }
-      scanned_apartments: {
-        Row: {
-          apartment_link: string | null
-          contact_name: string | null
-          contact_phone: string | null
-          created_at: string
-          description: string | null
-          floor: number | null
-          id: string
-          image_url: string | null
-          location: string | null
-          pets_allowed: string | null
-          price: number | null
-          square_meters: number | null
-          title: string
-        }
-        Insert: {
-          apartment_link?: string | null
-          contact_name?: string | null
-          contact_phone?: string | null
-          created_at?: string
-          description?: string | null
-          floor?: number | null
-          id?: string
-          image_url?: string | null
-          location?: string | null
-          pets_allowed?: string | null
-          price?: number | null
-          square_meters?: number | null
-          title: string
-        }
-        Update: {
-          apartment_link?: string | null
-          contact_name?: string | null
-          contact_phone?: string | null
-          created_at?: string
-          description?: string | null
-          floor?: number | null
-          id?: string
-          image_url?: string | null
-          location?: string | null
-          pets_allowed?: string | null
-          price?: number | null
-          square_meters?: number | null
-          title?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
