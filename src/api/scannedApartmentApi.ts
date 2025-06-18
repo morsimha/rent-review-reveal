@@ -1,66 +1,83 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface ScannedApartment {
   id: string;
   title: string;
-  description: string;
-  price: number;
-  location: string;
-  image_url: string;
-  apartment_link: string;
-  contact_phone: string;
-  contact_name: string;
+  description: string | null;
+  price: number | null;
+  location: string | null;
+  image_url: string | null;
+  apartment_link: string | null;
+  contact_phone: string | null;
+  contact_name: string | null;
+  square_meters: number | null;
+  floor: number | null;
   pets_allowed: 'yes' | 'no' | 'unknown';
-  square_meters: number;
-  floor: number;
   created_at: string;
 }
 
-export const getScannedApartments = async (): Promise<ScannedApartment[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('scanned_apartments')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    
-    // המר את pets_allowed לטייפ הנכון
-    return (data || []).map(apartment => ({
-      ...apartment,
-      pets_allowed: (apartment.pets_allowed as 'yes' | 'no' | 'unknown') || 'unknown'
-    }));
-  } catch (error) {
-    console.error('Error fetching scanned apartments:', error);
-    return [];
-  }
+export const fetchScannedApartments = async (): Promise<ScannedApartment[]> => {
+  const { data, error } = await supabase
+    .from('scanned_apartments')
+    .select('*')
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return data || [];
 };
 
-export const scanYad2Apartments = async (searchQuery: string): Promise<{ count: number }> => {
-  try {
-    const { data, error } = await supabase.functions.invoke('scan-yad2', {
-      body: { searchQuery }
-    });
+export const moveScannedApartmentToMain = async (scannedApartment: ScannedApartment) => {
+  // Insert into main apartments table
+  const { data, error: insertError } = await supabase
+    .from('apartments')
+    .insert([{
+      title: scannedApartment.title,
+      description: scannedApartment.description,
+      price: scannedApartment.price,
+      location: scannedApartment.location,
+      image_url: scannedApartment.image_url,
+      apartment_link: scannedApartment.apartment_link,
+      contact_phone: scannedApartment.contact_phone,
+      contact_name: scannedApartment.contact_name,
+      square_meters: scannedApartment.square_meters,
+      floor: scannedApartment.floor,
+      pets_allowed: scannedApartment.pets_allowed,
+      status: 'not_spoke',
+      rating: 0,
+      mor_rating: 0,
+      gabi_rating: 0,
+    }])
+    .select()
+    .single();
 
-    if (error) throw error;
-    
-    return { count: data.count || 0 };
-  } catch (error) {
-    console.error('Error scanning Yad2:', error);
-    throw error;
-  }
+  if (insertError) throw insertError;
+
+  // Remove from scanned apartments
+  const { error: deleteError } = await supabase
+    .from('scanned_apartments')
+    .delete()
+    .eq('id', scannedApartment.id);
+
+  if (deleteError) throw deleteError;
+
+  return data;
 };
 
-export const clearScannedApartments = async (): Promise<void> => {
-  try {
-    const { error } = await supabase
-      .from('scanned_apartments')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all (workaround)
+export const scanYad2Apartments = async (searchQuery: string) => {
+  const { data, error } = await supabase.functions.invoke('yad2-scanner', {
+    body: { searchQuery }
+  });
 
-    if (error) throw error;
-  } catch (error) {
-    console.error('Error clearing scanned apartments:', error);
-    throw error;
-  }
+  if (error) throw error;
+  return data;
+};
+
+export const clearScannedApartments = async () => {
+  const { error } = await supabase
+    .from('scanned_apartments')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+  if (error) throw error;
 };
