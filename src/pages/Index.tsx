@@ -25,6 +25,7 @@ const Index = () => {
   const [isCatGameOpen, setIsCatGameOpen] = useState(false);
   const [isYad2ScanOpen, setIsYad2ScanOpen] = useState(false);
   const [layoutMode, setLayoutMode] = useState<'regular' | 'functional' | 'tinder'>('regular');
+  const [tinderMode, setTinderMode] = useState<'regular' | 'scanned'>('regular');
   const [selectedApartmentId, setSelectedApartmentId] = useState<string | null>(null);
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
@@ -170,6 +171,7 @@ const Index = () => {
       setLayoutMode('functional');
     } else if (layoutMode === 'functional') {
       setLayoutMode('tinder');
+      setTinderMode('regular'); // Default to regular mode when entering tinder
     } else {
       setLayoutMode('regular');
     }
@@ -177,6 +179,7 @@ const Index = () => {
 
   const handleScannedButtonClick = () => {
     setLayoutMode('tinder');
+    setTinderMode('scanned'); // Set to scanned mode when clicking scanned button
   };
 
   const scannedCount = scannedApartments.length;
@@ -187,7 +190,7 @@ const Index = () => {
       <TinderMode 
         apartments={apartments} 
         scannedApartments={scannedApartments}
-        mode={scannedCount > 0 ? 'scanned' : 'regular'}
+        mode={tinderMode}
         onLikeScanned={handleAddScannedApartment}
         onMorRatingChange={handleMorRatingChange} 
         onGabiRatingChange={handleGabiRatingChange} 
