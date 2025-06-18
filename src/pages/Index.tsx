@@ -1,207 +1,291 @@
-import React, { useState, useEffect } from 'react';
-import { useTheme } from '@/contexts/ThemeContext';
-import ApartmentForm from '@/components/ApartmentForm';
-import ApartmentGallery from '@/components/ApartmentGallery';
-import EditApartmentDialog from '@/components/EditApartmentDialog';
+import React, { useState, useEffect } from 'react';Add commentMore actions
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useApartments } from '@/hooks/useApartments';
+import type { Apartment } from '@/types/ApartmentTypes';
+import Map from '@/components/Map';
+import CatGame from '@/components/CatGame';
 import DrawingGame from '@/components/DrawingGame';
-import CatChaseGame from '@/components/CatChaseGame';
+import ApartmentForm from '@/components/ApartmentForm';
+import ApartmentCard from '@/components/ApartmentCard';
+import EditApartmentDialog from '@/components/EditApartmentDialog';
+import { useAuth } from '@/contexts/AuthContext';
+import PasswordDialog from '@/components/PasswordDialog';
+import { useToast } from '@/hooks/use-toast';
+import { useTheme } from '@/contexts/ThemeContext';
 import ThemeHeader from '@/components/ThemeHeader';
 import TinderMode from '@/components/TinderMode';
 import Yad2ScanDialog from '@/components/Yad2ScanDialog';
-import Map from '@/components/Map';
-import { useToast } from '@/hooks/use-toast';
-import type { Apartment } from '@/types/ApartmentTypes';
-import { getApartments, addApartment, updateApartment, deleteApartment, uploadImage } from '@/api/apartmentApi';
-import { getScannedApartments } from '@/api/scannedApartmentApi';
-import { useAuth } from '@/hooks/useAuth';
+import { useScannedApartments } from '@/hooks/useScannedApartments';
+
+
+
+
+
 
 const Index = () => {
-  const { themeConfig } = useTheme();
-  const [apartments, setApartments] = useState<Apartment[]>([]);
-  const [scannedApartments, setScannedApartments] = useState<any[]>([]);
+
+
+
   const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDrawingGameOpen, setIsDrawingGameOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCatGameOpen, setIsCatGameOpen] = useState(false);
-  const [isYad2ScanOpen, setIsYad2ScanOpen] = useState(false);
-  const [layoutMode, setLayoutMode] = useState<'regular' | 'functional' | 'tinder'>('regular');
-  const [tinderMode, setTinderMode] = useState<'regular' | 'scanned'>('regular');
+  const [isDrawingGameOpen, setIsDrawingGameOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<"rating" | "entry_date" | "created_at" | "status">("rating");
+  const [statusFilter, setStatusFilter] = useState<"all" | "spoke" | "not_spoke" | "no_answer">("all");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedApartmentId, setSelectedApartmentId] = useState<string | null>(null);
+  const [isFunctionalLayout, setIsFunctionalLayout] = useState(false);
+  const [layoutMode, setLayoutMode] = useState<'regular' | 'functional' | 'tinder'>('regular');
+  const [isYad2ScanDialogOpen, setIsYad2ScanDialogOpen] = useState(false);
+
+  const { isAuthenticated, login } = useAuth();
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [authAttempted, setAuthAttempted] = useState(false);
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
+  const { themeConfig } = useTheme();
 
   useEffect(() => {
-    fetchData();
-    fetchScannedApartments();
-  }, []);
+    if (!isAuthenticated && !authAttempted) {
+      setTimeout(() => {
+        if (!sessionStorage.getItem('isAuthenticated')) {
+          setIsPasswordDialogOpen(true);
+        }
+      }, 100);
+    }
+  }, [isAuthenticated, authAttempted]);
 
-  const fetchData = async () => {
-    const data = await getApartments();
-    setApartments(data);
-  };
+  const {
+    apartments,
+    loading,
+    addApartment,
+    updateApartment,
+    deleteApartment,
+    updateMorRating,
+    updateGabiRating,
+    uploadImage
+  } = useApartments();
 
-  const fetchScannedApartments = async () => {
-    const data = await getScannedApartments();
-    setScannedApartments(data);
-  };
+  const {
+    scannedApartments,
+    loading: scannedLoading,
+    likeScannedApartment,
+    refreshScanned
+  } = useScannedApartments();
 
   const handleAddApartment = async (apartmentData: any) => {
-    try {
-      const newApartment = await addApartment(apartmentData);
-      if (newApartment) {
-        setApartments([...apartments, newApartment]);
-        toast({
-          title: "הדירה נוספה בהצלחה!",
-          description: `${newApartment.title} נוספה לרשימה`,
-        });
-        return true;
-      }
-      return false;
-    } catch (error) {
-      toast({
-        title: "שגיאה בהוספת דירה",
-        description: "משהו השתבש, נסה שוב",
-        variant: "destructive",
-      });
-      return false;
-    }
+    const result = await addApartment(apartmentData);
+    return result.success;
   };
 
-  const handleDeleteApartment = async (id: string) => {
-    const success = await deleteApartment(id);
-    if (success) {
-      setApartments(apartments.filter(apt => apt.id !== id));
-      toast({
-        title: "הדירה נמחקה",
-        description: "הדירה הוסרה מהרשימה",
-      });
-    } else {
-      toast({
-        title: "שגיאה במחיקה",
-        description: "לא הצלחנו למחוק את הדירה",
-        variant: "destructive",
-      });
-    }
+  const handleMorRatingChange = async (apartmentId: string, newRating: number) => {
+    if (!isAuthenticated) return;
+    await updateMorRating(apartmentId, newRating);
+  };
+
+  const handleGabiRatingChange = async (apartmentId: string, newRating: number) => {
+    if (!isAuthenticated) return;
+    await updateGabiRating(apartmentId, newRating);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  };
+
+  const handleMorTalkedChange = async (apartmentId: string, value: boolean) => {
+    if (!isAuthenticated) return;
+    await updateApartment(apartmentId, { spoke_with_mor: value });
+  };
+  
+  const handleGabiTalkedChange = async (apartmentId: string, value: boolean) => {
+    if (!isAuthenticated) return;
+    await updateApartment(apartmentId, { spoke_with_gabi: value });
+
+
+
+
+
+
+
   };
 
   const handleEditApartment = (apartment: Apartment) => {
     setEditingApartment(apartment);
-    setIsEditModalOpen(true);
+    setIsEditDialogOpen(true);
   };
 
-  const handleSaveEdit = async (apartmentId: string, updates: Partial<Apartment>) => {
-    const success = await updateApartment(apartmentId, updates);
-    if (success) {
-      setApartments(apartments.map(apt => 
-        apt.id === apartmentId ? { ...apt, ...updates } : apt
-      ));
-      setIsEditModalOpen(false);
+  const handleSaveEdit = async (apartmentId: string, editFormData: Partial<Apartment>) => {
+    const result = await updateApartment(apartmentId, editFormData);
+    if (result.success) {
       setEditingApartment(null);
+      setIsEditDialogOpen(false);
+    }
+  };
+
+  const handleDelete = async (apartmentId: string) => {
+    await deleteApartment(apartmentId);
+  };
+
+  const handlePasswordSubmit = (password: string) => {
+    setAuthAttempted(true);
+    const success = login(password);
+    if (success) {
+      setIsPasswordDialogOpen(false);
+
+
+
+
       toast({
-        title: "הדירה עודכנה",
-        description: "השינויים נשמרו בהצלחה",
+        title: "התחברת בהצלחה!",
+        description: "כעת באפשרותך לערוך את רשימת הדירות.",
       });
     } else {
       toast({
-        title: "שגיאה בעדכון",
-        description: "לא הצלחנו לשמור את השינויים",
+        title: "סיסמא שגויה",
+        description: "הסיסמא שהזנת אינה נכונה. הנך במצב צפייה בלבד.",
         variant: "destructive",
       });
     }
   };
 
-  const handleMorRatingChange = async (apartmentId: string, rating: number) => {
-    const success = await updateApartment(apartmentId, { mor_rating: rating });
-    if (success) {
-      setApartments(apartments.map(apt => 
-        apt.id === apartmentId ? { ...apt, mor_rating: rating } : apt
-      ));
-    }
-  };
+  const onPasswordDialogChange = (open: boolean) => {
+    setIsPasswordDialogOpen(open);
+    if (!open) {
+      setAuthAttempted(true);
+      if (!isAuthenticated) {
 
-  const handleGabiRatingChange = async (apartmentId: string, rating: number) => {
-    const success = await updateApartment(apartmentId, { gabi_rating: rating });
-    if (success) {
-      setApartments(apartments.map(apt => 
-        apt.id === apartmentId ? { ...apt, gabi_rating: rating } : apt
-      ));
-    }
-  };
 
-  const handleAddScannedApartment = async (scannedApartment: any) => {
-    try {
-      // המר את הדירה הסרוקה לפורמט של דירה רגילה
-      const newApartment = {
-        fb_url: scannedApartment.apartment_link || `https://yad2.co.il/${Date.now()}`,
-        title: scannedApartment.title,
-        description: scannedApartment.description,
-        price: scannedApartment.price,
-        location: scannedApartment.location,
-        image_url: scannedApartment.image_url,
-        apartment_link: scannedApartment.apartment_link,
-        contact_phone: scannedApartment.contact_phone,
-        contact_name: scannedApartment.contact_name,
-        status: 'not_spoke' as const,
-        pets_allowed: scannedApartment.pets_allowed || 'unknown',
-        rating: 0,
-        mor_rating: 0,
-        gabi_rating: 0,
-      };
-      
-      const success = await handleAddApartment(newApartment);
-      if (success) {
-        // הסר את הדירה מרשימת הסרוקות
-        setScannedApartments(scannedApartments.filter(apt => apt.id !== scannedApartment.id));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         toast({
-          title: "הדירה נוספה!",
-          description: "הדירה הסרוקה נוספה למאגר הדירות הרגיל",
+          title: "מצב צפייה בלבד",
+          description: "לא הוזנה סיסמא. לא ניתן לבצע שינויים.",
         });
       }
-    } catch (error) {
-      toast({
-        title: "שגיאה",
-        description: "לא הצלחנו להוסיף את הדירה",
-        variant: "destructive",
-      });
+
+
+
+
+
+
     }
   };
 
-  const handleLayoutToggle = () => {
-    if (layoutMode === 'regular') {
-      setLayoutMode('functional');
-    } else if (layoutMode === 'functional') {
-      setLayoutMode('tinder');
-      setTinderMode('regular'); // Default to regular mode when entering tinder
-    } else {
-      setLayoutMode('regular');
+@@ -148,307 +175,120 @@ const Index = () => {
     }
   };
 
-  const handleScannedButtonClick = () => {
-    setLayoutMode('tinder');
-    setTinderMode('scanned'); // Set to scanned mode when clicking scanned button
-  };
-
-  const scannedCount = scannedApartments.length;
-
-  // If in tinder mode, show TinderMode component
-  if (layoutMode === 'tinder') {
+  if (loading) {
     return (
-      <TinderMode 
-        apartments={apartments} 
-        scannedApartments={scannedApartments}
-        mode={tinderMode}
-        onLikeScanned={handleAddScannedApartment}
-        onMorRatingChange={handleMorRatingChange} 
-        onGabiRatingChange={handleGabiRatingChange} 
-        isAuthenticated={isAuthenticated} 
-      />
+      <div className={`min-h-screen ${themeConfig.backgroundGradient} flex items-center justify-center`} dir="rtl">
+        <div className="text-center">
+          <div className="text-4xl mb-4">{themeConfig.mainEmoji}</div>
+          <p className={`${themeConfig.accentColor} text-lg`}>טוען דירות...</p>
+        </div>
+      </div>
     );
   }
 
+  // סינון לפי סטטוס
+  let filteredApartments = apartments;
+  if (statusFilter !== "all") {
+    filteredApartments = filteredApartments.filter(a => a.status === statusFilter);
+  }
+
+  // ממיין
+  if (sortBy === "entry_date") {
+    filteredApartments = [...filteredApartments].sort((a, b) => {
+      if (!a.entry_date) return 1;
+      if (!b.entry_date) return -1;
+      return a.entry_date.localeCompare(b.entry_date);
+    });
+  } else if (sortBy === "rating") {
+    filteredApartments = [...filteredApartments].sort((a, b) => {
+      const totalA = (a.mor_rating||0)+(a.gabi_rating||0);
+      const totalB = (b.mor_rating||0)+(b.gabi_rating||0);
+      return totalB-totalA;
+    });
+  } else if (sortBy === "created_at") {
+    filteredApartments = [...filteredApartments].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  } else if (sortBy === "status") {
+    const statusOrder = { "spoke": 0, "not_spoke": 1, "no_answer": 2 };
+    filteredApartments = [...filteredApartments].sort((a, b) => {
+      const aOrder = statusOrder[a.status as keyof typeof statusOrder] ?? 3;
+      const bOrder = statusOrder[b.status as keyof typeof statusOrder] ?? 3;
+      return aOrder - bOrder;
+    });
+  }
+
   return (
-    <div className={`min-h-screen ${themeConfig.gradient} transition-all duration-500 p-8`}>
-      <div className="max-w-7xl mx-auto">
+    <div className={`min-h-screen ${themeConfig.backgroundGradient} relative overflow-hidden`} dir="rtl">
+      {/* Themed Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        {themeConfig.backgroundEmojis.map((emoji, index) => {
+          const positions = [
+            'top-10 left-10 text-6xl',
+            'top-32 right-20 text-4xl',
+            'top-64 left-1/4 text-5xl',
+            'bottom-40 right-1/3 text-6xl',
+            'bottom-20 left-20 text-4xl',
+            'top-1/2 right-10 text-5xl',
+            'bottom-1/2 left-1/2 text-4xl'
+          ];
+          return (
+            <div key={index} className={`absolute ${positions[index] || 'top-10 left-10 text-4xl'}`}>
+              {emoji}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="container mx-auto px-4 py-8 relative z-10">
+        {/* Themed Header */}
         <ThemeHeader 
           onDrawingGameOpen={() => setIsDrawingGameOpen(true)}
           onCatGameOpen={() => setIsCatGameOpen(true)}
@@ -209,87 +293,245 @@ const Index = () => {
           layoutMode={layoutMode}
         />
 
-        {/* Scanned Apartments Button */}
-        {scannedCount > 0 && (
-          <div className="flex justify-center mb-4">
-            <button
-              onClick={handleScannedButtonClick}
-              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-3 rounded-full font-bold shadow-lg transform transition-all duration-200 hover:scale-105 flex items-center gap-2"
-            >
-              <span className="text-xl">🏠</span>
-              דירות סרוקות ({scannedCount})
-              <span className="text-xl animate-pulse">💕</span>
-            </button>
+        {/* כפתורי הוסף דירה וסרוק דירות */}
+        <div className="flex justify-center gap-4 mb-8">
+          <Button
+            onClick={() => setIsAddDialogOpen(true)}
+            className={`${themeConfig.buttonGradient} text-white text-lg px-6 py-3 rounded shadow transition`}
+            disabled={!isAuthenticated}
+          >
+            + הוסף דירה חדשה
+          </Button>
+          
+          <Button
+            onClick={() => setIsYad2ScanDialogOpen(true)}
+            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-lg px-6 py-3 rounded shadow transition"
+            disabled={!isAuthenticated}
+          >
+            🔍 סרוק דירות אוטומטית
+          </Button>
+        </div>
+
+        {/* תפריט מיון וסינון סטטוס - הסתר במוד טינדר */}
+        {layoutMode !== 'tinder' && (
+          <div className="flex flex-wrap justify-center items-center gap-3 mb-7">
+            <div className="flex items-center gap-2">
+              <label className={`font-medium ${themeConfig.textColor} text-sm`}>מיין לפי:</label>
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value as any)}
+                className="rounded border px-2 py-1 text-right"
+              >
+                <option value="rating">דירוג {themeConfig.sortEmojis.rating}</option>
+                <option value="entry_date">תאריך כניסה {themeConfig.sortEmojis.entry_date}</option>
+                <option value="created_at">מועד הוספה {themeConfig.sortEmojis.created_at}</option>
+                <option value="status">סטטוס דיבור {themeConfig.sortEmojis.status}</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className={`font-medium ${themeConfig.textColor} text-sm`}>סנן לפי סטטוס:</label>
+              <select
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value as any)}
+                className="rounded border px-2 py-1 text-right"
+              >
+                <option value="all">הצג הכל</option>
+                <option value="spoke">דיברנו</option>
+                <option value="not_spoke">לא דיברנו</option>
+                <option value="no_answer">אין תשובה</option>
+              </select>
+            </div>
           </div>
         )}
 
-        <div className={layoutMode === 'functional' ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : 'space-y-6'}>
-          {/* Map */}
-          <div className={layoutMode === 'functional' ? 'lg:col-span-1' : ''}>
-            <Map 
-              apartments={apartments}
-              selectedApartmentId={selectedApartmentId}
-              setSelectedApartmentId={setSelectedApartmentId}
-              isCompact={layoutMode === 'functional'}
+        {/* Modal להוספת דירה */}
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir="rtl">
+            <DialogHeader>
+              <DialogTitle className="text-right">הוסף דירה חדשה</DialogTitle>
+            </DialogHeader>
+            <ApartmentForm
+              onAddApartment={async (data) => {
+                const success = await handleAddApartment(data);
+                if (success) setIsAddDialogOpen(false);
+                return success;
+              }}
+              uploadImage={uploadImage}
             />
-          </div>
+          </DialogContent>
+        </Dialog>
 
-          {/* Form and Gallery */}
-          <div className={layoutMode === 'functional' ? 'lg:col-span-1 space-y-6' : 'space-y-6'}>
-            <ApartmentForm onAddApartment={handleAddApartment} uploadImage={uploadImage} />
-            
-            {/* Yad2 Scan Button */}
-            <div className="flex justify-center">
-              <button
-                onClick={() => setIsYad2ScanOpen(true)}
-                className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-2 rounded-full font-bold shadow-lg transform transition-all duration-200 hover:scale-105"
-              >
-                🔍 סרוק דירות אוטומטית מ-Yad2
-              </button>
+        {/* Yad2 Scan Dialog */}
+        <Yad2ScanDialog
+          open={isYad2ScanDialogOpen}
+          onOpenChange={setIsYad2ScanDialogOpen}
+          onScanComplete={refreshScanned}
+        />
+
+        {/* Layout Content */}
+        {layoutMode === 'tinder' ? (
+          /* Enhanced Tinder Mode with scanned apartments option */
+          <div className="space-y-6">
+            <div className="flex justify-center items-center gap-4 mb-6">
+              <h2 className={`text-2xl font-bold ${themeConfig.textColor}`}>
+                💕Tindira Is Back 💕
+              </h2>
+              
+              {/* Toggle between regular and scanned apartments in Tinder mode */}
+              {scannedApartments.length > 0 && (
+                <div className="flex bg-white/80 rounded-lg p-1">
+                  <button
+                    onClick={() => setLayoutMode('tinder')}
+                    className={`px-3 py-1 rounded text-sm transition ${
+                      layoutMode === 'tinder' ? 'bg-purple-500 text-white' : 'text-gray-600'
+                    }`}
+                  >
+                    דירות רגילות ({filteredApartments.length})
+                  </button>
+                  <button
+                    onClick={() => setLayoutMode('tinder-scanned')}
+                    className={`px-3 py-1 rounded text-sm transition ${
+                      layoutMode === 'tinder-scanned' ? 'bg-blue-500 text-white' : 'text-gray-600'
+                    }`}
+                  >
+                    דירות סרוקות ({scannedApartments.length})
+                  </button>
+                </div>
+              )}
             </div>
 
-            <ApartmentGallery
-              apartments={apartments}
-              onDelete={handleDeleteApartment}
-              onEdit={handleEditApartment}
+            <TinderMode
+              apartments={filteredApartments}
+              scannedApartments={scannedApartments}
+
+
+
+
+
+
+
+
+
+
+
               onMorRatingChange={handleMorRatingChange}
               onGabiRatingChange={handleGabiRatingChange}
+              onLikeScanned={likeScannedApartment}
               isAuthenticated={isAuthenticated}
-              selectedApartmentId={selectedApartmentId}
-              isCompact={layoutMode === 'functional'}
+              mode={layoutMode === 'tinder-scanned' ? 'scanned' : 'regular'}
+
             />
           </div>
-        </div>
+        ) : layoutMode === 'functional' ? (
+          /* Functional Layout */
+          <div className="space-y-6">
+            {/* Compact Map */}
+            <div className="mb-6">
+              <h2 className={`text-xl font-bold ${themeConfig.textColor} mb-3 text-center`}>
+                מפה קומפקטית 📍
+              </h2>
+              <div className="h-64 rounded-lg overflow-hidden shadow-lg">
+                <Map
+                  apartments={apartments}
+                  selectedApartmentId={selectedApartmentId}
+                  setSelectedApartmentId={setSelectedApartmentId}
+                  isCompact={true}
+                />
+              </div>
+            </div>
 
-        <EditApartmentDialog
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setEditingApartment(null);
-          }}
-          apartment={editingApartment}
-          onSave={handleSaveEdit}
-          uploadImage={uploadImage}
-        />
+            {/* Apartments List View */}
+            <div className="space-y-4">
+              <h2 className={`text-xl font-bold ${themeConfig.textColor} mb-3 text-center`}>
+                רשימת דירות 🏠
+              </h2>
+              {filteredApartments.map((apartment) => (
+                <div key={apartment.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow">
+                  <ApartmentCard
+                    apartment={apartment}
+                    onEdit={handleEditApartment}
+                    onDelete={handleDelete}
+                    onMorRatingChange={handleMorRatingChange}
+                    onGabiRatingChange={handleGabiRatingChange}
+                    isAuthenticated={isAuthenticated}
+                    onCardClick={() => setSelectedApartmentId(apartment.id)}
+                    onMorTalkedChange={handleMorTalkedChange}
+                    onGabiTalkedChange={handleGabiTalkedChange}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* Regular Layout */
+          <>
+            {/* Map Section */}
+            <div className="mb-8">
+              <h2 className={`text-2xl font-bold ${themeConfig.textColor} mb-4 text-center`}>
+                {themeConfig.mapTitle}
+              </h2>
+              <Map
+                apartments={apartments}
+                selectedApartmentId={selectedApartmentId}
+                setSelectedApartmentId={setSelectedApartmentId}
+              />
+            </div>
 
-        <DrawingGame
-          isOpen={isDrawingGameOpen}
-          onClose={() => setIsDrawingGameOpen(false)}
-        />
+            {/* Apartments Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredApartments.map((apartment) => (
+                <ApartmentCard
+                  key={apartment.id}
+                  apartment={apartment}
+                  onEdit={handleEditApartment}
+                  onDelete={handleDelete}
+                  onMorRatingChange={handleMorRatingChange}
+                  onGabiRatingChange={handleGabiRatingChange}
+                  isAuthenticated={isAuthenticated}
+                  onCardClick={() => setSelectedApartmentId(apartment.id)}
+                  onMorTalkedChange={handleMorTalkedChange}
+                  onGabiTalkedChange={handleGabiTalkedChange}
+                />
+              ))}
+            </div>
+          </>
+        )}
 
-        <CatChaseGame
-          isOpen={isCatGameOpen}
-          onClose={() => setIsCatGameOpen(false)}
-        />
+        {filteredApartments.length === 0 && layoutMode !== 'tinder' && (
+          <div className="text-center py-12">
+            <p className={`${themeConfig.accentColor} text-lg`}>לא נמצאו דירות בהתאם לסינון {themeConfig.mainEmoji}</p>
+          </div>
+        )}
 
-        <Yad2ScanDialog
-          open={isYad2ScanOpen}
-          onOpenChange={setIsYad2ScanOpen}
-          onScanComplete={() => {
-            fetchScannedApartments();
-          }}
-        />
+        {layoutMode === 'tinder-scanned' && (
+          <div className="text-center mt-4">
+            <p className="text-sm text-blue-600">
+              מציג דירות סרוקות מYad2 - לייק יעביר למאגר הרגיל
+            </p>
+          </div>
+        )}
       </div>
+
+      {/* Edit Dialog */}
+      <EditApartmentDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        apartment={editingApartment}
+        onSave={handleSaveEdit}
+        uploadImage={uploadImage}
+      />
+
+      {/* Drawing Game Modal */}
+      <DrawingGame isOpen={isDrawingGameOpen} onClose={() => setIsDrawingGameOpen(false)} />
+
+      {/* Cat Game Modal */}
+      <CatGame isOpen={isCatGameOpen} onClose={() => setIsCatGameOpen(false)} />
+
+      <PasswordDialog
+        open={isPasswordDialogOpen}
+        onOpenChange={onPasswordDialogChange}
+        onPasswordSubmit={handlePasswordSubmit}
+      />
     </div>
   );
 };
