@@ -12,13 +12,13 @@ interface MapProps {
   isCompact?: boolean; // New prop for functional layout
 }
 
-type MapSize = 'full' | 'half' | 'third';
+type MapSize = 'half' | 'third';
 
 const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedApartmentId, isCompact = false }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [mapSize, setMapSize] = useState<MapSize>(isCompact ? 'third' : 'full');
+  const [mapSize, setMapSize] = useState<MapSize>(isCompact ? 'third' : 'half');
   const { toast } = useToast();
 
   const mapboxToken = 'pk.eyJ1IjoibW9yb3k5IiwiYSI6ImNtYndnN2s5YzBrMm4ycXNkMGw3bDRtMW0ifQ.TfWPfMMUQfcjEy4OzGR9XA';
@@ -214,7 +214,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
 
   // Update map size when isCompact changes
   useEffect(() => {
-    setMapSize(isCompact ? 'third' : 'full');
+    setMapSize(isCompact ? 'third' : 'half');
   }, [isCompact]);
 
   // Force map resize when size changes
@@ -231,16 +231,15 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     }
   }, [mapSize, isCompact]);
 
-  // Map size configurations
+  // Map size configurations - removed full size for compact mode
   const getSizeClasses = () => {
     switch (mapSize) {
       case 'third':
         return { wrapper: 'max-w-md', height: 'h-64' };
       case 'half':
         return { wrapper: 'max-w-2xl', height: 'h-80' };
-      case 'full':
       default:
-        return { wrapper: '', height: 'h-96' };
+        return { wrapper: 'max-w-2xl', height: 'h-80' };
     }
   };
 
@@ -251,20 +250,9 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
     <Card className="bg-white/90 backdrop-blur-sm border-purple-200">
       <CardContent className="p-0">
         <div className="relative">
-          {/* Map Size Selector - Only show in compact mode */}
+          {/* Map Size Selector - Only show in compact mode with only 2 options */}
           {isCompact && (
             <div className="absolute top-2 left-2 z-10 flex gap-1">
-              <button
-                onClick={() => setMapSize('full')}
-                className={`p-1.5 rounded-lg transition-all duration-300 ${
-                  mapSize === 'full' 
-                    ? 'bg-purple-500 text-white shadow-md' 
-                    : 'bg-white/90 hover:bg-purple-100 text-gray-700'
-                }`}
-                title="מפה מלאה"
-              >
-                <span className="text-sm">📍</span>
-              </button>
               <button
                 onClick={() => setMapSize('half')}
                 className={`p-1.5 rounded-lg transition-all duration-300 ${
