@@ -27,8 +27,8 @@ const Index = () => {
   const [statusFilter, setStatusFilter] = useState<"all" | "spoke" | "not_spoke" | "no_answer">("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedApartmentId, setSelectedApartmentId] = useState<string | null>(null);
-  const [isFunctionalLayout, setIsFunctionalLayout] = useState(false);
   const [layoutMode, setLayoutMode] = useState<'regular' | 'functional' | 'tinder'>('regular');
+  const [tinderMode, setTinderMode] = useState<'regular' | 'scanned'>('regular');
   const [isYad2ScanDialogOpen, setIsYad2ScanDialogOpen] = useState(false);
 
   const { isAuthenticated, login } = useAuth();
@@ -143,6 +143,7 @@ const Index = () => {
       setLayoutMode('functional');
     } else if (layoutMode === 'functional') {
       setLayoutMode('tinder');
+      setTinderMode('regular'); // Reset to regular when entering tinder mode
     } else {
       setLayoutMode('regular');
     }
@@ -299,33 +300,36 @@ const Index = () => {
         {layoutMode === 'tinder' ? (
           /* Enhanced Tinder Mode with scanned apartments option */
           <div className="space-y-6">
-            <div className="flex justify-center items-center gap-4 mb-6">
+            {/* Tinder Title - Now above the toggle buttons */}
+            <div className="text-center mb-6">
               <h2 className={`text-2xl font-bold ${themeConfig.textColor}`}>
-                💕Tindira Is Back 💕
+                💕 Tindira Is Back 💕
               </h2>
-              
-              {/* Toggle between regular and scanned apartments in Tinder mode */}
-              {scannedApartments.length > 0 && (
+            </div>
+            
+            {/* Toggle between regular and scanned apartments in Tinder mode */}
+            {scannedApartments.length > 0 && (
+              <div className="flex justify-center mb-6">
                 <div className="flex bg-white/80 rounded-lg p-1">
                   <button
-                    onClick={() => setLayoutMode('tinder')}
-                    className={`px-3 py-1 rounded text-sm transition ${
-                      layoutMode === 'tinder' ? 'bg-purple-500 text-white' : 'text-gray-600'
+                    onClick={() => setTinderMode('regular')}
+                    className={`px-4 py-2 rounded text-sm transition ${
+                      tinderMode === 'regular' ? 'bg-purple-500 text-white' : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
                     דירות רגילות ({filteredApartments.length})
                   </button>
                   <button
-                    onClick={() => setLayoutMode('tinder-scanned')}
-                    className={`px-3 py-1 rounded text-sm transition ${
-                      layoutMode === 'tinder-scanned' ? 'bg-blue-500 text-white' : 'text-gray-600'
+                    onClick={() => setTinderMode('scanned')}
+                    className={`px-4 py-2 rounded text-sm transition ${
+                      tinderMode === 'scanned' ? 'bg-blue-500 text-white' : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
                     דירות סרוקות ({scannedApartments.length})
                   </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
             
             <TinderMode
               apartments={filteredApartments}
@@ -334,7 +338,7 @@ const Index = () => {
               onGabiRatingChange={handleGabiRatingChange}
               onLikeScanned={likeScannedApartment}
               isAuthenticated={isAuthenticated}
-              mode={layoutMode === 'tinder-scanned' ? 'scanned' : 'regular'}
+              mode={tinderMode}
             />
           </div>
         ) : layoutMode === 'functional' ? (
@@ -415,14 +419,6 @@ const Index = () => {
         {filteredApartments.length === 0 && layoutMode !== 'tinder' && (
           <div className="text-center py-12">
             <p className={`${themeConfig.accentColor} text-lg`}>לא נמצאו דירות בהתאם לסינון {themeConfig.mainEmoji}</p>
-          </div>
-        )}
-
-        {layoutMode === 'tinder-scanned' && (
-          <div className="text-center mt-4">
-            <p className="text-sm text-blue-600">
-              מציג דירות סרוקות מYad2 - לייק יעביר למאגר הרגיל
-            </p>
           </div>
         )}
       </div>
