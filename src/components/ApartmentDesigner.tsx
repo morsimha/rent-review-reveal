@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -5,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Upload, Wand2, Share, Download, Sparkles } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import PasswordDialog from '@/components/PasswordDialog';
 
 interface ApartmentDesignerProps {
   isOpen: boolean;
@@ -19,6 +21,8 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose, 
   const [customPrompt, setCustomPrompt] = useState('');
   const [isDesigning, setIsDesigning] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -58,6 +62,20 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose, 
     }
   }, [isOpen]);
 
+  // איפוס אימות כשנסגר הדיאלוג
+  useEffect(() => {
+    if (!isOpen) {
+      setIsAuthenticated(false);
+      setSelectedImage(null);
+      setOriginalImageUrl('');
+      setDesignedImageData('');
+      setCustomPrompt('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, [isOpen]);
+
   // בדיקת rate limit
   const checkRateLimit = () => {
     const now = Date.now();
@@ -86,7 +104,30 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose, 
     return true;
   };
 
+  const handlePasswordSubmit = (password: string) => {
+    if (password === 'wika') {
+      setIsAuthenticated(true);
+      setIsPasswordDialogOpen(false);
+      toast({
+        title: "התחברת בהצלחה! 🎉",
+        description: "כעת תוכל להשתמש במעצב הדירות",
+      });
+    } else {
+      toast({
+        title: "סיסמא שגויה",
+        description: "אנא נסה שוב",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // בדוק אם המשתמש מאומת
+    if (!isAuthenticated) {
+      setIsPasswordDialogOpen(true);
+      return;
+    }
+
     const file = event.target.files?.[0];
     if (file) {
       setSelectedImage(file);
@@ -334,185 +375,208 @@ const ApartmentDesigner: React.FC<ApartmentDesignerProps> = ({ isOpen, onClose, 
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir="rtl">
-        <DialogHeader>
-          <DialogTitle className="text-center text-xl font-bold">
-            🎨 מעצב דירות AI ✨
-            <p className="text-sm font-normal text-gray-600 mt-1">
-              העלה תמונת דירה וקבל עיצוב מודרני מדהים!
-            </p>
-            {/* הצגת מונה שימוש */}
-            <p className="text-xs font-normal mt-2">
-              {(() => {
-                // בדיקה דינמית של המצב הנוכחי
-                const now = Date.now();
-                const thirtyMinutes = 30 * 60 * 1000;
-                const timePassed = now - lastResetTime;
-                
-                // אם עברו 30 דקות, הצג שיש 2 שימושים פנויים
-                if (timePassed > thirtyMinutes) {
-                  return <span className="text-green-600">יש לך 2 עיצובים זמינים (מתאפס כל 30 דקות)</span>;
-                }
-                
-                // אחרת, הצג לפי המונה
-                if (usageCount < 2) {
-                  return (
-                    <span className="text-green-600">
-                      נותרו לך {2 - usageCount} עיצובים מתוך 2 (מתאפס בעוד {Math.ceil((thirtyMinutes - timePassed) / 60000)} דקות)
-                    </span>
-                  );
-                } else {
-                  return (
-                    <span className="text-red-600">
-                      הגעת למגבלת השימוש. נסה שוב בעוד {Math.ceil((thirtyMinutes - timePassed) / 60000)} דקות
-                    </span>
-                  );
-                }
-              })()}
-            </p>
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="space-y-6">
-          {/* Image Upload Section */}
-          <div className="space-y-4">
-            <div className="border-2 border-dashed border-purple-300 rounded-lg p-6 text-center bg-purple-50">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImageSelect}
-                accept="image/*"
-                className="hidden"
-              />
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                disabled={isDesigning}
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                {selectedImage ? 'החלף תמונה' : 'בחר תמונת דירה'}
-              </Button>
-              
-              {selectedImage && (
-                <p className="text-sm text-green-600 mt-2">
-                  ✅ נבחר: {selectedImage.name}
-                </p>
-              )}
-            </div>
+    <>
+      {/* Password Dialog */}
+      <PasswordDialog
+        open={isPasswordDialogOpen}
+        onOpenChange={setIsPasswordDialogOpen}
+        onPasswordSubmit={handlePasswordSubmit}
+      />
 
-            {/* Custom Prompt Section */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                פרומפט מותאם אישית (אופציונלי):
-              </label>
-              <Textarea
-                value={customPrompt}
-                onChange={(e) => setCustomPrompt(e.target.value)}
-                placeholder="תאר איך תרצה שהדירה תיראה... (אם תשאיר ריק, נשתמש בעיצוב מודרני ברירת מחדל)"
-                className="min-h-20 text-right"
-                disabled={isDesigning}
-              />
-              <p className="text-xs text-gray-500">
-                דוגמה: "עיצוב מינימליסטי בגוונים של כחול ולבן, עם הרבה צמחים וריהוט סקנדינבי"
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl font-bold">
+              🎨 מעצב דירות AI ✨
+              <p className="text-sm font-normal text-gray-600 mt-1">
+                העלה תמונת דירה וקבל עיצוב מודרני מדהים!
               </p>
-            </div>
-          </div>
-
-          {/* Design Button */}
-          <div className="flex justify-center">
-            <Button
-              onClick={handleDesignApartment}
-              disabled={!selectedImage || isDesigning}
-              className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-lg px-8 py-3"
-            >
-              {isDesigning ? (
-                <>
-                  <Sparkles className="w-5 h-5 mr-2 animate-spin" />
-                  {isUploading ? 'מעלה תמונה...' : 'מעצב עם AI...'}
-                </>
-              ) : (
-                <>
-                  <Wand2 className="w-5 h-5 mr-2" />
-                  עצב דירה ✨
-                </>
-              )}
-            </Button>
-          </div>
-
-          {/* Results Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Original Image */}
-            {originalImageUrl && (
-              <div className="space-y-2">
-                <h3 className="font-semibold text-center">תמונה מקורית</h3>
-                <div className="border rounded-lg overflow-hidden bg-gray-50">
-                  <img
-                    src={originalImageUrl}
-                    alt="תמונה מקורית"
-                    className="w-full h-64 object-cover"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Designed Image */}
-            {designedImageData && (
-              <div className="space-y-2">
-                <h3 className="font-semibold text-center">תמונה מעוצבת</h3>
-                <div className="border rounded-lg overflow-hidden bg-gray-50">
-                  <img
-                    src={`data:image/png;base64,${designedImageData}`}
-                    alt="תמונה מעוצבת"
-                    className="w-full h-64 object-cover"
-                  />
-                </div>
-                
-                {/* Action Buttons */}
-                <div className="flex gap-2 justify-center mt-4">
-                  <Button
-                    onClick={handleShare}
-                    className="bg-blue-500 hover:bg-blue-600"
-                    size="sm"
-                  >
-                    <Share className="w-4 h-4 mr-1" />
-                    שתף
-                  </Button>
-                  <Button
-                    onClick={handleDownload}
-                    className="bg-green-500 hover:bg-green-600"
-                    size="sm"
-                  >
-                    <Download className="w-4 h-4 mr-1" />
-                    הורד
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Reset Button */}
-          {(selectedImage || designedImageData) && (
-            <div className="flex justify-center">
+              {/* הצגת מונה שימוש */}
+              <p className="text-xs font-normal mt-2">
+                {(() => {
+                  // בדיקה דינמית של המצב הנוכחי
+                  const now = Date.now();
+                  const thirtyMinutes = 30 * 60 * 1000;
+                  const timePassed = now - lastResetTime;
+                  
+                  // אם עברו 30 דקות, הצג שיש 2 שימושים פנויים
+                  if (timePassed > thirtyMinutes) {
+                    return <span className="text-green-600">יש לך 2 עיצובים זמינים (מתאפס כל 30 דקות)</span>;
+                  }
+                  
+                  // אחרת, הצג לפי המונה
+                  if (usageCount < 2) {
+                    return (
+                      <span className="text-green-600">
+                        נותרו לך {2 - usageCount} עיצובים מתוך 2 (מתאפס בעוד {Math.ceil((thirtyMinutes - timePassed) / 60000)} דקות)
+                      </span>
+                    );
+                  } else {
+                    return (
+                      <span className="text-red-600">
+                        הגעת למגבלת השימוש. נסה שוב בעוד {Math.ceil((thirtyMinutes - timePassed) / 60000)} דקות
+                      </span>
+                    );
+                  }
+                })()}
+              </p>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {!isAuthenticated ? (
+            <div className="text-center py-8">
+              <p className="text-gray-600 mb-4">
+                כדי להשתמש במעצב הדירות, נדרשת הזנת סיסמא
+              </p>
               <Button
-                onClick={resetDesigner}
-                variant="outline"
-                disabled={isDesigning}
+                onClick={() => setIsPasswordDialogOpen(true)}
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
               >
-                התחל מחדש
+                הזן סיסמא לגישה
               </Button>
             </div>
-          )}
-          
-          {/* Debug Info */}
-          {isDesigning && (
-            <div className="text-xs text-gray-500 text-center">
-              {isUploading ? 'מעלה תמונה לשרת...' : 'שולח ל-AI לעיצוב...'}
+          ) : (
+            <div className="space-y-6">
+              {/* Image Upload Section */}
+              <div className="space-y-4">
+                <div className="border-2 border-dashed border-purple-300 rounded-lg p-6 text-center bg-purple-50">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageSelect}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <Button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                    disabled={isDesigning}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    {selectedImage ? 'החלף תמונה' : 'בחר תמונת דירה'}
+                  </Button>
+                  
+                  {selectedImage && (
+                    <p className="text-sm text-green-600 mt-2">
+                      ✅ נבחר: {selectedImage.name}
+                    </p>
+                  )}
+                </div>
+
+                {/* Custom Prompt Section */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    פרומפט מותאם אישית (אופציונלי):
+                  </label>
+                  <Textarea
+                    value={customPrompt}
+                    onChange={(e) => setCustomPrompt(e.target.value)}
+                    placeholder="תאר איך תרצה שהדירה תיראה... (אם תשאיר ריק, נשתמש בעיצוב מודרני ברירת מחדל)"
+                    className="min-h-20 text-right"
+                    disabled={isDesigning}
+                  />
+                  <p className="text-xs text-gray-500">
+                    דוגמה: "עיצוב מינימליסטי בגוונים של כחול ולבן, עם הרבה צמחים וריהוט סקנדינבי"
+                  </p>
+                </div>
+              </div>
+
+              {/* Design Button */}
+              <div className="flex justify-center">
+                <Button
+                  onClick={handleDesignApartment}
+                  disabled={!selectedImage || isDesigning}
+                  className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-lg px-8 py-3"
+                >
+                  {isDesigning ? (
+                    <>
+                      <Sparkles className="w-5 h-5 mr-2 animate-spin" />
+                      {isUploading ? 'מעלה תמונה...' : 'מעצב עם AI...'}
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-5 h-5 mr-2" />
+                      עצב דירה ✨
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Results Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Original Image */}
+                {originalImageUrl && (
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-center">תמונה מקורית</h3>
+                    <div className="border rounded-lg overflow-hidden bg-gray-50">
+                      <img
+                        src={originalImageUrl}
+                        alt="תמונה מקורית"
+                        className="w-full h-64 object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Designed Image */}
+                {designedImageData && (
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-center">תמונה מעוצבת</h3>
+                    <div className="border rounded-lg overflow-hidden bg-gray-50">
+                      <img
+                        src={`data:image/png;base64,${designedImageData}`}
+                        alt="תמונה מעוצבת"
+                        className="w-full h-64 object-cover"
+                      />
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 justify-center mt-4">
+                      <Button
+                        onClick={handleShare}
+                        className="bg-blue-500 hover:bg-blue-600"
+                        size="sm"
+                      >
+                        <Share className="w-4 h-4 mr-1" />
+                        שתף
+                      </Button>
+                      <Button
+                        onClick={handleDownload}
+                        className="bg-green-500 hover:bg-green-600"
+                        size="sm"
+                      >
+                        <Download className="w-4 h-4 mr-1" />
+                        הורד
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Reset Button */}
+              {(selectedImage || designedImageData) && (
+                <div className="flex justify-center">
+                  <Button
+                    onClick={resetDesigner}
+                    variant="outline"
+                    disabled={isDesigning}
+                  >
+                    התחל מחדש
+                  </Button>
+                </div>
+              )}
+              
+              {/* Debug Info */}
+              {isDesigning && (
+                <div className="text-xs text-gray-500 text-center">
+                  {isUploading ? 'מעלה תמונה לשרת...' : 'שולח ל-AI לעיצוב...'}
+                </div>
+              )}
             </div>
           )}
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

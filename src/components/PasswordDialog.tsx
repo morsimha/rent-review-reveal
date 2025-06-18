@@ -23,16 +23,24 @@ const PasswordDialog: React.FC<PasswordDialogProps> = ({ open, onOpenChange, onP
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onPasswordSubmit(password);
+    setPassword(''); // נקה את השדה לאחר השליחה
+  };
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      setPassword(''); // נקה את השדה כשסוגרים את הדיאלוג
+    }
+    onOpenChange(newOpen);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px]" dir="rtl">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="text-right">נדרשת סיסמא</DialogTitle>
             <DialogDescription className="text-right">
-              כדי לבצע שינויים, אנא הכנס את הסיסמא.
+              כדי להשתמש במעצב הדירות, אנא הכנס את הסיסמא.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -47,7 +55,9 @@ const PasswordDialog: React.FC<PasswordDialogProps> = ({ open, onOpenChange, onP
             />
           </div>
           <DialogFooter>
-            <Button type="submit">כניסה</Button>
+            <Button type="submit" disabled={!password.trim()}>
+              כניסה
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
