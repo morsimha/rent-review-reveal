@@ -15,6 +15,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import ThemeHeader from '@/components/ThemeHeader';
 import TinderMode from '@/components/TinderMode';
+import Yad2ScanDialog from '@/components/Yad2ScanDialog';
+import { useScannedApartments } from '@/hooks/useScannedApartments';
 
 const Index = () => {
   const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
@@ -27,6 +29,7 @@ const Index = () => {
   const [selectedApartmentId, setSelectedApartmentId] = useState<string | null>(null);
   const [isFunctionalLayout, setIsFunctionalLayout] = useState(false);
   const [layoutMode, setLayoutMode] = useState<'regular' | 'functional' | 'tinder'>('regular');
+  const [isYad2ScanDialogOpen, setIsYad2ScanDialogOpen] = useState(false);
 
   const { isAuthenticated, login } = useAuth();
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -54,6 +57,13 @@ const Index = () => {
     updateGabiRating,
     uploadImage
   } = useApartments();
+
+  const {
+    scannedApartments,
+    loading: scannedLoading,
+    likeScannedApartment,
+    refreshScanned
+  } = useScannedApartments();
 
   const handleAddApartment = async (apartmentData: any) => {
     const result = await addApartment(apartmentData);
@@ -210,14 +220,22 @@ const Index = () => {
           layoutMode={layoutMode}
         />
 
-        {/* כפתור הוסף דירה */}
-        <div className="flex justify-center mb-8">
+        {/* כפתורי הוסף דירה וסרוק דירות */}
+        <div className="flex justify-center gap-4 mb-8">
           <Button
             onClick={() => setIsAddDialogOpen(true)}
             className={`${themeConfig.buttonGradient} text-white text-lg px-6 py-3 rounded shadow transition`}
             disabled={!isAuthenticated}
           >
             + הוסף דירה חדשה
+          </Button>
+          
+          <Button
+            onClick={() => setIsYad2ScanDialogOpen(true)}
+            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-lg px-6 py-3 rounded shadow transition"
+            disabled={!isAuthenticated}
+          >
+            🔍 סרוק דירות אוטומטית
           </Button>
         </div>
 
@@ -270,18 +288,53 @@ const Index = () => {
           </DialogContent>
         </Dialog>
 
+        {/* Yad2 Scan Dialog */}
+        <Yad2ScanDialog
+          open={isYad2ScanDialogOpen}
+          onOpenChange={setIsYad2ScanDialogOpen}
+          onScanComplete={refreshScanned}
+        />
+
         {/* Layout Content */}
         {layoutMode === 'tinder' ? (
-          /* Tinder Mode */
+          /* Enhanced Tinder Mode with scanned apartments option */
           <div className="space-y-6">
-            <h2 className={`text-2xl font-bold ${themeConfig.textColor} mb-6 text-center`}>
-              💕Tindira Is Back 💕
-            </h2>
+            <div className="flex justify-center items-center gap-4 mb-6">
+              <h2 className={`text-2xl font-bold ${themeConfig.textColor}`}>
+                💕Tindira Is Back 💕
+              </h2>
+              
+              {/* Toggle between regular and scanned apartments in Tinder mode */}
+              {scannedApartments.length > 0 && (
+                <div className="flex bg-white/80 rounded-lg p-1">
+                  <button
+                    onClick={() => setLayoutMode('tinder')}
+                    className={`px-3 py-1 rounded text-sm transition ${
+                      layoutMode === 'tinder' ? 'bg-purple-500 text-white' : 'text-gray-600'
+                    }`}
+                  >
+                    דירות רגילות ({filteredApartments.length})
+                  </button>
+                  <button
+                    onClick={() => setLayoutMode('tinder-scanned')}
+                    className={`px-3 py-1 rounded text-sm transition ${
+                      layoutMode === 'tinder-scanned' ? 'bg-blue-500 text-white' : 'text-gray-600'
+                    }`}
+                  >
+                    דירות סרוקות ({scannedApartments.length})
+                  </button>
+                </div>
+              )}
+            </div>
+            
             <TinderMode
               apartments={filteredApartments}
+              scannedApartments={scannedApartments}
               onMorRatingChange={handleMorRatingChange}
               onGabiRatingChange={handleGabiRatingChange}
+              onLikeScanned={likeScannedApartment}
               isAuthenticated={isAuthenticated}
+              mode={layoutMode === 'tinder-scanned' ? 'scanned' : 'regular'}
             />
           </div>
         ) : layoutMode === 'functional' ? (
@@ -362,6 +415,14 @@ const Index = () => {
         {filteredApartments.length === 0 && layoutMode !== 'tinder' && (
           <div className="text-center py-12">
             <p className={`${themeConfig.accentColor} text-lg`}>לא נמצאו דירות בהתאם לסינון {themeConfig.mainEmoji}</p>
+          </div>
+        )}
+
+        {layoutMode === 'tinder-scanned' && (
+          <div className="text-center mt-4">
+            <p className="text-sm text-blue-600">
+              מציג דירות סרוקות מYad2 - לייק יעביר למאגר הרגיל
+            </p>
           </div>
         )}
       </div>

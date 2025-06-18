@@ -7,16 +7,22 @@ import { useTheme } from '@/contexts/ThemeContext';
 
 interface TinderModeProps {
   apartments: Apartment[];
+  scannedApartments?: any[]; // New prop for scanned apartments
   onMorRatingChange: (apartmentId: string, rating: number) => void;
   onGabiRatingChange: (apartmentId: string, rating: number) => void;
+  onLikeScanned?: (apartment: any) => void; // New prop for liking scanned apartments
   isAuthenticated: boolean;
+  mode?: 'regular' | 'scanned'; // New prop to determine mode
 }
 
 const TinderMode: React.FC<TinderModeProps> = ({
   apartments,
+  scannedApartments = [],
   onMorRatingChange,
   onGabiRatingChange,
-  isAuthenticated
+  onLikeScanned,
+  isAuthenticated,
+  mode = 'regular'
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -26,7 +32,9 @@ const TinderMode: React.FC<TinderModeProps> = ({
   const startX = useRef(0);
   const { themeConfig } = useTheme();
 
-  const currentApartment = apartments[currentIndex];
+  // Use scanned apartments when in scanned mode
+  const currentApartments = mode === 'scanned' ? scannedApartments : apartments;
+  const currentApartment = currentApartments[currentIndex];
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setIsDragging(true);
@@ -104,17 +112,21 @@ const TinderMode: React.FC<TinderModeProps> = ({
   };
 
   const handleLike = () => {
-    // In Tinder mode, don't actually update ratings - just for viewing
+    if (mode === 'scanned' && onLikeScanned && currentApartment) {
+      // Like scanned apartment - add to main apartments
+      onLikeScanned(currentApartment);
+    }
+    // In regular mode or after liking, just move to next card
     nextCard();
   };
 
   const handleDislike = () => {
-    // In Tinder mode, don't actually update ratings - just for viewing
+    // In both modes, just move to next card without doing anything
     nextCard();
   };
 
   const nextCard = () => {
-    if (currentIndex < apartments.length - 1) {
+    if (currentIndex < currentApartments.length - 1) {
       setCurrentIndex(currentIndex + 1);
     }
   };
@@ -168,10 +180,13 @@ const TinderMode: React.FC<TinderModeProps> = ({
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
         <div className="text-6xl mb-4">🎉</div>
         <h3 className={`text-2xl font-bold ${themeConfig.textColor} mb-4`}>
-          סיימת לעבור על כל הדירות!
+          {mode === 'scanned' ? 'סיימת לעבור על כל הדירות הסרוקות!' : 'סיימת לעבור על כל הדירות!'}
         </h3>
         <p className={`${themeConfig.accentColor} mb-6`}>
-          לחץ על כפתור האיפוס כדי להתחיל מהתחלה
+          {mode === 'scanned' 
+            ? 'סרוק דירות חדשות או חזור למצב רגיל'
+            : 'לחץ על כפתור האיפוס כדי להתחיל מהתחלה'
+          }
         </p>
         <Button
           onClick={handleReset}
@@ -184,28 +199,41 @@ const TinderMode: React.FC<TinderModeProps> = ({
     );
   }
 
+  // For scanned apartments, we need to handle the different data structure
+  const displayApartment = mode === 'scanned' ? {
+    ...currentApartment,
+    status: 'not_spoke' as const, // Default status for scanned apartments
+  } : currentApartment;
+
   return (
     <div className="max-w-md mx-auto">
       {/* Progress Bar */}
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
           <span className={`text-sm ${themeConfig.accentColor}`}>
-            {currentIndex + 1} / {apartments.length}
+            {currentIndex + 1} / {currentApartments.length}
           </span>
-          <Button
-            onClick={handleReset}
-            variant="ghost"
-            size="sm"
-            className="text-xs"
-          >
-            <RotateCcw className="w-3 h-3 mr-1" />
-            איפוס
-          </Button>
+          <div className="flex items-center gap-2">
+            {mode === 'scanned' && (
+              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                דירות סרוקות
+              </span>
+            )}
+            <Button
+              onClick={handleReset}
+              variant="ghost"
+              size="sm"
+              className="text-xs"
+            >
+              <RotateCcw className="w-3 h-3 mr-1" />
+              איפוס
+            </Button>
+          </div>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
           <div
             className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${((currentIndex + 1) / apartments.length) * 100}%` }}
+            style={{ width: `${((currentIndex + 1) / currentApartments.length) * 100}%` }}
           ></div>
         </div>
       </div>
@@ -213,7 +241,7 @@ const TinderMode: React.FC<TinderModeProps> = ({
       {/* Card Stack */}
       <div className="relative h-[500px] mb-6">
         {/* Background cards for stack effect */}
-        {apartments.slice(currentIndex + 1, currentIndex + 3).map((_, index) => (
+        {currentApartments.slice(currentIndex + 1, currentIndex + 3).map((_, index) => (
           <Card
             key={`bg-${currentIndex + index + 1}`}
             className="absolute inset-0 bg-white/60 border-purple-200"
@@ -242,14 +270,14 @@ const TinderMode: React.FC<TinderModeProps> = ({
         >
           <CardContent className="p-0 h-full flex flex-col">
             {/* Status Bar */}
-            <div className={`h-2 w-full rounded-t-lg ${getStatusColor(currentApartment.status)}`} />
+            <div className={`h-2 w-full rounded-t-lg ${getStatusColor(displayApartment.status)}`} />
             
             {/* Image */}
             <div className="relative h-64 overflow-hidden">
-              {currentApartment.image_url ? (
+              {displayApartment.image_url ? (
                 <img
-                  src={currentApartment.image_url}
-                  alt={currentApartment.title}
+                  src={displayApartment.image_url}
+                  alt={displayApartment.title}
                   className="w-full h-full object-cover"
                   draggable={false}
                 />
@@ -260,41 +288,59 @@ const TinderMode: React.FC<TinderModeProps> = ({
               )}
               
               {/* Price overlay */}
-              {currentApartment.price && (
+              {displayApartment.price && (
                 <div className="absolute top-2 right-2 bg-green-500 text-white px-3 py-1 rounded-full font-bold text-sm">
-                  ₪{currentApartment.price.toLocaleString()}
+                  ₪{displayApartment.price.toLocaleString()}
+                </div>
+              )}
+
+              {/* Scanned indicator */}
+              {mode === 'scanned' && (
+                <div className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                  Yad2
                 </div>
               )}
             </div>
 
             {/* Content */}
             <div className="p-4 flex-1">
-              <h3 className="font-bold text-lg mb-2 line-clamp-2">{currentApartment.title}</h3>
+              <h3 className="font-bold text-lg mb-2 line-clamp-2">{displayApartment.title}</h3>
               
-              {currentApartment.location && (
-                <p className="text-gray-600 text-sm mb-2">📍 {currentApartment.location}</p>
+              {displayApartment.location && (
+                <p className="text-gray-600 text-sm mb-2">📍 {displayApartment.location}</p>
               )}
               
-              {currentApartment.description && (
-                <p className="text-gray-700 text-sm line-clamp-3 mb-3">{currentApartment.description}</p>
+              {displayApartment.description && (
+                <p className="text-gray-700 text-sm line-clamp-3 mb-3">{displayApartment.description}</p>
               )}
 
               {/* Details */}
               <div className="flex flex-wrap gap-2 text-xs text-gray-600">
-                {currentApartment.square_meters && (
+                {displayApartment.square_meters && (
                   <span className="bg-gray-100 px-2 py-1 rounded">
-                    {currentApartment.square_meters} מ"ר
+                    {displayApartment.square_meters} מ"ר
                   </span>
                 )}
-                {currentApartment.floor && (
+                {displayApartment.floor && (
                   <span className="bg-gray-100 px-2 py-1 rounded">
-                    קומה {currentApartment.floor}
+                    קומה {displayApartment.floor}
                   </span>
                 )}
-                {currentApartment.pets_allowed !== 'unknown' && (
+                {displayApartment.pets_allowed !== 'unknown' && (
                   <span className="bg-gray-100 px-2 py-1 rounded">
-                    {currentApartment.pets_allowed === 'yes' ? '🐕 חיות מותרות' : '🚫 ללא חיות'}
+                    {displayApartment.pets_allowed === 'yes' ? '🐕 חיות מותרות' : '🚫 ללא חיות'}
                   </span>
+                )}
+                {mode === 'scanned' && displayApartment.apartment_link && (
+                  <a 
+                    href={displayApartment.apartment_link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    🔗 קישור מקורי
+                  </a>
                 )}
               </div>
             </div>
@@ -317,7 +363,7 @@ const TinderMode: React.FC<TinderModeProps> = ({
         )}
       </div>
 
-      {/* Action Buttons - Swapped order */}
+      {/* Action Buttons */}
       <div className="flex justify-center gap-4">
         <Button
           onClick={handleLike}
@@ -343,9 +389,15 @@ const TinderMode: React.FC<TinderModeProps> = ({
         <p className="text-sm text-gray-600">
           🤏 גרור ימינה לחיבה, שמאלה לדחייה
         </p>
-        <p className="text-xs text-blue-600 mt-1">
-          מצב צפייה בלבד - הדירוגים לא נשמרים
-        </p>
+        {mode === 'scanned' ? (
+          <p className="text-xs text-blue-600 mt-1">
+            ❤️ לייק יוסיף את הדירה למאגר הרגיל
+          </p>
+        ) : (
+          <p className="text-xs text-blue-600 mt-1">
+            מצב צפייה בלבד - הדירוגים לא נשמרים
+          </p>
+        )}
       </div>
     </div>
   );
