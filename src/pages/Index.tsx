@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';Add commentMore actions
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useApartments } from '@/hooks/useApartments';
@@ -18,15 +18,7 @@ import TinderMode from '@/components/TinderMode';
 import Yad2ScanDialog from '@/components/Yad2ScanDialog';
 import { useScannedApartments } from '@/hooks/useScannedApartments';
 
-
-
-
-
-
 const Index = () => {
-
-
-
   const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCatGameOpen, setIsCatGameOpen] = useState(false);
@@ -86,23 +78,6 @@ const Index = () => {
   const handleGabiRatingChange = async (apartmentId: string, newRating: number) => {
     if (!isAuthenticated) return;
     await updateGabiRating(apartmentId, newRating);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   };
 
   const handleMorTalkedChange = async (apartmentId: string, value: boolean) => {
@@ -113,13 +88,6 @@ const Index = () => {
   const handleGabiTalkedChange = async (apartmentId: string, value: boolean) => {
     if (!isAuthenticated) return;
     await updateApartment(apartmentId, { spoke_with_gabi: value });
-
-
-
-
-
-
-
   };
 
   const handleEditApartment = (apartment: Apartment) => {
@@ -144,10 +112,6 @@ const Index = () => {
     const success = login(password);
     if (success) {
       setIsPasswordDialogOpen(false);
-
-
-
-
       toast({
         title: "התחברת בהצלחה!",
         description: "כעת באפשרותך לערוך את רשימת הדירות.",
@@ -166,58 +130,21 @@ const Index = () => {
     if (!open) {
       setAuthAttempted(true);
       if (!isAuthenticated) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         toast({
           title: "מצב צפייה בלבד",
           description: "לא הוזנה סיסמא. לא ניתן לבצע שינויים.",
         });
       }
-
-
-
-
-
-
     }
   };
 
-@@ -148,307 +175,120 @@ const Index = () => {
+  const handleLayoutToggle = () => {
+    if (layoutMode === 'regular') {
+      setLayoutMode('functional');
+    } else if (layoutMode === 'functional') {
+      setLayoutMode('tinder');
+    } else {
+      setLayoutMode('regular');
     }
   };
 
@@ -399,27 +326,15 @@ const Index = () => {
                 </div>
               )}
             </div>
-
+            
             <TinderMode
               apartments={filteredApartments}
               scannedApartments={scannedApartments}
-
-
-
-
-
-
-
-
-
-
-
               onMorRatingChange={handleMorRatingChange}
               onGabiRatingChange={handleGabiRatingChange}
               onLikeScanned={likeScannedApartment}
               isAuthenticated={isAuthenticated}
               mode={layoutMode === 'tinder-scanned' ? 'scanned' : 'regular'}
-
             />
           </div>
         ) : layoutMode === 'functional' ? (
