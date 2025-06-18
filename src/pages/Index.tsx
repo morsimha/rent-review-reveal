@@ -308,7 +308,7 @@ const Index = () => {
             </div>
             
             {/* Toggle between regular and scanned apartments in Tinder mode */}
-            {scannedApartments.length > 0 && (
+            {scannedApartments.length >= 0 && (
               <div className="flex justify-center mb-6">
                 <div className="flex bg-white/80 rounded-lg p-1">
                   <button
