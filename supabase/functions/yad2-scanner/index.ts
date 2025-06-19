@@ -99,8 +99,10 @@ async function generateMockApartments(searchQuery: string): Promise<ScrapedApart
     - square_meters (realistic number)
     - floor (1-5)
     - pets_allowed ("yes", "no", or "unknown")
+    - image_url (use realistic placeholder images from unsplash for apartments)
     
     Make it realistic with varied prices, specific addresses, and authentic Hebrew descriptions.
+    Include actual apartment images from unsplash with apartment-related keywords.
     `;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -128,7 +130,7 @@ async function generateMockApartments(searchQuery: string): Promise<ScrapedApart
       price: apt.price,
       location: apt.location,
       description: apt.description,
-      image_url: null,
+      image_url: apt.image_url || `https://images.unsplash.com/photo-${1560184318-d4b7a3d2b6be + index}?w=400&h=300&fit=crop&auto=format`,
       apartment_link: `https://www.yad2.co.il/item/${Date.now()}-${index}`,
       contact_phone: null,
       contact_name: null,
@@ -147,13 +149,24 @@ function generateBasicMockData(): ScrapedApartment[] {
   const locations = ['גבעתיים מרכז', 'רמת גן צפון', 'גבעתיים דרום', 'רמת גן מערב'];
   const apartments: ScrapedApartment[] = [];
   
+  // Sample apartment images from Unsplash
+  const apartmentImages = [
+    'https://images.unsplash.com/photo-1560184318-d4b7a3d2b6be?w=400&h=300&fit=crop&auto=format',
+    'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&h=300&fit=crop&auto=format',
+    'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&h=300&fit=crop&auto=format',
+    'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=400&h=300&fit=crop&auto=format',
+    'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=400&h=300&fit=crop&auto=format',
+    'https://images.unsplash.com/photo-1505873242700-f289a29e1e0f?w=400&h=300&fit=crop&auto=format',
+    'https://images.unsplash.com/photo-1582063289852-62e3ba2747f8?w=400&h=300&fit=crop&auto=format',
+  ];
+  
   for (let i = 0; i < 7; i++) {
     apartments.push({
       title: `דירת ${2 + Math.floor(Math.random() * 3)} חדרים ב${locations[Math.floor(Math.random() * locations.length)]}`,
       price: 4000 + Math.floor(Math.random() * 1600),
       location: locations[Math.floor(Math.random() * locations.length)],
       description: 'דירה מטופחת, קרובה לתחבורה ציבורית ומרכזי קניות',
-      image_url: null,
+      image_url: apartmentImages[i % apartmentImages.length],
       apartment_link: `https://www.yad2.co.il/item/${Date.now()}-${i}`,
       contact_phone: null,
       contact_name: null,
