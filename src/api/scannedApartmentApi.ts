@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface ScannedApartment {
@@ -17,18 +18,12 @@ export interface ScannedApartment {
 }
 
 export const fetchScannedApartments = async (): Promise<ScannedApartment[]> => {
-  console.log('Fetching scanned apartments...');
   const { data, error } = await supabase
     .from('scanned_apartments')
     .select('*')
     .order('created_at', { ascending: false });
   
-  if (error) {
-    console.error('Error fetching scanned apartments:', error);
-    throw error;
-  }
-  
-  console.log(`Fetched ${data?.length || 0} scanned apartments`);
+  if (error) throw error;
   return (data || []).map(apartment => ({
     ...apartment,
     pets_allowed: apartment.pets_allowed as 'yes' | 'no' | 'unknown'
@@ -36,21 +31,15 @@ export const fetchScannedApartments = async (): Promise<ScannedApartment[]> => {
 };
 
 export const deleteScannedApartment = async (apartmentId: string) => {
-  console.log('Deleting scanned apartment:', apartmentId);
   const { error } = await supabase
     .from('scanned_apartments')
     .delete()
     .eq('id', apartmentId);
 
-  if (error) {
-    console.error('Error deleting scanned apartment:', error);
-    throw error;
-  }
+  if (error) throw error;
 };
 
 export const moveScannedApartmentToMain = async (scannedApartment: ScannedApartment) => {
-  console.log('Moving scanned apartment to main:', scannedApartment.id);
-  
   // Insert into main apartments table
   const { data, error: insertError } = await supabase
     .from('apartments')
@@ -74,10 +63,7 @@ export const moveScannedApartmentToMain = async (scannedApartment: ScannedApartm
     .select()
     .single();
 
-  if (insertError) {
-    console.error('Error inserting into main apartments:', insertError);
-    throw insertError;
-  }
+  if (insertError) throw insertError;
 
   // Remove from scanned apartments
   const { error: deleteError } = await supabase
@@ -85,58 +71,25 @@ export const moveScannedApartmentToMain = async (scannedApartment: ScannedApartm
     .delete()
     .eq('id', scannedApartment.id);
 
-  if (deleteError) {
-    console.error('Error deleting from scanned apartments:', deleteError);
-    throw deleteError;
-  }
+  if (deleteError) throw deleteError;
 
-  console.log('Successfully moved apartment to main');
   return data;
 };
 
 export const scanYad2Apartments = async (searchQuery: string) => {
-  console.log('Calling yad2-scanner function with query:', searchQuery);
-  
-  try {
-    const { data, error } = await supabase.functions.invoke('yad2-scanner', {
-      body: { searchQuery },
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
+  const { data, error } = await supabase.functions.invoke('yad2-scanner', {
+    body: { searchQuery }
+  });
 
-    console.log('Function response:', { data, error });
-
-    if (error) {
-      console.error('Supabase function error:', error);
-      throw new Error(error.message || 'Function invocation failed');
-    }
-    
-    // Handle both success with 0 results and actual results
-    if (data && data.success) {
-      return data;
-    } else if (data && data.success === false) {
-      throw new Error(data.error || 'Scan failed');
-    } else {
-      throw new Error('Unexpected response format');
-    }
-  } catch (error: any) {
-    console.error('Error in scanYad2Apartments:', error);
-    throw error;
-  }
+  if (error) throw error;
+  return data;
 };
 
 export const clearScannedApartments = async () => {
-  console.log('Clearing all scanned apartments...');
   const { error } = await supabase
     .from('scanned_apartments')
     .delete()
     .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
 
-  if (error) {
-    console.error('Error clearing scanned apartments:', error);
-    throw error;
-  }
-  
-  console.log('Successfully cleared all scanned apartments');
+  if (error) throw error;
 };
