@@ -62,6 +62,7 @@ const Index = () => {
     scannedApartments,
     loading: scannedLoading,
     likeScannedApartment,
+    deleteScanned,
     refreshScanned
   } = useScannedApartments();
 
@@ -337,6 +338,7 @@ const Index = () => {
               onMorRatingChange={handleMorRatingChange}
               onGabiRatingChange={handleGabiRatingChange}
               onLikeScanned={likeScannedApartment}
+              onDeleteScanned={deleteScanned}
               isAuthenticated={isAuthenticated}
               mode={tinderMode}
             />

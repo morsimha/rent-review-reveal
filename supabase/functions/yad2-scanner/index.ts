@@ -84,7 +84,7 @@ async function generateMockApartments(searchQuery: string): Promise<ScrapedApart
   try {
     const prompt = `
     Based on this search query: "${searchQuery}"
-    Generate 5-10 realistic apartment listings for Israeli rental market.
+    Generate 5-8 realistic apartment listings for Israeli rental market.
     
     Default criteria if not specified:
     - Price: up to 5600 NIS
@@ -92,17 +92,17 @@ async function generateMockApartments(searchQuery: string): Promise<ScrapedApart
     - Rooms: 2+ bedrooms
     
     Return a JSON array of apartments with these fields:
-    - title (Hebrew)
-    - price (number in NIS)
-    - location (Hebrew, specific neighborhood)
-    - description (Hebrew, 2-3 sentences)
-    - square_meters (realistic number)
+    - title (Hebrew, varied - different number of rooms, different features)
+    - price (number in NIS, varied between 3800-5500)
+    - location (Hebrew, specific street addresses like "רחוב הרצל 25, גבעתיים" or "רחוב ביאליק 8, רמת גן")
+    - description (Hebrew, 2-3 sentences, MAKE EACH UNIQUE - mention different features like מזגן, מעלית, חניה, מרפסת, etc.)
+    - square_meters (realistic number between 55-85)
     - floor (1-5)
     - pets_allowed ("yes", "no", or "unknown")
     - image_url (use realistic placeholder images from unsplash for apartments)
     
-    Make it realistic with varied prices, specific addresses, and authentic Hebrew descriptions.
-    Include actual apartment images from unsplash with apartment-related keywords.
+    Make each apartment COMPLETELY DIFFERENT with varied prices, specific addresses, and UNIQUE Hebrew descriptions.
+    Include varied apartment images from unsplash with apartment-related keywords.
     `;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -114,30 +114,33 @@ async function generateMockApartments(searchQuery: string): Promise<ScrapedApart
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'You are a real estate data generator for Israeli market. Return only valid JSON.' },
+          { role: 'system', content: 'You are a real estate data generator for Israeli market. Return only valid JSON with completely unique and varied apartment listings.' },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.8,
+        temperature: 0.9,
       }),
     });
 
     const data = await response.json();
     const generatedData = JSON.parse(data.choices[0].message.content);
     
-    // Convert to our format and add missing fields
-    return generatedData.map((apt: any, index: number) => ({
-      title: apt.title,
-      price: apt.price,
-      location: apt.location,
-      description: apt.description,
-      image_url: apt.image_url || `https://images.unsplash.com/photo-${1560184318-d4b7a3d2b6be + index}?w=400&h=300&fit=crop&auto=format`,
-      apartment_link: `https://www.yad2.co.il/item/${Date.now()}-${index}`,
-      contact_phone: null,
-      contact_name: null,
-      square_meters: apt.square_meters,
-      floor: apt.floor,
-      pets_allowed: apt.pets_allowed || 'unknown',
-    }));
+    // Convert to our format and add missing fields with proper Yad2 links
+    return generatedData.map((apt: any, index: number) => {
+      const randomId = Math.random().toString(36).substring(2, 10);
+      return {
+        title: apt.title,
+        price: apt.price,
+        location: apt.location,
+        description: apt.description,
+        image_url: apt.image_url || `https://images.unsplash.com/photo-${1560184318 + index * 123}?w=400&h=300&fit=crop&auto=format`,
+        apartment_link: `https://www.yad2.co.il/realestate/item/${randomId}`,
+        contact_phone: null,
+        contact_name: null,
+        square_meters: apt.square_meters,
+        floor: apt.floor,
+        pets_allowed: apt.pets_allowed || 'unknown',
+      };
+    });
 
   } catch (error) {
     console.error('Error generating with AI:', error);
@@ -146,8 +149,67 @@ async function generateMockApartments(searchQuery: string): Promise<ScrapedApart
 }
 
 function generateBasicMockData(): ScrapedApartment[] {
-  const locations = ['גבעתיים מרכז', 'רמת גן צפון', 'גבעתיים דרום', 'רמת גן מערב'];
   const apartments: ScrapedApartment[] = [];
+  
+  // Varied data for each apartment
+  const apartmentData = [
+    {
+      title: 'דירת 2 חדרים משופצת ברחוב הרצל',
+      location: 'רחוב הרצל 25, גבעתיים',
+      description: 'דירה משופצת, מזגן בכל החדרים, מעלית, חניה.',
+      price: 4200,
+      sqm: 65,
+      floor: 2
+    },
+    {
+      title: 'דירת 3 חדרים עם מרפסת ברמת גן',
+      location: 'רחוב ביאליק 8, רמת גן',
+      description: 'דירה עם מרפסת גדולה, קרובה לתחבורה ציבורית.',
+      price: 5100,
+      sqm: 75,
+      floor: 3
+    },
+    {
+      title: 'דירת 2.5 חדרים בגבעתיים מרכז',
+      location: 'רחוב קטסנלסון 15, גבעתיים',
+      description: 'דירה בבניין חדש, סורגים, דלת פלדה.',
+      price: 4600,
+      sqm: 68,
+      floor: 1
+    },
+    {
+      title: 'דירת 3 חדרים ברמת גן צפון',
+      location: 'רחוב אבן גבירול 22, רמת גן',
+      description: 'דירה שקטה, נוף פתוח, מיזוג מרכזי.',
+      price: 5300,
+      sqm: 80,
+      floor: 4
+    },
+    {
+      title: 'דירת גן 2 חדרים עם חצר',
+      location: 'רחוב רוטשילד 18, גבעתיים',
+      description: 'דירת גן עם חצר פרטית, מושקעת ומטופחת.',
+      price: 4800,
+      sqm: 70,
+      floor: 0
+    },
+    {
+      title: 'דירת 2 חדרים קרובה לקניון',
+      location: 'רחוב ארלוזורוב 12, רמת גן',
+      description: 'דירה בלב רמת גן, קרובה לקניון ולרכבת.',
+      price: 4400,
+      sqm: 60,
+      floor: 3
+    },
+    {
+      title: 'דירת 3.5 חדרים יוקרתית',
+      location: 'רחוב ויצמן 30, גבעתיים',
+      description: 'דירה יוקרתית עם גימורים מעולים ומרפסת שירות.',
+      price: 5500,
+      sqm: 85,
+      floor: 5
+    }
+  ];
   
   // Sample apartment images from Unsplash
   const apartmentImages = [
@@ -160,21 +222,22 @@ function generateBasicMockData(): ScrapedApartment[] {
     'https://images.unsplash.com/photo-1582063289852-62e3ba2747f8?w=400&h=300&fit=crop&auto=format',
   ];
   
-  for (let i = 0; i < 7; i++) {
+  apartmentData.forEach((apt, i) => {
+    const randomId = Math.random().toString(36).substring(2, 10);
     apartments.push({
-      title: `דירת ${2 + Math.floor(Math.random() * 3)} חדרים ב${locations[Math.floor(Math.random() * locations.length)]}`,
-      price: 4000 + Math.floor(Math.random() * 1600),
-      location: locations[Math.floor(Math.random() * locations.length)],
-      description: 'דירה מטופחת, קרובה לתחבורה ציבורית ומרכזי קניות',
+      title: apt.title,
+      price: apt.price,
+      location: apt.location,
+      description: apt.description,
       image_url: apartmentImages[i % apartmentImages.length],
-      apartment_link: `https://www.yad2.co.il/item/${Date.now()}-${i}`,
+      apartment_link: `https://www.yad2.co.il/realestate/item/${randomId}`,
       contact_phone: null,
       contact_name: null,
-      square_meters: 50 + Math.floor(Math.random() * 40),
-      floor: Math.floor(Math.random() * 5) + 1,
+      square_meters: apt.sqm,
+      floor: apt.floor,
       pets_allowed: ['yes', 'no', 'unknown'][Math.floor(Math.random() * 3)] as any,
     });
-  }
+  });
   
   return apartments;
 }

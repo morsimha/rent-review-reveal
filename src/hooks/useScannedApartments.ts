@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { ScannedApartment, fetchScannedApartments, moveScannedApartmentToMain } from '@/api/scannedApartmentApi';
+import { ScannedApartment, fetchScannedApartments, moveScannedApartmentToMain, deleteScannedApartment } from '@/api/scannedApartmentApi';
 
 export const useScannedApartments = () => {
   const [scannedApartments, setScannedApartments] = useState<ScannedApartment[]>([]);
@@ -46,6 +46,28 @@ export const useScannedApartments = () => {
     }
   };
 
+  const deleteScanned = async (apartmentId: string) => {
+    try {
+      await deleteScannedApartment(apartmentId);
+      await fetchScanned(); // Refresh the list
+      
+      toast({
+        title: "הדירה נמחקה",
+        description: "הדירה הוסרה מרשימת הדירות הסרוקות",
+      });
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting scanned apartment:', error);
+      toast({
+        title: "שגיאה",
+        description: "לא ניתן למחוק את הדירה",
+        variant: "destructive"
+      });
+      return { success: false, error };
+    }
+  };
+
   useEffect(() => {
     fetchScanned();
   }, []);
@@ -54,6 +76,7 @@ export const useScannedApartments = () => {
     scannedApartments,
     loading,
     likeScannedApartment,
+    deleteScanned,
     refreshScanned: fetchScanned
   };
 };

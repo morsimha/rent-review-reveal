@@ -1,6 +1,8 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
 import type { Apartment } from '@/types/ApartmentTypes';
 
 interface TinderCardProps {
@@ -12,6 +14,8 @@ interface TinderCardProps {
   onTouchStart: (e: React.TouchEvent) => void;
   onTouchMove: (e: React.TouchEvent) => void;
   onTouchEnd: () => void;
+  onDelete?: (apartmentId: string) => void;
+  isAuthenticated: boolean;
 }
 
 const TinderCard: React.FC<TinderCardProps> = ({
@@ -22,7 +26,9 @@ const TinderCard: React.FC<TinderCardProps> = ({
   onMouseStart,
   onTouchStart,
   onTouchMove,
-  onTouchEnd
+  onTouchEnd,
+  onDelete,
+  isAuthenticated
 }) => {
   const getStatusColor = (status: "spoke" | "not_spoke" | "no_answer") => {
     switch (status) {
@@ -38,6 +44,13 @@ const TinderCard: React.FC<TinderCardProps> = ({
     ...apartment,
     status: 'not_spoke' as const, // Default status for scanned apartments
   } : apartment;
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete && isAuthenticated) {
+      onDelete(apartment.id);
+    }
+  };
 
   return (
     <div className="relative h-[500px] mb-6">
@@ -73,6 +86,18 @@ const TinderCard: React.FC<TinderCardProps> = ({
           {/* Status Bar */}
           <div className={`h-2 w-full rounded-t-lg ${getStatusColor(displayApartment.status)}`} />
           
+          {/* Delete Button for Scanned Apartments */}
+          {mode === 'scanned' && onDelete && isAuthenticated && (
+            <Button
+              onClick={handleDelete}
+              variant="destructive"
+              size="sm"
+              className="absolute top-3 left-3 z-30 w-8 h-8 p-0 rounded-full bg-red-500 hover:bg-red-600"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
+          
           {/* Image */}
           <div className="relative h-64 overflow-hidden">
             {displayApartment.image_url ? (
@@ -97,7 +122,7 @@ const TinderCard: React.FC<TinderCardProps> = ({
 
             {/* Scanned indicator */}
             {mode === 'scanned' && (
-              <div className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+              <div className="absolute top-2 left-12 bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-bold">
                 Yad2
               </div>
             )}
@@ -122,9 +147,9 @@ const TinderCard: React.FC<TinderCardProps> = ({
                   {displayApartment.square_meters} מ"ר
                 </span>
               )}
-              {displayApartment.floor && (
+              {displayApartment.floor !== null && displayApartment.floor !== undefined && (
                 <span className="bg-gray-100 px-2 py-1 rounded">
-                  קומה {displayApartment.floor}
+                  {displayApartment.floor === 0 ? 'קרקע' : `קומה ${displayApartment.floor}`}
                 </span>
               )}
               {displayApartment.pets_allowed !== 'unknown' && (

@@ -24,7 +24,19 @@ export const fetchScannedApartments = async (): Promise<ScannedApartment[]> => {
     .order('created_at', { ascending: false });
   
   if (error) throw error;
-  return data || [];
+  return (data || []).map(apartment => ({
+    ...apartment,
+    pets_allowed: apartment.pets_allowed as 'yes' | 'no' | 'unknown'
+  }));
+};
+
+export const deleteScannedApartment = async (apartmentId: string) => {
+  const { error } = await supabase
+    .from('scanned_apartments')
+    .delete()
+    .eq('id', apartmentId);
+
+  if (error) throw error;
 };
 
 export const moveScannedApartmentToMain = async (scannedApartment: ScannedApartment) => {
