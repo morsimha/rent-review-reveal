@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -66,10 +65,18 @@ const Yad2ScanDialog: React.FC<Yad2ScanDialogProps> = ({
     try {
       const result = await scanYad2Apartments(scanParams);
       
-      toast({
-        title: "סריקה הושלמה בהצלחה!",
-        description: `נמצאו ${result.count} דירות חדשות`,
-      });
+      if (result.isFallback) {
+        toast({
+          title: "סריקה הושלמה (נתונים אוטומטיים)",
+          description: `נמצאו ${result.count} דירות - הנתונים נוצרו אוטומטית כי יד2 חוסם גישה`,
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "סריקה הושלמה בהצלחה!",
+          description: `נמצאו ${result.count} דירות חדשות מיד2`,
+        });
+      }
       
       onScanComplete();
       onOpenChange(false);
