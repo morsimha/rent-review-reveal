@@ -1,10 +1,9 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";More actions
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 const corsHeaders = {
@@ -33,11 +32,10 @@ serve(async (req) => {
 
   try {
     console.log('Request method:', req.method);
-    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
-
+    
     let searchQuery = 'דירות להשכרה עד 5600 שקלים, בגבעתיים או רמת גן, 2 חדרים ומעלה';
 
-    // Try to read JSON body, but don't fail if it's empty
+    // Try to read JSON body
     try {
       const requestText = await req.text();
       console.log('Request body text:', requestText);
@@ -49,7 +47,7 @@ serve(async (req) => {
         }
       }
     } catch (parseError) {
-      console.log('Could not parse request body, using default search query:', parseError);
+      console.log('Could not parse request body, using default search query');
     }
 
     console.log('Starting real Yad2 scan with query:', searchQuery);
@@ -58,29 +56,42 @@ serve(async (req) => {
     const criteria = parseSearchQuery(searchQuery);
     console.log('Parsed criteria:', criteria);
 
-    // Build Yad2 URL
-    const yad2Url = buildYad2SearchUrl(criteria);
-    console.log('Yad2 URL:', yad2Url);
+    // Try multiple scraping methods
+    let apartments: ScrapedApartment[] = [];
+    
+    // Method 1: Try API approach
+    try {
+      apartments = await scrapeYad2API(criteria);
+      console.log(`API scraping got ${apartments.length} apartments`);
+    } catch (apiError) {
+      console.error('API scraping failed:', apiError);
+    }
 
-    // Scrape Yad2
-    const scrapedApartments = await scrapeYad2(yad2Url);
-    console.log(`Scraped ${scrapedApartments.length} apartments`);
+    // Method 2: Try HTML scraping with better parsing
+    if (apartments.length === 0) {
+      try {
+        apartments = await scrapeYad2HTML(criteria);
+        console.log(`HTML scraping got ${apartments.length} apartments`);
+      } catch (htmlError) {
+        console.error('HTML scraping failed:', htmlError);
+      }
+    }
 
-    if (scrapedApartments.length === 0) {
+    if (apartments.length === 0) {
       return new Response(JSON.stringify({ 
         success: true, 
         count: 0,
-        message: 'לא נמצאו דירות לפי הקריטריונים',
+        message: 'לא נמצאו דירות. ייתכן ש-Yad2 חוסמים גישה אוטומטית.',
         apartments: [] 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Store in scanned_apartments table
+    // Store only real scraped apartments
     const { data, error } = await supabase
       .from('scanned_apartments')
-      .insert(scrapedApartments)
+      .insert(apartments)
       .select();
 
     if (error) {
@@ -88,7 +99,7 @@ serve(async (req) => {
       throw error;
     }
 
-    console.log(`Successfully added ${data.length} apartments to scan results`);
+    console.log(`Successfully added ${data.length} real apartments`);
 
     return new Response(JSON.stringify({ 
       success: true, 
@@ -118,19 +129,16 @@ function parseSearchQuery(query: string) {
     propertyType: 'rent'
   };
 
-  // Parse price
   const priceMatch = query.match(/עד\s*(\d+)\s*שקל/);
   if (priceMatch) {
     criteria.maxPrice = parseInt(priceMatch[1]);
   }
 
-  // Parse locations
   const locationMatches = query.match(/(גבעתיים|רמת גן|תל אביב|פתח תקווה|בני ברק|גבעת שמואל|קריית אונו)/g);
   if (locationMatches) {
-    criteria.locations = locationMatches;
+    criteria.locations = [...new Set(locationMatches)];
   }
 
-  // Parse rooms
   const roomsMatch = query.match(/(\d+)\s*חדר/);
   if (roomsMatch) {
     criteria.minRooms = parseInt(roomsMatch[1]);
@@ -139,207 +147,185 @@ function parseSearchQuery(query: string) {
   return criteria;
 }
 
-function buildYad2SearchUrl(criteria: any): string {
-  const baseUrl = 'https://www.yad2.co.il/realestate/rent';
-  const params = new URLSearchParams();
+async function scrapeYad2API(criteria: any): Promise<ScrapedApartment[]> {
+  const cityMapping: Record<string, number> = {
+    'גבעתיים': 6300,
+    'רמת גן': 8600,
+    'תל אביב': 5000,
+    'פתח תקווה': 7900,
+    'בני ברק': 6200
+  };
+
+  const apartments: ScrapedApartment[] = [];
+  const cityIds = criteria.locations
+    .map((loc: string) => cityMapping[loc])
+    .filter(Boolean);
+
+  // Try Yad2 API endpoint
+  const apiUrl = 'https://gw.yad2.co.il/feed-search-legacy/realestate/rent';
   
-  // Add price filter
-  if (criteria.maxPrice) {
-    params.append('maxPrice', criteria.maxPrice.toString());
+  const params = new URLSearchParams({
+    'price': `0-${criteria.maxPrice}`,
+    'rooms': `${criteria.minRooms}-12`,
+    'page': '1'
+  });
+
+  cityIds.forEach((cityId: number) => {
+    params.append('city', cityId.toString());
+  });
+
+  try {
+    const response = await fetch(`${apiUrl}?${params}`, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Referer': 'https://www.yad2.co.il/'
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      
+      if (data?.data?.feed?.feed_items) {
+        for (const item of data.data.feed.feed_items.slice(0, 10)) {
+          if (item.type === 'ad' && item.data) {
+            const ad = item.data;
+            
+            apartments.push({
+              title: ad.title_1 || ad.title || 'דירה להשכרה',
+              price: ad.price ? parseInt(ad.price.toString().replace(/[^\d]/g, '')) : null,
+              location: [ad.street, ad.neighborhood, ad.city_text].filter(Boolean).join(', '),
+              description: [ad.row_3, ad.row_4, ad.HomeTypeID_text].filter(Boolean).join('. '),
+              image_url: ad.images?.[0]?.src ? `https://img.yad2.co.il/Pic/${ad.images[0].src}` : null,
+              apartment_link: `https://www.yad2.co.il/item/${ad.id}`,
+              contact_phone: ad.mobile || ad.phone || null,
+              contact_name: ad.contact_name || null,
+              square_meters: ad.square_meters ? parseInt(ad.square_meters) : null,
+              floor: ad.floor?.on_the_floor ? parseInt(ad.floor.on_the_floor) : null,
+              pets_allowed: 'unknown'
+            });
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('API fetch error:', error);
   }
 
-  // Add location filters (Yad2 uses city IDs)
-  const cityMapping: { [key: string]: string } = {
+  return apartments;
+}
+
+async function scrapeYad2HTML(criteria: any): Promise<ScrapedApartment[]> {
+  const cityMapping: Record<string, string> = {
     'גבעתיים': '6300',
-    'רמת גן': '8600', 
+    'רמת גן': '8600',
     'תל אביב': '5000',
     'פתח תקווה': '7900',
     'בני ברק': '6200'
   };
 
-  if (criteria.locations) {
-    const cityIds = criteria.locations
-      .map((loc: string) => cityMapping[loc])
-      .filter(Boolean);
-    if (cityIds.length > 0) {
-      params.append('city', cityIds.join(','));
+  const apartments: ScrapedApartment[] = [];
+  const cityIds = criteria.locations
+    .map((loc: string) => cityMapping[loc])
+    .filter(Boolean)
+    .join(',');
 
-
-
-
-
-
-
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  }
-
-  // Add rooms filter
-  if (criteria.minRooms) {
-    params.append('rooms', criteria.minRooms.toString());
-  }
-
-  return `${baseUrl}?${params.toString()}`;
-}
-
-async function scrapeYad2(url: string): Promise<ScrapedApartment[]> {
+  const url = `https://www.yad2.co.il/realestate/rent?city=${cityIds}&price=0-${criteria.maxPrice}&rooms=${criteria.minRooms}-12`;
+  
   try {
-    console.log('Fetching Yad2 page:', url);
+    console.log('Fetching:', url);
     
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'he-IL,he;q=0.9,en;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'he-IL,he;q=0.9',
+        'Cache-Control': 'no-cache'
       }
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP ${response.status}`);
     }
 
     const html = await response.text();
-    console.log('HTML fetched, length:', html.length);
+    console.log('HTML length:', html.length);
     
-    return parseYad2Html(html);
+    // Use DOM parser for better extraction
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    if (!doc) {
+      throw new Error('Failed to parse HTML');
+    }
+
+    // Try to find apartments using JSON-LD data
+    const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+    for (const script of scripts) {
+      try {
+        const jsonData = JSON.parse(script.textContent || '{}');
+        if (jsonData['@type'] === 'ItemList' && jsonData.itemListElement) {
+          for (const item of jsonData.itemListElement.slice(0, 10)) {
+            if (item.url && item.name) {
+              apartments.push({
+                title: item.name,
+                price: null,
+                location: criteria.locations[0],
+                description: '',
+                image_url: null,
+                apartment_link: item.url,
+                contact_phone: null,
+                contact_name: null,
+                square_meters: null,
+                floor: null,
+                pets_allowed: 'unknown'
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.log('Could not parse JSON-LD');
+      }
+    }
+
+    // If no JSON-LD, try regex extraction
+    if (apartments.length === 0) {
+      // Extract links more carefully
+      const linkMatches = html.matchAll(/href="(\/realestate\/item\/[a-zA-Z0-9]+)"/g);
+      const uniqueLinks = new Set<string>();
+      
+      for (const match of linkMatches) {
+        uniqueLinks.add(`https://www.yad2.co.il${match[1]}`);
+        if (uniqueLinks.size >= 10) break;
+      }
+
+      // Extract apartment data near each link
+      for (const link of uniqueLinks) {
+        const itemId = link.split('/').pop();
+        
+        // Try to find price near this item
+        const pricePattern = new RegExp(`id="${itemId}"[^>]*>[\\s\\S]*?₪\\s*([\\d,]+)`, 'i');
+        const priceMatch = html.match(pricePattern);
+        
+        apartments.push({
+          title: 'דירה להשכרה',
+          price: priceMatch ? parseInt(priceMatch[1].replace(/,/g, '')) : null,
+          location: criteria.locations[0],
+          description: '',
+          image_url: null,
+          apartment_link: link,
+          contact_phone: null,
+          contact_name: null,
+          square_meters: null,
+          floor: null,
+          pets_allowed: 'unknown'
+        });
+      }
+    }
+
   } catch (error) {
-    console.error('Error scraping Yad2:', error);
-    throw error;
+    console.error('HTML scraping error:', error);
   }
 
-}
-
-function parseYad2Html(html: string): ScrapedApartment[] {
-  const apartments: ScrapedApartment[] = [];
-
-
-  try {
-    // Look for apartment cards in the HTML
-    // Yad2 uses various patterns, we'll try to extract what we can
-    
-    // Extract apartment links
-    const linkRegex = /href="(\/realestate\/item\/[^"]+)"/g;
-    const links: string[] = [];
-    let match;
-    
-    while ((match = linkRegex.exec(html)) !== null && links.length < 10) {
-      const fullLink = `https://www.yad2.co.il${match[1]}`;
-      if (!links.includes(fullLink)) {
-        links.push(fullLink);
-      }
-    }
-    
-    console.log(`Found ${links.length} apartment links`);
-    
-    // Extract basic info patterns
-    const priceRegex = /₪([\d,]+)/g;
-    const roomRegex = /(\d+)\s*חד/g;
-    const locationRegex = /(גבעתיים|רמת גן|תל אביב|פתח תקווה|בני ברק)[^<]*/g;
-    
-    const prices: number[] = [];
-    const roomCounts: number[] = [];
-    const locations: string[] = [];
-    
-    // Extract prices
-    let priceMatch;
-    while ((priceMatch = priceRegex.exec(html)) !== null && prices.length < 15) {
-      const price = parseInt(priceMatch[1].replace(/,/g, ''));
-      if (price > 1000 && price < 20000) { // Reasonable rent range
-        prices.push(price);
-      }
-    }
-    
-    // Extract room counts
-    let roomMatch;
-    while ((roomMatch = roomRegex.exec(html)) !== null && roomCounts.length < 15) {
-      roomCounts.push(parseInt(roomMatch[1]));
-    }
-    
-    // Extract locations
-    let locationMatch;
-    while ((locationMatch = locationRegex.exec(html)) !== null && locations.length < 15) {
-      locations.push(locationMatch[0].trim());
-    }
-    
-    console.log(`Extracted: ${prices.length} prices, ${roomCounts.length} rooms, ${locations.length} locations`);
-    
-    // Create apartments from extracted data
-    const maxApartments = Math.min(links.length, 8);
-    
-    for (let i = 0; i < maxApartments; i++) {
-      const price = prices[i % prices.length] || null;
-      const rooms = roomCounts[i % roomCounts.length] || 2;
-      const location = locations[i % locations.length] || 'גבעתיים';
-      
-      apartments.push({
-        title: `דירת ${rooms} חדרים${price ? ` - ₪${price.toLocaleString()}` : ''}`,
-        price: price,
-        location: location,
-        description: `דירה להשכרה ב${location}`,
-        image_url: `https://images.unsplash.com/photo-${1560184318 + i * 123}?w=400&h=300&fit=crop&auto=format`,
-        apartment_link: links[i],
-        contact_phone: null,
-        contact_name: null,
-        square_meters: Math.floor(Math.random() * 30) + 55, // 55-85 sqm
-        floor: Math.floor(Math.random() * 5) + 1, // 1-5 floors
-        pets_allowed: ['yes', 'no', 'unknown'][Math.floor(Math.random() * 3)] as any,
-      });
-    }
-    
-    // If we couldn't extract enough data, add a few more with basic info
-    while (apartments.length < Math.min(5, links.length)) {
-      const i = apartments.length;
-      apartments.push({
-        title: `דירה להשכרה`,
-        price: null,
-        location: 'גבעתיים',
-        description: 'דירה להשכרה - פרטים נוספים בקישור',
-        image_url: `https://images.unsplash.com/photo-${1560184318 + i * 456}?w=400&h=300&fit=crop&auto=format`,
-        apartment_link: links[i] || `https://www.yad2.co.il/realestate/item/${Math.random().toString(36).substring(2, 10)}`,
-        contact_phone: null,
-        contact_name: null,
-        square_meters: null,
-        floor: null,
-        pets_allowed: 'unknown',
-      });
-    }
-    
-    console.log(`Created ${apartments.length} apartment records`);
-    return apartments;
-    
-  } catch (error) {
-    console.error('Error parsing HTML:', error);
-    // Fallback: return empty array rather than fake data
-    return [];
-  }Add commentMore actions
+  return apartments;
 }
