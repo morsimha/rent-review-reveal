@@ -33,7 +33,26 @@ serve(async (req) => {
   }
 
   try {
-    const { searchQuery } = await req.json();
+    console.log('Request method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+    
+    let searchQuery = 'דירות להשכרה עד 5600 שקלים, בגבעתיים או רמת גן, 2 חדרים ומעלה';
+    
+    // Try to read JSON body, but don't fail if it's empty
+    try {
+      const requestText = await req.text();
+      console.log('Request body text:', requestText);
+      
+      if (requestText && requestText.trim()) {
+        const body = JSON.parse(requestText);
+        if (body.searchQuery) {
+          searchQuery = body.searchQuery;
+        }
+      }
+    } catch (parseError) {
+      console.log('Could not parse request body, using default search query:', parseError);
+    }
+    
     console.log('Starting real Yad2 scan with query:', searchQuery);
 
     // Parse search criteria
