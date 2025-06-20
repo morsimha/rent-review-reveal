@@ -41,8 +41,44 @@ serve(async (req) => {
   }
 
   try {
-    const { scanParams } = await req.json();
-    console.log('Starting Yad2 scan with parameters:', scanParams);
+    console.log('Starting Yad2 scan request processing...');
+    
+    let requestBody;
+    let scanParams: ScanParameters;
+    
+    try {
+      const text = await req.text();
+      console.log('Request text:', text);
+      
+      if (!text || text.trim() === '') {
+        console.log('Empty request body, using default parameters');
+        scanParams = {
+          propertyType: 'rent',
+          maxPrice: '5500',
+          areas: ['גבעתיים', 'רמת גן'],
+          minRooms: '2',
+          maxRooms: 'none'
+        };
+      } else {
+        requestBody = JSON.parse(text);
+        scanParams = requestBody.scanParams;
+        
+        if (!scanParams) {
+          throw new Error('scanParams missing from request body');
+        }
+      }
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError);
+      return new Response(JSON.stringify({ 
+        error: 'Invalid request format',
+        success: false 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('Scan parameters:', scanParams);
 
     // Build Yad2 URL with structured parameters
     const yad2Url = buildYad2SearchUrl(scanParams);
