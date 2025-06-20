@@ -16,6 +16,14 @@ export interface ScannedApartment {
   created_at: string;
 }
 
+export interface ScanParameters {
+  propertyType: 'rent' | 'sale';
+  maxPrice: string;
+  areas: string[];
+  minRooms: string;
+  maxRooms: string;
+}
+
 export const fetchScannedApartments = async (): Promise<ScannedApartment[]> => {
   console.log('Fetching scanned apartments...');
   const { data, error } = await supabase
@@ -94,12 +102,12 @@ export const moveScannedApartmentToMain = async (scannedApartment: ScannedApartm
   return data;
 };
 
-export const scanYad2Apartments = async (searchQuery: string) => {
-  console.log('Calling yad2-scanner function with query:', searchQuery);
+export const scanYad2Apartments = async (scanParams: ScanParameters) => {
+  console.log('Calling yad2-scanner function with params:', scanParams);
   
   try {
     const { data, error } = await supabase.functions.invoke('yad2-scanner', {
-      body: { searchQuery },
+      body: { scanParams },
       headers: {
         'Content-Type': 'application/json',
       }
