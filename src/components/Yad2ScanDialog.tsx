@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -67,28 +68,16 @@ const Yad2ScanDialog: React.FC<Yad2ScanDialogProps> = ({
       
       toast({
         title: "סריקה הושלמה בהצלחה!",
-        description: `${result.message} - נמצאו ${result.count} דירות`,
+        description: `נמצאו ${result.count} דירות חדשות`,
       });
       
       onScanComplete();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Scan error:', error);
-      
-      let errorMessage = "לא ניתן לסרוק דירות כרגע";
-      
-      // Provide more specific error messages
-      if (error.message?.includes('יד2 חוסם גישה')) {
-        errorMessage = "יד2 חוסם גישה - נסה שוב מאוחר יותר או בדוק את הקריטריונים";
-      } else if (error.message?.includes('לא נמצאו דירות')) {
-        errorMessage = "לא נמצאו דירות ביד2 לפי הקריטריונים - נסה לשנות את הפרמטרים";
-      } else if (error.message?.includes('שגיאה 403') || error.message?.includes('שגיאה 429')) {
-        errorMessage = "יד2 חוסם את הבקשה - נסה שוב מאוחר יותר";
-      }
-      
       toast({
         title: "שגיאה בסריקה",
-        description: errorMessage,
+        description: "לא ניתן לסרוק דירות כרגע",
         variant: "destructive"
       });
     } finally {

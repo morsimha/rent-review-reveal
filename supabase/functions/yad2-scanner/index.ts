@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -40,75 +41,14 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting Yad2 scan request processing...');
-    
-    let requestBody;
-    let scanParams: ScanParameters;
-    
-    try {
-      const text = await req.text();
-      console.log('Request text:', text);
-      
-      if (!text || text.trim() === '') {
-        console.log('Empty request body, using default parameters');
-        scanParams = {
-          propertyType: 'rent',
-          maxPrice: '5500',
-          areas: ['גבעתיים', 'רמת גן'],
-          minRooms: '2',
-          maxRooms: 'none'
-        };
-      } else {
-        requestBody = JSON.parse(text);
-        
-        // Handle both old searchQuery format and new scanParams format
-        if (requestBody.scanParams) {
-          scanParams = requestBody.scanParams;
-        } else if (requestBody.searchQuery) {
-          // Parse the old searchQuery format
-          const searchQuery = requestBody.searchQuery;
-          console.log('Parsing old searchQuery format:', searchQuery);
-          
-          // Try to parse as JSON first (new format)
-          try {
-            const parsed = JSON.parse(searchQuery);
-            scanParams = parsed;
-          } catch {
-            // Fall back to default parameters for old text format
-            scanParams = {
-              propertyType: 'rent',
-              maxPrice: '5500',
-              areas: ['גבעתיים', 'רמת גן'],
-              minRooms: '2',
-              maxRooms: 'none'
-            };
-          }
-        } else {
-          throw new Error('Neither scanParams nor searchQuery found in request body');
-        }
-        
-        if (!scanParams) {
-          throw new Error('scanParams missing from request body');
-        }
-      }
-    } catch (parseError) {
-      console.error('Error parsing request body:', parseError);
-      return new Response(JSON.stringify({ 
-        error: 'Invalid request format',
-        success: false 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    console.log('Scan parameters:', scanParams);
+    const { scanParams } = await req.json();
+    console.log('Starting Yad2 scan with parameters:', scanParams);
 
     // Build Yad2 URL with structured parameters
     const yad2Url = buildYad2SearchUrl(scanParams);
     console.log('Yad2 URL:', yad2Url);
 
-    // Scrape Yad2
+    // Try to scrape real apartments from Yad2
     const scrapedApartments = await scrapeYad2(yad2Url, scanParams);
     console.log(`Scraped ${scrapedApartments.length} apartments`);
 
@@ -116,8 +56,8 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         success: true, 
         count: 0,
-        message: 'לא נמצאו דירות ביד2 לפי הקריטריונים שהזנת',
-        apartments: []
+        message: 'לא נמצאו דירות אמיתיות לפי הקריטריונים',
+        apartments: [] 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -139,8 +79,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       success: true, 
       count: data.length,
-      apartments: data,
-      message: 'הדירות נסרקו בהצלחה מיד2'
+      apartments: data 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -228,40 +167,22 @@ async function scrapeYad2(url: string, scanParams: ScanParameters): Promise<Scra
         'DNT': '1',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
       }
     });
 
-    console.log(`Response status: ${response.status}`);
-    console.log(`Response headers:`, Object.fromEntries(response.headers.entries()));
-
     if (!response.ok) {
       console.log(`HTTP error! status: ${response.status}`);
-      throw new Error(`יד2 החזיר שגיאה ${response.status} - ייתכן שהאתר חוסם גישה`);
+      return [];
     }
 
     const html = await response.text();
     console.log('HTML fetched, length:', html.length);
     
-    // Check if we got a CAPTCHA or blocked page
-    if (html.includes('captcha') || html.includes('blocked') || html.includes('robot') || html.length < 1000) {
-      console.log('Detected blocking/CAPTCHA from Yad2');
-      throw new Error('יד2 חוסם גישה - נדרש פתרון קפצ\'ה או זיהוי בוט');
-    }
-    
     // Parse real data from Yad2
-    const apartments = parseYad2Html(html, scanParams);
-    
-    if (apartments.length === 0) {
-      console.log('No apartments found in HTML from Yad2');
-      throw new Error('לא נמצאו דירות ביד2 לפי הקריטריונים שהזנת');
-    }
-    
-    return apartments;
+    return parseYad2Html(html, scanParams);
   } catch (error) {
     console.error('Error scraping Yad2:', error);
-    throw error;
+    return [];
   }
 }
 
@@ -269,71 +190,42 @@ function parseYad2Html(html: string, scanParams: ScanParameters): ScrapedApartme
   const apartments: ScrapedApartment[] = [];
 
   try {
-    console.log('Starting HTML parsing...');
-    
-    // Look for apartment links - try multiple patterns
-    const linkPatterns = [
-      /href="(\/realestate\/item\/[^"]+)"/g,
-      /href="(\/realestate\/[^"]+)"/g,
-      /data-item-id="([^"]+)"/g,
-      /class="[^"]*item[^"]*"[^>]*data-id="([^"]+)"/g
-    ];
-    
+    // Look for apartment links
+    const linkRegex = /href="(\/realestate\/item\/[^"]+)"/g;
     const links: string[] = [];
     let match;
     
-    for (const pattern of linkPatterns) {
-      while ((match = pattern.exec(html)) !== null && links.length < 10) {
-        let fullLink = match[1];
-        if (!fullLink.startsWith('http')) {
-          fullLink = `https://www.yad2.co.il${fullLink.startsWith('/') ? '' : '/'}${fullLink}`;
-        }
-        if (!links.includes(fullLink)) {
-          links.push(fullLink);
-        }
+    while ((match = linkRegex.exec(html)) !== null && links.length < 8) {
+      const fullLink = `https://www.yad2.co.il${match[1]}`;
+      if (!links.includes(fullLink)) {
+        links.push(fullLink);
       }
     }
     
-    console.log(`Found ${links.length} apartment links using patterns`);
-    
-    // Extract price patterns from HTML - try multiple formats
-    const pricePatterns = [
-      /₪([\d,]+)/g,
-      /([\d,]+)\s*₪/g,
-      /([\d,]+)\s*שקל/g,
-      /price[^>]*>([\d,]+)/gi
-    ];
-    
+    // Extract price patterns from HTML
+    const priceRegex = /₪([\d,]+)/g;
     const prices: number[] = [];
-    for (const pattern of pricePatterns) {
-      let priceMatch;
-      while ((priceMatch = pattern.exec(html)) !== null && prices.length < 15) {
-        const price = parseInt(priceMatch[1].replace(/,/g, ''));
-        const maxPrice = parseInt(scanParams.maxPrice) || 10000;
-        if (price > 1000 && price <= maxPrice * 1.2) {
-          prices.push(price);
-        }
+    let priceMatch;
+    
+    while ((priceMatch = priceRegex.exec(html)) !== null && prices.length < 10) {
+      const price = parseInt(priceMatch[1].replace(/,/g, ''));
+      const maxPrice = parseInt(scanParams.maxPrice) || 10000;
+      if (price > 1000 && price <= maxPrice * 1.2) {
+        prices.push(price);
       }
     }
     
-    // Extract room counts from HTML - try multiple formats
-    const roomPatterns = [
-      /(\d+)\s*חד/g,
-      /(\d+)\s*חדר/g,
-      /rooms[^>]*>(\d+)/gi,
-      /חדרים[^>]*>(\d+)/gi
-    ];
-    
+    // Extract room counts from HTML
+    const roomRegex = /(\d+)\s*חד/g;
     const roomCounts: number[] = [];
-    for (const pattern of roomPatterns) {
-      let roomMatch;
-      while ((roomMatch = pattern.exec(html)) !== null && roomCounts.length < 15) {
-        const rooms = parseInt(roomMatch[1]);
-        const minRooms = scanParams.minRooms !== 'none' ? parseInt(scanParams.minRooms) : 1;
-        const maxRooms = scanParams.maxRooms !== 'none' ? parseInt(scanParams.maxRooms) : 10;
-        if (rooms >= minRooms && rooms <= maxRooms) {
-          roomCounts.push(rooms);
-        }
+    let roomMatch;
+    
+    while ((roomMatch = roomRegex.exec(html)) !== null && roomCounts.length < 10) {
+      const rooms = parseInt(roomMatch[1]);
+      const minRooms = scanParams.minRooms !== 'none' ? parseInt(scanParams.minRooms) : 1;
+      const maxRooms = scanParams.maxRooms !== 'none' ? parseInt(scanParams.maxRooms) : 10;
+      if (rooms >= minRooms && rooms <= maxRooms) {
+        roomCounts.push(rooms);
       }
     }
     
@@ -341,8 +233,7 @@ function parseYad2Html(html: string, scanParams: ScanParameters): ScrapedApartme
     
     // Only create apartments if we have real data
     if (links.length === 0) {
-      console.log('No apartment links found in HTML');
-      console.log('HTML snippet (first 500 chars):', html.substring(0, 500));
+      console.log('No apartment links found, returning empty array');
       return [];
     }
     
@@ -369,7 +260,6 @@ function parseYad2Html(html: string, scanParams: ScanParameters): ScrapedApartme
       });
     }
     
-    console.log(`Created ${apartments.length} apartments from HTML parsing`);
     return apartments;
     
   } catch (error) {
