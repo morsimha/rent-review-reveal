@@ -1,3 +1,54 @@
+# Rent Review Reveal
+
+## Project Description & Purpose
+
+Rent Review Reveal is a web application designed to help renters make informed decisions about apartments. It provides apartment reviews, ratings, and advice using a combination of user input and AI-powered analysis. The app aims to demystify the rental process, offering insights into apartment quality, neighborhood, and value, so users can rent with confidence.
+
+Key features include:
+- Apartment search and comparison
+- AI-generated advice and analysis of listings
+- User ratings and reviews
+- Interactive tools and games for renters
+
+---
+
+## Installation
+
+### Prerequisites
+- Node.js (v18 or higher recommended)
+- npm (comes with Node.js)
+
+### Setup
+```sh
+# 1. Clone the repository
+git clone <YOUR_GIT_URL>
+
+# 2. Navigate to the project directory
+cd rent-review-reveal
+
+# 3. Install dependencies
+npm install
+
+# 4. Start the development server
+npm run dev
+```
+The app will be available at the local address printed in your terminal (usually http://localhost:5173).
+
+---
+
+## Usage
+
+After starting the development server:
+- Open your browser and go to the local address (e.g., http://localhost:5173).
+- Explore the main features:
+  - Browse and search for apartments
+  - View detailed apartment cards with ratings, images, and advice
+  - Use interactive tools like the Apartment Designer and games
+  - (If authentication is enabled) Sign up or log in to save favorites and leave reviews
+- No default login is required unless you enable authentication features.
+
+---
+
 # Welcome to your Lovable project
 
 ## Project info
