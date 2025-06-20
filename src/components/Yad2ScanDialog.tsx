@@ -65,26 +65,30 @@ const Yad2ScanDialog: React.FC<Yad2ScanDialogProps> = ({
     try {
       const result = await scanYad2Apartments(scanParams);
       
-      if (result.isFallback) {
-        toast({
-          title: "סריקה הושלמה (נתונים אוטומטיים)",
-          description: `נמצאו ${result.count} דירות - הנתונים נוצרו אוטומטית כי יד2 חוסם גישה`,
-          variant: "default"
-        });
-      } else {
-        toast({
-          title: "סריקה הושלמה בהצלחה!",
-          description: `נמצאו ${result.count} דירות חדשות מיד2`,
-        });
-      }
+      toast({
+        title: "סריקה הושלמה בהצלחה!",
+        description: `${result.message} - נמצאו ${result.count} דירות`,
+      });
       
       onScanComplete();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Scan error:', error);
+      
+      let errorMessage = "לא ניתן לסרוק דירות כרגע";
+      
+      // Provide more specific error messages
+      if (error.message?.includes('יד2 חוסם גישה')) {
+        errorMessage = "יד2 חוסם גישה - נסה שוב מאוחר יותר או בדוק את הקריטריונים";
+      } else if (error.message?.includes('לא נמצאו דירות')) {
+        errorMessage = "לא נמצאו דירות ביד2 לפי הקריטריונים - נסה לשנות את הפרמטרים";
+      } else if (error.message?.includes('שגיאה 403') || error.message?.includes('שגיאה 429')) {
+        errorMessage = "יד2 חוסם את הבקשה - נסה שוב מאוחר יותר";
+      }
+      
       toast({
         title: "שגיאה בסריקה",
-        description: "לא ניתן לסרוק דירות כרגע",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

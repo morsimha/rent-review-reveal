@@ -116,16 +116,12 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         success: true, 
         count: 0,
-        message: 'לא נמצאו דירות לפי הקריטריונים',
-        apartments: [],
-        isFallback: false
+        message: 'לא נמצאו דירות ביד2 לפי הקריטריונים שהזנת',
+        apartments: []
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    // Check if we're using fallback data
-    const isFallback = scrapedApartments.some(apt => apt.apartment_link?.includes('yad2.co.il/realestate/item/') && apt.apartment_link.length > 50);
 
     // Store in scanned_apartments table
     const { data, error } = await supabase
@@ -144,8 +140,7 @@ serve(async (req) => {
       success: true, 
       count: data.length,
       apartments: data,
-      isFallback: isFallback,
-      message: isFallback ? 'הנתונים נוצרו באופן אוטומטי (יד2 חוסם גישה)' : 'הדירות נסרקו בהצלחה מיד2'
+      message: 'הדירות נסרקו בהצלחה מיד2'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -243,8 +238,7 @@ async function scrapeYad2(url: string, scanParams: ScanParameters): Promise<Scra
 
     if (!response.ok) {
       console.log(`HTTP error! status: ${response.status}`);
-      // Return fallback data instead of empty array
-      return generateFallbackApartments(scanParams);
+      throw new Error(`יד2 החזיר שגיאה ${response.status} - ייתכן שהאתר חוסם גישה`);
     }
 
     const html = await response.text();
@@ -252,62 +246,23 @@ async function scrapeYad2(url: string, scanParams: ScanParameters): Promise<Scra
     
     // Check if we got a CAPTCHA or blocked page
     if (html.includes('captcha') || html.includes('blocked') || html.includes('robot') || html.length < 1000) {
-      console.log('Detected blocking/CAPTCHA, using fallback data');
-      return generateFallbackApartments(scanParams);
+      console.log('Detected blocking/CAPTCHA from Yad2');
+      throw new Error('יד2 חוסם גישה - נדרש פתרון קפצ\'ה או זיהוי בוט');
     }
     
     // Parse real data from Yad2
     const apartments = parseYad2Html(html, scanParams);
     
     if (apartments.length === 0) {
-      console.log('No apartments found in HTML, using fallback data');
-      return generateFallbackApartments(scanParams);
+      console.log('No apartments found in HTML from Yad2');
+      throw new Error('לא נמצאו דירות ביד2 לפי הקריטריונים שהזנת');
     }
     
     return apartments;
   } catch (error) {
     console.error('Error scraping Yad2:', error);
-    console.log('Using fallback data due to error');
-    return generateFallbackApartments(scanParams);
+    throw error;
   }
-}
-
-function generateFallbackApartments(scanParams: ScanParameters): ScrapedApartment[] {
-  console.log('Generating fallback apartments for:', scanParams);
-  
-  const apartments: ScrapedApartment[] = [];
-  const areas = scanParams.areas.length > 0 ? scanParams.areas : ['גבעתיים', 'רמת גן'];
-  const maxPrice = parseInt(scanParams.maxPrice) || 5600;
-  const minRooms = scanParams.minRooms !== 'none' ? parseInt(scanParams.minRooms) : 2;
-  const maxRooms = scanParams.maxRooms !== 'none' ? parseInt(scanParams.maxRooms) : 4;
-  
-  // Generate 5-8 realistic apartments
-  const numApartments = Math.floor(Math.random() * 4) + 5;
-  
-  for (let i = 0; i < numApartments; i++) {
-    const area = areas[i % areas.length];
-    const rooms = Math.floor(Math.random() * (maxRooms - minRooms + 1)) + minRooms;
-    const price = Math.floor(Math.random() * (maxPrice - 3000)) + 3000;
-    const squareMeters = Math.floor(Math.random() * 30) + 55; // 55-85 sqm
-    const floor = Math.floor(Math.random() * 5) + 1; // 1-5 floors
-    
-    apartments.push({
-      title: `דירת ${rooms} חדרים ב${area} - ₪${price.toLocaleString()}`,
-      price: price,
-      location: area,
-      description: `דירה ל${scanParams.propertyType === 'rent' ? 'השכרה' : 'מכירה'} ב${area}, ${rooms} חדרים, ${squareMeters} מ"ר`,
-      image_url: `https://images.unsplash.com/photo-${1560184318 + i * 123}?w=400&h=300&fit=crop&auto=format`,
-      apartment_link: `https://www.yad2.co.il/realestate/item/${Math.random().toString(36).substring(2, 10)}`,
-      contact_phone: null,
-      contact_name: null,
-      square_meters: squareMeters,
-      floor: floor,
-      pets_allowed: ['yes', 'no', 'unknown'][Math.floor(Math.random() * 3)] as any,
-    });
-  }
-  
-  console.log(`Generated ${apartments.length} fallback apartments`);
-  return apartments;
 }
 
 function parseYad2Html(html: string, scanParams: ScanParameters): ScrapedApartment[] {
