@@ -223,10 +223,10 @@ const Index = () => {
         />
 
         {/* כפתורי הוסף דירה וסרוק דירות */}
-        <div className="flex justify-center gap-4 mb-8">
+        <div className="flex flex-col items-center gap-4 mb-8">
           <Button
             onClick={() => setIsAddDialogOpen(true)}
-            className={`${themeConfig.buttonGradient} text-white text-lg px-6 py-3 rounded shadow transition`}
+            className={`${themeConfig.buttonGradient} text-white text-lg px-6 py-3 rounded shadow transition w-64`}
             disabled={!isAuthenticated}
           >
             + הוסף דירה חדשה
@@ -234,7 +234,7 @@ const Index = () => {
           
           <Button
             onClick={() => setIsYad2ScanDialogOpen(true)}
-            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-lg px-6 py-3 rounded shadow transition"
+            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-lg px-6 py-3 rounded shadow transition w-64"
             disabled={!isAuthenticated}
           >
             🔍 סרוק דירות אוטומטית
