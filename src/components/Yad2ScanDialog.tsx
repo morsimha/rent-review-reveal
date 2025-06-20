@@ -33,7 +33,7 @@ const Yad2ScanDialog: React.FC<Yad2ScanDialogProps> = ({
     maxPrice: '5500',
     areas: ['גבעתיים', 'רמת גן'],
     minRooms: '2',
-    maxRooms: ''
+    maxRooms: 'none'
   });
   const [isScanning, setIsScanning] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
@@ -182,7 +182,7 @@ const Yad2ScanDialog: React.FC<Yad2ScanDialogProps> = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">הכל</SelectItem>
+                  <SelectItem value="none">הכל</SelectItem>
                   <SelectItem value="1">1 חדר</SelectItem>
                   <SelectItem value="2">2 חדרים</SelectItem>
                   <SelectItem value="3">3 חדרים</SelectItem>
@@ -204,7 +204,7 @@ const Yad2ScanDialog: React.FC<Yad2ScanDialogProps> = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">הכל</SelectItem>
+                  <SelectItem value="none">הכל</SelectItem>
                   <SelectItem value="1">1 חדר</SelectItem>
                   <SelectItem value="2">2 חדרים</SelectItem>
                   <SelectItem value="3">3 חדרים</SelectItem>

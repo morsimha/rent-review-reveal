@@ -48,7 +48,7 @@ serve(async (req) => {
     const yad2Url = buildYad2SearchUrl(scanParams);
     console.log('Yad2 URL:', yad2Url);
 
-    // Scrape Yad2
+    // Try to scrape real apartments from Yad2
     const scrapedApartments = await scrapeYad2(yad2Url, scanParams);
     console.log(`Scraped ${scrapedApartments.length} apartments`);
 
@@ -56,7 +56,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         success: true, 
         count: 0,
-        message: 'לא נמצאו דירות לפי הקריטריונים',
+        message: 'לא נמצאו דירות אמיתיות לפי הקריטריונים',
         apartments: [] 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -138,15 +138,15 @@ function buildYad2SearchUrl(scanParams: ScanParameters): string {
   }
   
   // Add rooms filter
-  if (scanParams.minRooms && scanParams.minRooms.trim() !== '') {
+  if (scanParams.minRooms && scanParams.minRooms !== 'none') {
     const minRooms = parseInt(scanParams.minRooms);
-    if (scanParams.maxRooms && scanParams.maxRooms.trim() !== '') {
+    if (scanParams.maxRooms && scanParams.maxRooms !== 'none') {
       const maxRooms = parseInt(scanParams.maxRooms);
       params.append('rooms', `${minRooms}-${maxRooms}`);
     } else {
       params.append('rooms', `${minRooms}-99`);
     }
-  } else if (scanParams.maxRooms && scanParams.maxRooms.trim() !== '') {
+  } else if (scanParams.maxRooms && scanParams.maxRooms !== 'none') {
     const maxRooms = parseInt(scanParams.maxRooms);
     params.append('rooms', `1-${maxRooms}`);
   }
@@ -172,25 +172,17 @@ async function scrapeYad2(url: string, scanParams: ScanParameters): Promise<Scra
 
     if (!response.ok) {
       console.log(`HTTP error! status: ${response.status}`);
-      // If we get blocked, return realistic apartments based on search criteria
-      return generateRealisticApartments(scanParams);
+      return [];
     }
 
     const html = await response.text();
     console.log('HTML fetched, length:', html.length);
     
-    // Try to parse real data, fallback to realistic generation
-    const realApartments = parseYad2Html(html, scanParams);
-    if (realApartments.length > 0) {
-      return realApartments;
-    } else {
-      console.log('No real apartments parsed, generating realistic ones');
-      return generateRealisticApartments(scanParams);
-    }
+    // Parse real data from Yad2
+    return parseYad2Html(html, scanParams);
   } catch (error) {
     console.error('Error scraping Yad2:', error);
-    // Fallback to realistic apartments
-    return generateRealisticApartments(scanParams);
+    return [];
   }
 }
 
@@ -210,7 +202,7 @@ function parseYad2Html(html: string, scanParams: ScanParameters): ScrapedApartme
       }
     }
     
-    // Extract price patterns
+    // Extract price patterns from HTML
     const priceRegex = /₪([\d,]+)/g;
     const prices: number[] = [];
     let priceMatch;
@@ -218,20 +210,20 @@ function parseYad2Html(html: string, scanParams: ScanParameters): ScrapedApartme
     while ((priceMatch = priceRegex.exec(html)) !== null && prices.length < 10) {
       const price = parseInt(priceMatch[1].replace(/,/g, ''));
       const maxPrice = parseInt(scanParams.maxPrice) || 10000;
-      if (price > 1000 && price <= maxPrice * 1.2) { // Allow some flexibility
+      if (price > 1000 && price <= maxPrice * 1.2) {
         prices.push(price);
       }
     }
     
-    // Extract room counts
+    // Extract room counts from HTML
     const roomRegex = /(\d+)\s*חד/g;
     const roomCounts: number[] = [];
     let roomMatch;
     
     while ((roomMatch = roomRegex.exec(html)) !== null && roomCounts.length < 10) {
       const rooms = parseInt(roomMatch[1]);
-      const minRooms = parseInt(scanParams.minRooms) || 1;
-      const maxRooms = parseInt(scanParams.maxRooms) || 10;
+      const minRooms = scanParams.minRooms !== 'none' ? parseInt(scanParams.minRooms) : 1;
+      const maxRooms = scanParams.maxRooms !== 'none' ? parseInt(scanParams.maxRooms) : 10;
       if (rooms >= minRooms && rooms <= maxRooms) {
         roomCounts.push(rooms);
       }
@@ -239,26 +231,32 @@ function parseYad2Html(html: string, scanParams: ScanParameters): ScrapedApartme
     
     console.log(`Extracted: ${links.length} links, ${prices.length} prices, ${roomCounts.length} rooms`);
     
-    // Create apartments from extracted data
+    // Only create apartments if we have real data
+    if (links.length === 0) {
+      console.log('No apartment links found, returning empty array');
+      return [];
+    }
+    
+    // Create apartments only from extracted real data
     const maxApartments = Math.min(links.length, 6);
     
     for (let i = 0; i < maxApartments; i++) {
-      const price = prices[i % prices.length] || null;
-      const rooms = roomCounts[i % roomCounts.length] || parseInt(scanParams.minRooms) || 2;
-      const location = scanParams.areas[i % scanParams.areas.length] || 'גבעתיים';
+      const price = prices[i] || null;
+      const rooms = roomCounts[i] || null;
+      const location = scanParams.areas[i % scanParams.areas.length] || null;
       
       apartments.push({
-        title: `דירת ${rooms} חדרים${price ? ` - ₪${price.toLocaleString()}` : ''}`,
+        title: `דירה ב${location}${rooms ? ` - ${rooms} חדרים` : ''}${price ? ` - ₪${price.toLocaleString()}` : ''}`,
         price: price,
         location: location,
-        description: `דירה ל${scanParams.propertyType === 'rent' ? 'השכרה' : 'מכירה'} ב${location}`,
-        image_url: `https://images.unsplash.com/photo-${1560184318 + i * 123}?w=400&h=300&fit=crop&auto=format`,
+        description: `דירה ל${scanParams.propertyType === 'rent' ? 'השכרה' : 'מכירה'}${location ? ` ב${location}` : ''}`,
+        image_url: null,
         apartment_link: links[i],
         contact_phone: null,
         contact_name: null,
-        square_meters: Math.floor(Math.random() * 30) + 55,
-        floor: Math.floor(Math.random() * 5) + 1,
-        pets_allowed: ['yes', 'no', 'unknown'][Math.floor(Math.random() * 3)] as any,
+        square_meters: null,
+        floor: null,
+        pets_allowed: 'unknown',
       });
     }
     
@@ -268,43 +266,4 @@ function parseYad2Html(html: string, scanParams: ScanParameters): ScrapedApartme
     console.error('Error parsing HTML:', error);
     return [];
   }
-}
-
-function generateRealisticApartments(scanParams: ScanParameters): ScrapedApartment[] {
-  const apartments: ScrapedApartment[] = [];
-  const maxPrice = parseInt(scanParams.maxPrice) || 5500;
-  const minRooms = parseInt(scanParams.minRooms) || 2;
-  const maxRooms = parseInt(scanParams.maxRooms) || 5;
-  const areas = scanParams.areas.length > 0 ? scanParams.areas : ['גבעתיים', 'רמת גן'];
-  
-  // Generate 4-7 realistic apartments based on search criteria
-  const numApartments = Math.floor(Math.random() * 4) + 4; // 4-7 apartments
-  
-  for (let i = 0; i < numApartments; i++) {
-    const rooms = Math.floor(Math.random() * (maxRooms - minRooms + 1)) + minRooms;
-    const basePrice = scanParams.propertyType === 'rent' 
-      ? Math.floor(Math.random() * (maxPrice * 0.8 - 3000)) + 3000
-      : Math.floor(Math.random() * (maxPrice * 0.8 - 800000)) + 800000;
-    
-    const location = areas[Math.floor(Math.random() * areas.length)];
-    const streetNames = ['הרצל', 'ביאליק', 'רוטשילד', 'דיזנגוף', 'אלנבי', 'קק"ל', 'ויצמן'];
-    const streetName = streetNames[Math.floor(Math.random() * streetNames.length)];
-    const streetNumber = Math.floor(Math.random() * 50) + 1;
-    
-    apartments.push({
-      title: `דירת ${rooms} חדרים ב${location}`,
-      price: basePrice,
-      location: `${streetName} ${streetNumber}, ${location}`,
-      description: `דירה מרווחת ל${scanParams.propertyType === 'rent' ? 'השכרה' : 'מכירה'} ב${location}, ${rooms} חדרים`,
-      image_url: `https://images.unsplash.com/photo-${1560184318 + i * 456}?w=400&h=300&fit=crop&auto=format`,
-      apartment_link: `https://www.yad2.co.il/realestate/item/${Math.random().toString(36).substring(2, 10)}`,
-      contact_phone: `05${Math.floor(Math.random() * 9)}${Math.floor(Math.random() * 1000000).toString().padStart(7, '0')}`,
-      contact_name: ['דוד כהן', 'רחל לוי', 'משה ישראל', 'שרה אברהם'][Math.floor(Math.random() * 4)],
-      square_meters: Math.floor(Math.random() * 40) + (rooms * 20),
-      floor: Math.floor(Math.random() * 6) + 1,
-      pets_allowed: ['yes', 'no', 'unknown'][Math.floor(Math.random() * 3)] as any,
-    });
-  }
-  
-  return apartments;
 }
