@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface ScannedApartment {
@@ -14,6 +15,7 @@ export interface ScannedApartment {
   floor: number | null;
   pets_allowed: 'yes' | 'no' | 'unknown';
   created_at: string;
+  couple_id: string | null;
 }
 
 export interface ScanParameters {
@@ -24,12 +26,35 @@ export interface ScanParameters {
   maxRooms: string;
 }
 
+// Get current user's couple_id
+const getCurrentUserCoupleId = async (): Promise<string | null> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('couple_id')
+    .eq('id', user.id)
+    .single();
+    
+  return profile?.couple_id || null;
+};
+
 export const fetchScannedApartments = async (): Promise<ScannedApartment[]> => {
   console.log('Fetching scanned apartments...');
-  const { data, error } = await supabase
+  const coupleId = await getCurrentUserCoupleId();
+  
+  let query = supabase
     .from('scanned_apartments')
     .select('*')
     .order('created_at', { ascending: false });
+    
+  // If user has a couple_id, filter by it
+  if (coupleId) {
+    query = query.eq('couple_id', coupleId);
+  }
+  
+  const { data, error } = await query;
   
   if (error) {
     console.error('Error fetching scanned apartments:', error);
@@ -58,6 +83,7 @@ export const deleteScannedApartment = async (apartmentId: string) => {
 
 export const moveScannedApartmentToMain = async (scannedApartment: ScannedApartment) => {
   console.log('Moving scanned apartment to main:', scannedApartment.id);
+  const coupleId = await getCurrentUserCoupleId();
   
   // Insert into main apartments table
   const { data, error: insertError } = await supabase
@@ -78,6 +104,7 @@ export const moveScannedApartmentToMain = async (scannedApartment: ScannedApartm
       rating: 0,
       mor_rating: 0,
       gabi_rating: 0,
+      couple_id: coupleId,
     }])
     .select()
     .single();
@@ -104,10 +131,14 @@ export const moveScannedApartmentToMain = async (scannedApartment: ScannedApartm
 
 export const scanYad2Apartments = async (scanParams: ScanParameters) => {
   console.log('Calling yad2-scanner function with params:', scanParams);
+  const coupleId = await getCurrentUserCoupleId();
   
   try {
     const { data, error } = await supabase.functions.invoke('yad2-scanner', {
-      body: { scanParams },
+      body: { 
+        scanParams,
+        coupleId 
+      },
       headers: {
         'Content-Type': 'application/json',
       }
@@ -120,7 +151,6 @@ export const scanYad2Apartments = async (scanParams: ScanParameters) => {
       throw new Error(error.message || 'Function invocation failed');
     }
     
-    // Handle both success with 0 results and actual results
     if (data && data.success) {
       return data;
     } else if (data && data.success === false) {
@@ -136,15 +166,22 @@ export const scanYad2Apartments = async (scanParams: ScanParameters) => {
 
 export const clearScannedApartments = async () => {
   console.log('Clearing all scanned apartments...');
-  const { error } = await supabase
-    .from('scanned_apartments')
-    .delete()
-    .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+  const coupleId = await getCurrentUserCoupleId();
+  
+  let query = supabase.from('scanned_apartments').delete();
+  
+  if (coupleId) {
+    query = query.eq('couple_id', coupleId);
+  } else {
+    query = query.neq('id', '00000000-0000-0000-0000-000000000000');
+  }
+
+  const { error } = await query;
 
   if (error) {
     console.error('Error clearing scanned apartments:', error);
     throw error;
   }
   
-  console.log('Successfully cleared all scanned apartments');
+  console.log('Successfully cleared scanned apartments');
 };
