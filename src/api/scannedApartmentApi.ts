@@ -14,6 +14,7 @@ export interface ScannedApartment {
   floor: number | null;
   pets_allowed: 'yes' | 'no' | 'unknown';
   created_at: string;
+  couple_id?: string | null;
 }
 
 export interface ScanParameters {
@@ -26,9 +27,26 @@ export interface ScanParameters {
 
 export const fetchScannedApartments = async (): Promise<ScannedApartment[]> => {
   console.log('Fetching scanned apartments...');
+  
+  // Get current user's couple_id
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return [];
+  }
+
+  // Get user's profile to find couple_id
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('couple_id')
+    .eq('id', user.id)
+    .single();
+
+  const coupleId = profile?.couple_id;
+
   const { data, error } = await supabase
     .from('scanned_apartments')
     .select('*')
+    .eq('couple_id', coupleId)
     .order('created_at', { ascending: false });
   
   if (error) {
@@ -59,7 +77,25 @@ export const deleteScannedApartment = async (apartmentId: string) => {
 export const moveScannedApartmentToMain = async (scannedApartment: ScannedApartment) => {
   console.log('Moving scanned apartment to main:', scannedApartment.id);
   
-  // Insert into main apartments table
+  // Get current user's couple_id
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  // Get user's profile to find couple_id
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('couple_id')
+    .eq('id', user.id)
+    .single();
+
+  const coupleId = profile?.couple_id;
+  if (!coupleId) {
+    throw new Error('User not associated with a couple');
+  }
+  
+  // Insert into main apartments table with couple_id
   const { data, error: insertError } = await supabase
     .from('apartments')
     .insert([{
@@ -78,6 +114,7 @@ export const moveScannedApartmentToMain = async (scannedApartment: ScannedApartm
       rating: 0,
       mor_rating: 0,
       gabi_rating: 0,
+      couple_id: coupleId,
     }])
     .select()
     .single();
@@ -105,9 +142,30 @@ export const moveScannedApartmentToMain = async (scannedApartment: ScannedApartm
 export const scanYad2Apartments = async (scanParams: ScanParameters) => {
   console.log('Calling yad2-scanner function with params:', scanParams);
   
+  // Get current user's couple_id
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  // Get user's profile to find couple_id
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('couple_id')
+    .eq('id', user.id)
+    .single();
+
+  const coupleId = profile?.couple_id;
+  if (!coupleId) {
+    throw new Error('User not associated with a couple');
+  }
+  
   try {
     const { data, error } = await supabase.functions.invoke('yad2-scanner', {
-      body: { scanParams },
+      body: { 
+        scanParams,
+        coupleId
+      },
       headers: {
         'Content-Type': 'application/json',
       }
@@ -136,10 +194,29 @@ export const scanYad2Apartments = async (scanParams: ScanParameters) => {
 
 export const clearScannedApartments = async () => {
   console.log('Clearing all scanned apartments...');
+  
+  // Get current user's couple_id
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  // Get user's profile to find couple_id
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('couple_id')
+    .eq('id', user.id)
+    .single();
+
+  const coupleId = profile?.couple_id;
+  if (!coupleId) {
+    throw new Error('User not associated with a couple');
+  }
+  
   const { error } = await supabase
     .from('scanned_apartments')
     .delete()
-    .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+    .eq('couple_id', coupleId);
 
   if (error) {
     console.error('Error clearing scanned apartments:', error);

@@ -10,7 +10,7 @@ import ApartmentForm from '@/components/ApartmentForm';
 import ApartmentCard from '@/components/ApartmentCard';
 import EditApartmentDialog from '@/components/EditApartmentDialog';
 import { useAuth } from '@/contexts/AuthContext';
-import PasswordDialog from '@/components/PasswordDialog';
+import AuthDialog from '@/components/AuthDialog';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import ThemeHeader from '@/components/ThemeHeader';
@@ -30,22 +30,11 @@ const Index = () => {
   const [layoutMode, setLayoutMode] = useState<'regular' | 'functional' | 'tinder'>('regular');
   const [tinderMode, setTinderMode] = useState<'regular' | 'scanned'>('regular');
   const [isYad2ScanDialogOpen, setIsYad2ScanDialogOpen] = useState(false);
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
 
-  const { isAuthenticated, login } = useAuth();
-  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
-  const [authAttempted, setAuthAttempted] = useState(false);
+  const { user, loading: authLoading, signOut } = useAuth();
   const { toast } = useToast();
   const { themeConfig } = useTheme();
-
-  useEffect(() => {
-    if (!isAuthenticated && !authAttempted) {
-      setTimeout(() => {
-        if (!sessionStorage.getItem('isAuthenticated')) {
-          setIsPasswordDialogOpen(true);
-        }
-      }, 100);
-    }
-  }, [isAuthenticated, authAttempted]);
 
   const {
     apartments,
@@ -72,22 +61,22 @@ const Index = () => {
   };
 
   const handleMorRatingChange = async (apartmentId: string, newRating: number) => {
-    if (!isAuthenticated) return;
+    if (!user) return;
     await updateMorRating(apartmentId, newRating);
   };
 
   const handleGabiRatingChange = async (apartmentId: string, newRating: number) => {
-    if (!isAuthenticated) return;
+    if (!user) return;
     await updateGabiRating(apartmentId, newRating);
   };
 
   const handleMorTalkedChange = async (apartmentId: string, value: boolean) => {
-    if (!isAuthenticated) return;
+    if (!user) return;
     await updateApartment(apartmentId, { spoke_with_mor: value });
   };
   
   const handleGabiTalkedChange = async (apartmentId: string, value: boolean) => {
-    if (!isAuthenticated) return;
+    if (!user) return;
     await updateApartment(apartmentId, { spoke_with_gabi: value });
   };
 
@@ -108,35 +97,12 @@ const Index = () => {
     await deleteApartment(apartmentId);
   };
 
-  const handlePasswordSubmit = (password: string) => {
-    setAuthAttempted(true);
-    const success = login(password);
-    if (success) {
-      setIsPasswordDialogOpen(false);
-      toast({
-        title: "התחברת בהצלחה!",
-        description: "כעת באפשרותך לערוך את רשימת הדירות.",
-      });
-    } else {
-      toast({
-        title: "סיסמא שגויה",
-        description: "הסיסמא שהזנת אינה נכונה. הנך במצב צפייה בלבד.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const onPasswordDialogChange = (open: boolean) => {
-    setIsPasswordDialogOpen(open);
-    if (!open) {
-      setAuthAttempted(true);
-      if (!isAuthenticated) {
-        toast({
-          title: "מצב צפייה בלבד",
-          description: "לא הוזנה סיסמא. לא ניתן לבצע שינויים.",
-        });
-      }
-    }
+  const handleLogout = async () => {
+    await signOut();
+    toast({
+      title: "התנתקת בהצלחה",
+      description: "חזרת למצב צפייה בלבד",
+    });
   };
 
   const handleLayoutToggle = () => {
@@ -144,11 +110,51 @@ const Index = () => {
       setLayoutMode('functional');
     } else if (layoutMode === 'functional') {
       setLayoutMode('tinder');
-      setTinderMode('regular'); // Reset to regular when entering tinder mode
+      setTinderMode('regular');
     } else {
       setLayoutMode('regular');
     }
   };
+
+  // הצג מסך טעינה בזמן בדיקת אותנטיקציה
+  if (authLoading) {
+    return (
+      <div className={`min-h-screen ${themeConfig.backgroundGradient} flex items-center justify-center`} dir="rtl">
+        <div className="text-center">
+          <div className="text-4xl mb-4">{themeConfig.mainEmoji}</div>
+          <p className={`${themeConfig.accentColor} text-lg`}>בודק אותנטיקציה...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // הצג מסך התחברות כאשר המשתמש לא מחובר
+  if (!user) {
+    return (
+      <div className={`min-h-screen ${themeConfig.backgroundGradient} flex items-center justify-center`} dir="rtl">
+        <div className="text-center space-y-6">
+          <div className="text-6xl mb-4">{themeConfig.mainEmoji}</div>
+          <h1 className={`text-3xl font-bold ${themeConfig.textColor}`}>
+            ברוכים הבאים למערכת חיפוש הדירה!
+          </h1>
+          <p className={`${themeConfig.accentColor} text-lg max-w-md mx-auto`}>
+            התחבר או הירשם כדי להתחיל לנהל את רשימת הדירות שלך
+          </p>
+          <Button
+            onClick={() => setIsAuthDialogOpen(true)}
+            className={`${themeConfig.buttonGradient} text-white text-lg px-8 py-3 rounded-lg shadow-lg transition hover:scale-105`}
+          >
+            התחבר / הירשם
+          </Button>
+        </div>
+
+        <AuthDialog
+          open={isAuthDialogOpen}
+          onOpenChange={setIsAuthDialogOpen}
+        />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -222,12 +228,25 @@ const Index = () => {
           layoutMode={layoutMode}
         />
 
+        {/* User Info and Logout */}
+        <div className="flex justify-between items-center mb-6">
+          <div className={`${themeConfig.textColor} text-sm`}>
+            מחובר כ: {user.email}
+          </div>
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="text-sm"
+          >
+            התנתק
+          </Button>
+        </div>
+
         {/* כפתורי הוסף דירה וסרוק דירות */}
         <div className="flex flex-col items-center gap-4 mb-8">
           <Button
             onClick={() => setIsAddDialogOpen(true)}
             className={`${themeConfig.buttonGradient} text-white text-lg px-6 py-3 rounded shadow transition w-64`}
-            disabled={!isAuthenticated}
           >
             + הוסף דירה חדשה
           </Button>
@@ -235,7 +254,6 @@ const Index = () => {
           <Button
             onClick={() => setIsYad2ScanDialogOpen(true)}
             className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-lg px-6 py-3 rounded shadow transition w-64"
-            disabled={!isAuthenticated}
           >
             🔍 סרוק דירות אוטומטית
           </Button>
@@ -339,7 +357,7 @@ const Index = () => {
               onGabiRatingChange={handleGabiRatingChange}
               onLikeScanned={likeScannedApartment}
               onDeleteScanned={deleteScanned}
-              isAuthenticated={isAuthenticated}
+              isAuthenticated={!!user}
               mode={tinderMode}
             />
           </div>
@@ -374,7 +392,7 @@ const Index = () => {
                     onDelete={handleDelete}
                     onMorRatingChange={handleMorRatingChange}
                     onGabiRatingChange={handleGabiRatingChange}
-                    isAuthenticated={isAuthenticated}
+                    isAuthenticated={!!user}
                     onCardClick={() => setSelectedApartmentId(apartment.id)}
                     onMorTalkedChange={handleMorTalkedChange}
                     onGabiTalkedChange={handleGabiTalkedChange}
@@ -408,7 +426,7 @@ const Index = () => {
                   onDelete={handleDelete}
                   onMorRatingChange={handleMorRatingChange}
                   onGabiRatingChange={handleGabiRatingChange}
-                  isAuthenticated={isAuthenticated}
+                  isAuthenticated={!!user}
                   onCardClick={() => setSelectedApartmentId(apartment.id)}
                   onMorTalkedChange={handleMorTalkedChange}
                   onGabiTalkedChange={handleGabiTalkedChange}
@@ -439,12 +457,6 @@ const Index = () => {
 
       {/* Cat Game Modal */}
       <CatGame isOpen={isCatGameOpen} onClose={() => setIsCatGameOpen(false)} />
-
-      <PasswordDialog
-        open={isPasswordDialogOpen}
-        onOpenChange={onPasswordDialogChange}
-        onPasswordSubmit={handlePasswordSubmit}
-      />
     </div>
   );
 };

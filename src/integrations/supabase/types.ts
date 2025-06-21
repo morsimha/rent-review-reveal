@@ -15,6 +15,7 @@ export type Database = {
           arnona: number | null
           contact_name: string | null
           contact_phone: string | null
+          couple_id: string | null
           created_at: string
           description: string | null
           entry_date: string | null
@@ -43,6 +44,7 @@ export type Database = {
           arnona?: number | null
           contact_name?: string | null
           contact_phone?: string | null
+          couple_id?: string | null
           created_at?: string
           description?: string | null
           entry_date?: string | null
@@ -71,6 +73,7 @@ export type Database = {
           arnona?: number | null
           contact_name?: string | null
           contact_phone?: string | null
+          couple_id?: string | null
           created_at?: string
           description?: string | null
           entry_date?: string | null
@@ -94,7 +97,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "apartments_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       cat_game_scores: {
         Row: {
@@ -116,6 +127,56 @@ export type Database = {
           score?: number
         }
         Relationships: []
+      }
+      couples: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apartments_couple_id_fkey"
+            columns: ["id"]
+            isOneToOne: false
+            referencedRelation: "apartments"
+            referencedColumns: ["couple_id"]
+          },
+          {
+            foreignKeyName: "profiles_couple_id_fkey"
+            columns: ["id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["couple_id"]
+          },
+          {
+            foreignKeyName: "scanned_apartments_couple_id_fkey"
+            columns: ["id"]
+            isOneToOne: false
+            referencedRelation: "scanned_apartments"
+            referencedColumns: ["couple_id"]
+          },
+          {
+            foreignKeyName: "invitations_couple_id_fkey"
+            columns: ["id"]
+            isOneToOne: false
+            referencedRelation: "invitations"
+            referencedColumns: ["couple_id"]
+          }
+        ]
       }
       drawings: {
         Row: {
@@ -214,11 +275,89 @@ export type Database = {
           },
         ]
       }
+      invitations: {
+        Row: {
+          couple_id: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          token: string
+        }
+        Insert: {
+          couple_id: string
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          token: string
+        }
+        Update: {
+          couple_id?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      profiles: {
+        Row: {
+          couple_id: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          couple_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          couple_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       scanned_apartments: {
         Row: {
           apartment_link: string | null
           contact_name: string | null
           contact_phone: string | null
+          couple_id: string | null
           created_at: string
           description: string | null
           floor: number | null
@@ -234,6 +373,7 @@ export type Database = {
           apartment_link?: string | null
           contact_name?: string | null
           contact_phone?: string | null
+          couple_id?: string | null
           created_at?: string
           description?: string | null
           floor?: number | null
@@ -249,6 +389,7 @@ export type Database = {
           apartment_link?: string | null
           contact_name?: string | null
           contact_phone?: string | null
+          couple_id?: string | null
           created_at?: string
           description?: string | null
           floor?: number | null
@@ -260,7 +401,15 @@ export type Database = {
           square_meters?: number | null
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "scanned_apartments_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {
