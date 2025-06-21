@@ -21,7 +21,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 const Index = () => {
   const [editingApartment, setEditingApartment] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [tinderMode, setTinderMode] = useState('regular');
+  const [tinderMode, setTinderMode] = useState<'regular' | 'scanned'>('regular');
+  const [showYad2Dialog, setShowYad2Dialog] = useState(false);
+  const [showCatGame, setShowCatGame] = useState(false);
+  const [showDrawingGame, setShowDrawingGame] = useState(false);
+  const [layoutMode, setLayoutMode] = useState<'grid' | 'list'>('grid');
   
   const { isAuthenticated, profile, loading } = useAuth();
   const navigate = useNavigate();
@@ -48,7 +52,12 @@ const Index = () => {
   // Public features available to everyone
   const publicFeatures = (
     <div className="space-y-8">
-      <ThemeHeader />
+      <ThemeHeader 
+        onDrawingGameOpen={() => setShowDrawingGame(true)}
+        onCatGameOpen={() => setShowCatGame(true)}
+        onLayoutToggle={() => setLayoutMode(prev => prev === 'grid' ? 'list' : 'grid')}
+        layoutMode={layoutMode}
+      />
       
       {/* Music Feature */}
       <Card>
@@ -84,10 +93,10 @@ const Index = () => {
               <TabsTrigger value="drawing">משחק ציור</TabsTrigger>
             </TabsList>
             <TabsContent value="cat">
-              <CatGame />
+              <CatGame isOpen={showCatGame} onClose={() => setShowCatGame(false)} />
             </TabsContent>
             <TabsContent value="drawing">
-              <DrawingGame />
+              <DrawingGame isOpen={showDrawingGame} onClose={() => setShowDrawingGame(false)} />
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -186,7 +195,12 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
       <div className="container mx-auto p-4">
-        <ThemeHeader />
+        <ThemeHeader 
+          onDrawingGameOpen={() => setShowDrawingGame(true)}
+          onCatGameOpen={() => setShowCatGame(true)}
+          onLayoutToggle={() => setLayoutMode(prev => prev === 'grid' ? 'list' : 'grid')}
+          layoutMode={layoutMode}
+        />
         
         <Tabs defaultValue="grid" className="w-full">
           <TabsList className="grid w-full grid-cols-6">
@@ -202,7 +216,12 @@ const Index = () => {
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-purple-800">הדירות שלנו</h2>
               <div className="flex gap-2">
-                <Yad2ScanDialog onScanComplete={refreshScanned} />
+                <Button
+                  onClick={() => setShowYad2Dialog(true)}
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+                >
+                  סריקת Yad2
+                </Button>
                 <Button
                   onClick={() => setShowAddForm(true)}
                   className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
@@ -267,7 +286,12 @@ const Index = () => {
           <TabsContent value="scanned" className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-purple-800">דירות סרוקות</h2>
-              <Yad2ScanDialog onScanComplete={refreshScanned} />
+              <Button
+                onClick={() => setShowYad2Dialog(true)}
+                className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+              >
+                סריקת Yad2
+              </Button>
             </div>
             
             {scannedLoading ? (
@@ -314,16 +338,17 @@ const Index = () => {
                 <TabsTrigger value="drawing">משחק ציור</TabsTrigger>
               </TabsList>
               <TabsContent value="cat">
-                <CatGame />
+                <CatGame isOpen={showCatGame} onClose={() => setShowCatGame(false)} />
               </TabsContent>
               <TabsContent value="drawing">
-                <DrawingGame />
+                <DrawingGame isOpen={showDrawingGame} onClose={() => setShowDrawingGame(false)} />
               </TabsContent>
             </Tabs>
           </TabsContent>
 
           <TabsContent value="add">
             <ApartmentForm
+              apartment={null}
               onSave={handleSaveApartment}
               onCancel={() => setShowAddForm(false)}
               uploadImage={uploadImage}
@@ -333,6 +358,7 @@ const Index = () => {
 
         {showAddForm && (
           <ApartmentForm
+            apartment={null}
             onSave={handleSaveApartment}
             onCancel={() => setShowAddForm(false)}
             uploadImage={uploadImage}
@@ -342,12 +368,21 @@ const Index = () => {
         {editingApartment && (
           <EditApartmentDialog
             apartment={editingApartment}
-            open={!!editingApartment}
-            onOpenChange={(open) => !open && setEditingApartment(null)}
+            isOpen={!!editingApartment}
+            onClose={() => setEditingApartment(null)}
             onSave={handleSaveApartment}
             uploadImage={uploadImage}
           />
         )}
+
+        <Yad2ScanDialog
+          open={showYad2Dialog}
+          onOpenChange={setShowYad2Dialog}
+          onScanComplete={async () => {
+            await refreshScanned();
+            setShowYad2Dialog(false);
+          }}
+        />
       </div>
     </div>
   );
