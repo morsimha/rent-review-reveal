@@ -27,8 +27,8 @@ interface ThemeConfig {
 const themeConfigs: Record<ThemeType, ThemeConfig> = {
   cats: {
     name: 'חתולים',
-    title: 'Rent Master',
-    subtitle: 'Find your next home 🏠✨',
+    title: 'מור וגבי מוצאים דירה',
+    subtitle: 'וואו איזה ביתתת 🏠✨',
     punishment: 'מי שמוסיף הכי פחות דירות עושה כלים לשבוע בבית החדש',
     mapTitle: 'מפת הדירות',
     backgroundGradient: 'bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100',

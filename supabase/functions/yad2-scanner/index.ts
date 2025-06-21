@@ -24,7 +24,6 @@ serve(async (req) => {
     
     let requestBody;
     let scanParams;
-    let coupleId;
     
     try {
       const text = await req.text();
@@ -42,14 +41,9 @@ serve(async (req) => {
       } else {
         requestBody = JSON.parse(text);
         scanParams = requestBody.scanParams;
-        coupleId = requestBody.coupleId;
         
         if (!scanParams) {
           throw new Error('scanParams missing from request body');
-        }
-        
-        if (!coupleId) {
-          throw new Error('coupleId missing from request body');
         }
       }
     } catch (parseError) {
@@ -64,7 +58,6 @@ serve(async (req) => {
     }
 
     console.log('Scan parameters:', scanParams);
-    console.log('Couple ID:', coupleId);
 
     // Build Yad2 URL with structured parameters
     const yad2Url = buildYad2SearchUrl(scanParams);
@@ -85,14 +78,8 @@ serve(async (req) => {
       });
     }
 
-    // Add couple_id to each apartment
-    const apartmentsWithCouple = scrapedApartments.map(apartment => ({
-      ...apartment,
-      couple_id: coupleId
-    }));
-
     // Store in scanned_apartments table
-    const { data, error } = await supabase.from('scanned_apartments').insert(apartmentsWithCouple).select();
+    const { data, error } = await supabase.from('scanned_apartments').insert(scrapedApartments).select();
     
     if (error) {
       console.error('Error inserting scanned apartments:', error);
