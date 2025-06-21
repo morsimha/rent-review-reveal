@@ -1,4 +1,3 @@
-
 export interface Apartment {
   id: string;
   fb_url: string | null;
@@ -26,33 +25,4 @@ export interface Apartment {
   spoke_with_mor?: boolean | null;
   spoke_with_gabi?: boolean | null;
   scheduled_visit_text?: string | null;
-  couple_id?: string | null;
-}
-
-export interface UserProfile {
-  id: string;
-  email: string | null;
-  full_name: string | null;
-  avatar_url: string | null;
-  couple_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Couple {
-  id: string;
-  partner1_id: string;
-  partner2_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Invitation {
-  id: string;
-  inviter_id: string;
-  invitee_email: string;
-  couple_id: string;
-  status: 'pending' | 'accepted' | 'expired';
-  created_at: string;
-  expires_at: string;
 }

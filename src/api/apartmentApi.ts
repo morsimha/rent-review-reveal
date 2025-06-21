@@ -1,37 +1,12 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Apartment } from '@/types/ApartmentTypes';
 
-// Get current user's couple_id
-const getCurrentUserCoupleId = async (): Promise<string | null> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('couple_id')
-    .eq('id', user.id)
-    .single();
-    
-  return profile?.couple_id || null;
-};
-
 export const fetchApartmentsFromDB = async (): Promise<Apartment[]> => {
-  const coupleId = await getCurrentUserCoupleId();
-  
-  let query = supabase
+  const { data, error } = await supabase
     .from('apartments')
     .select('*')
     .order('created_at', { ascending: false });
-    
-  // If user has a couple_id, filter by it; otherwise show all apartments
-  if (coupleId) {
-    query = query.eq('couple_id', coupleId);
-  }
-  
-  const { data, error } = await query;
   if (error) throw error;
-  
   // Sort by combined rating (mor_rating + gabi_rating) in descending order
   return (data || []).sort((a, b) => {
     const totalA = (a.mor_rating || 0) + (a.gabi_rating || 0);
@@ -57,37 +32,32 @@ export const uploadApartmentImageToStorage = async (file: File): Promise<string 
 };
 
 export const insertApartment = async (apartmentData: Omit<Apartment, 'id' | 'created_at' | 'updated_at'>) => {
-  const coupleId = await getCurrentUserCoupleId();
-  
-  const dataWithCouple = {
-    ...apartmentData,
-    couple_id: coupleId
-  };
-  
   const { data, error } = await supabase
     .from('apartments')
-    .insert([dataWithCouple])
+    .insert([apartmentData])
     .select()
     .single();
   if (error) throw error;
   
-  // Send email notification for new apartment
+  // Send email notification for new apartment (כולל שדה הערות)
   try {
     await supabase.functions.invoke('send-apartment-email', {
       body: {
-        ...dataWithCouple,
+        ...apartmentData,
         action: 'added',
-        note: dataWithCouple.note || "",
+        note: apartmentData.note || "", // ensure נשלח
       }
     });
     console.log('Email notification sent for new apartment');
   } catch (emailError) {
     console.error('Failed to send email notification:', emailError);
+    // Don't fail the apartment creation if email fails
   }
   
   return data;
 };
 
+// *** MAIN CHANGE: Remove the email notification logic from updateApartmentInDB ***
 export const updateApartmentInDB = async (id: string, updates: Partial<Apartment>) => {
   const { error: updateError } = await supabase
     .from('apartments')
