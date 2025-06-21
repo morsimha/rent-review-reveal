@@ -49,6 +49,8 @@ After starting the development server:
 
 ---
 
+# Welcome to your Lovable project
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/1ec0ccdb-5b1e-44a3-9f85-a2f045d442e4
