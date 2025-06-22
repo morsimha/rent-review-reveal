@@ -203,7 +203,7 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({
           <button
             onClick={() => setIsPianoOpen(true)}
             className="relative text-4xl hover:scale-110 transition-all duration-300 cursor-pointer p-2 rounded-2xl bg-gradient-to-br from-blue-100 to-purple-100 hover:from-blue-200 hover:to-purple-200 shadow-lg hover:shadow-xl border-2 border-blue-200 hover:border-blue-300 animate-pulse"
-            title="פסנתר אינטראקטיבי!"
+            title="פסנתריקו אינטראקטיבי!"
             style={{ animationDuration: '3s' }}
           >
             <span className="relative z-10">🎹</span>
