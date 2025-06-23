@@ -1,8 +1,8 @@
-# Rent Review Reveal
+# Rent Master
 
 ## Project Description & Purpose
 
-Rent Review Reveal is a web application designed to help renters make informed decisions about apartments. It provides apartment reviews, ratings, and advice using a combination of user input and AI-powered analysis. The app aims to demystify the rental process, offering insights into apartment quality, neighborhood, and value, so users can rent with confidence.
+Rent Master is a web application designed to help renters make informed decisions about apartments. It provides apartment reviews, ratings, and advice using a combination of user input and AI-powered analysis. The app aims to demystify the rental process, offering insights into apartment quality, neighborhood, and value, so users can rent with confidence.
 
 Key features include:
 - Apartment search and comparison
