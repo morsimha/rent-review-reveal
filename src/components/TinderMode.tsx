@@ -186,7 +186,7 @@ const TinderMode: React.FC<TinderModeProps> = ({
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
         <div className="text-6xl mb-4">🎉</div>
         <h3 className={`text-2xl font-bold ${themeConfig.textColor} mb-4`}>
-          {mode === 'scanned' ? 'סיימת לעבור על כל הדירות הסרוקות!' : 'סיימת לעבור על כל הדירות!'}
+          {mode === 'scanned' ? 'סיימת לעבור על כל הדירות בסל המחזור!' : 'סיימת לעבור על כל הדירות!'}
         </h3>
         <p className={`${themeConfig.accentColor} mb-6`}>
           {mode === 'scanned' 

@@ -326,7 +326,7 @@ const Index = () => {
                       tinderMode === 'scanned' ? 'bg-blue-500 text-white' : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
-                    דירות סרוקות ({scannedApartments.length})
+                    סל המחזור ({scannedApartments.length})
                   </button>
                 </div>
               </div>

@@ -25,7 +25,7 @@ const TinderProgressBar: React.FC<TinderProgressBarProps> = ({
         <div className="flex items-center gap-2">
           {mode === 'scanned' && (
             <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-              דירות סרוקות
+              סל המחזור
             </span>
           )}
           <Button

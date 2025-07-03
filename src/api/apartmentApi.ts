@@ -66,10 +66,41 @@ export const updateApartmentInDB = async (id: string, updates: Partial<Apartment
   if (updateError) throw updateError;
 };
 
-export const deleteApartmentFromDB = async (id: string) => {
-  const { error } = await supabase
+export const moveApartmentToRecycleBin = async (id: string) => {
+  // First, get the apartment data
+  const { data: apartment, error: fetchError } = await supabase
+    .from('apartments')
+    .select('*')
+    .eq('id', id)
+    .single();
+  
+  if (fetchError) throw fetchError;
+  
+  // Insert into scanned_apartments (recycle bin)
+  const { error: insertError } = await supabase
+    .from('scanned_apartments')
+    .insert([{
+      title: apartment.title,
+      description: apartment.description,
+      price: apartment.price,
+      location: apartment.location,
+      image_url: apartment.image_url,
+      apartment_link: apartment.apartment_link,
+      contact_phone: apartment.contact_phone,
+      contact_name: apartment.contact_name,
+      square_meters: apartment.square_meters,
+      floor: apartment.floor,
+      pets_allowed: apartment.pets_allowed,
+      couple_id: apartment.couple_id,
+    }]);
+  
+  if (insertError) throw insertError;
+  
+  // Delete from apartments
+  const { error: deleteError } = await supabase
     .from('apartments')
     .delete()
     .eq('id', id);
-  if (error) throw error;
+  
+  if (deleteError) throw deleteError;
 };

@@ -7,7 +7,7 @@ import {
   uploadApartmentImageToStorage,
   insertApartment,
   updateApartmentInDB,
-  deleteApartmentFromDB
+  moveApartmentToRecycleBin
 } from '@/api/apartmentApi';
 
 export const useApartments = () => {
@@ -88,18 +88,18 @@ export const useApartments = () => {
 
   const deleteApartment = async (id: string) => {
     try {
-      await deleteApartmentFromDB(id);
+      await moveApartmentToRecycleBin(id);
       await fetchApartments(); // Refresh the list
       toast({
-        title: "הדירה נמחקה",
-        description: "הדירה הוסרה מהרשימה",
+        title: "הדירה הועברה לסל המחזור",
+        description: "הדירה הועברה לסל המחזור ונשמרה שם",
       });
       return { success: true };
     } catch (error) {
-      console.error('Error deleting apartment:', error);
+      console.error('Error moving apartment to recycle bin:', error);
       toast({
         title: "שגיאה",
-        description: "לא ניתן למחוק את הדירה",
+        description: "לא ניתן להעביר את הדירה לסל המחזור",
         variant: "destructive"
       });
       return { success: false, error };

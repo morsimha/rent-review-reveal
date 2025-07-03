@@ -91,7 +91,7 @@ const Yad2ScanDialog: React.FC<Yad2ScanDialogProps> = ({
       await clearScannedApartments();
       
       toast({
-        title: "נמחקו כל הדירות הסרוקות",
+        title: "סל המחזור רוקן",
         description: "ניתן לסרוק דירות חדשות",
       });
       
@@ -99,7 +99,7 @@ const Yad2ScanDialog: React.FC<Yad2ScanDialogProps> = ({
     } catch (error) {
       toast({
         title: "שגיאה במחיקה",
-        description: "לא ניתן למחוק את הדירות הסרוקות",
+        description: "לא ניתן לרוקן את סל המחזור",
         variant: "destructive"
       });
     } finally {
@@ -227,7 +227,7 @@ const Yad2ScanDialog: React.FC<Yad2ScanDialogProps> = ({
               ) : (
                 <Trash2 className="w-4 h-4" />
               )}
-              מחק דירות סרוקות
+              רוקן סל מחזור
             </Button>
 
             <div className="flex gap-2">
