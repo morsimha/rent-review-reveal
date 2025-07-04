@@ -52,7 +52,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 
   return (
     <Card
-      className="bg-white/90 backdrop-blur-sm border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 flex flex-col cursor-pointer"
+      className="bg-white/90 backdrop-blur-sm border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 flex flex-col cursor-pointer relative"
       onClick={onCardClick}
     >
       <CardContent className="p-0 flex flex-col h-full">
@@ -60,43 +60,51 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
         <div
           className={`h-2 w-full rounded-t-lg ${getStatusColor(apartment.status)}`}
         ></div>
+        
+        {/* Edit/Delete buttons - positioned inside the card at top right */}
+        {isAuthenticated && (
+          <div className="absolute top-3 left-3 z-10">
+            <ApartmentCardActions
+              apartment={apartment}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          </div>
+        )}
+        
         {/* Image and prices */}
         <ApartmentCardImageSection apartment={apartment} />
         {/* Info */}
         <ApartmentCardMainInfo apartment={apartment} />
-        {/* דירוגים/סטטוס */}
-        <ApartmentCardRatings
-          apartment={apartment}
-          isAuthenticated={isAuthenticated}
-          onMorRatingChange={onMorRatingChange}
-          onGabiRatingChange={onGabiRatingChange}
-          onMorTalkedChange={onMorTalkedChange}
-          onGabiTalkedChange={onGabiTalkedChange}
-        />
-        {/* הערות + שורה חדשה לתאריך ביקור */}
-        <ApartmentCardNote
-          note={apartment.note}
-          scheduled_visit_text={apartment.scheduled_visit_text}
-        />
-        {/* כפתור "שווה לי?" */}
-        <div className="flex flex-row justify-center pb-2 mt-1">
-          <button
-            type="button"
-            className="flex items-center gap-2 border rounded px-3 py-1 text-sm font-semibold text-purple-700 border-purple-300 bg-purple-50 hover:bg-purple-100 transition"
-            onClick={adviceDialog.openDialog}
-          >
-            <Brain size={18} className="text-purple-500"/>
-            שווה לי? 🧠
-          </button>
-        </div>
-        {/* פעולות */}
-        {isAuthenticated && (
-          <ApartmentCardActions
+        
+        {/* Content with adjusted padding */}
+        <div className="px-4 pb-4 flex-1 flex flex-col">
+          {/* דירוגים/סטטוס */}
+          <ApartmentCardRatings
             apartment={apartment}
-            onEdit={onEdit}
-            onDelete={onDelete}
+            isAuthenticated={isAuthenticated}
+            onMorRatingChange={onMorRatingChange}
+            onGabiRatingChange={onGabiRatingChange}
+            onMorTalkedChange={onMorTalkedChange}
+            onGabiTalkedChange={onGabiTalkedChange}
           />
-        )}
+          {/* הערות + שורה חדשה לתאריך ביקור */}
+          <ApartmentCardNote
+            note={apartment.note}
+            scheduled_visit_text={apartment.scheduled_visit_text}
+          />
+          {/* כפתור "שווה לי?" */}
+          <div className="flex flex-row justify-center pb-2 mt-auto">
+            <button
+              type="button"
+              className="flex items-center gap-2 border rounded px-3 py-1 text-sm font-semibold text-purple-700 border-purple-300 bg-purple-50 hover:bg-purple-100 transition"
+              onClick={adviceDialog.openDialog}
+            >
+              <Brain size={18} className="text-purple-500"/>
+              שווה לי? 🧠
+            </button>
+          </div>
+        </div>
       </CardContent>
       {/* דיאלוג ייעוץ + בדיחה */}
       <ApartmentAdviceDialog

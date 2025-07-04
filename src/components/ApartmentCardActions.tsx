@@ -11,21 +11,26 @@ interface Props {
 }
 
 const ApartmentCardActions: React.FC<Props> = ({ apartment, onEdit, onDelete }) => (
-  <div className="flex justify-between items-center mt-auto pt-3">
+  <div className="flex gap-2">
     <Button
       size="sm"
       variant="outline"
-      onClick={() => onEdit(apartment)}
-      className="h-8 px-3 text-sm"
+      onClick={(e) => {
+        e.stopPropagation();
+        onEdit(apartment);
+      }}
+      className="h-8 w-8 p-0 bg-white/90 hover:bg-white shadow-sm"
     >
-      <Edit className="w-4 h-4 ml-1" />
-      ערוך
+      <Edit className="w-4 h-4" />
     </Button>
     <Button
       size="sm"
       variant="destructive"
-      onClick={() => onDelete(apartment.id)}
-      className="bg-red-500 hover:bg-red-600 h-8 w-8 p-0"
+      onClick={(e) => {
+        e.stopPropagation();
+        onDelete(apartment.id);
+      }}
+      className="bg-red-500 hover:bg-red-600 h-8 w-8 p-0 shadow-sm"
     >
       <Trash2 className="w-4 h-4" />
     </Button>
