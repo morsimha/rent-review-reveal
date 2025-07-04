@@ -81,18 +81,8 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             note={apartment.note}
             scheduled_visit_text={apartment.scheduled_visit_text}
           />
-          {/* כפתור העריכה מתחת לאין הערות */}
-          <div className="flex justify-end mb-2">
-            {isAuthenticated && (
-              <ApartmentCardActions
-                apartment={apartment}
-                onEdit={onEdit}
-                onDelete={onDelete}
-              />
-            )}
-          </div>
-          {/* כפתור "שווה לי?" במרכז */}
-          <div className="flex flex-row justify-center pb-2 mt-auto">
+          {/* שורה תחתונה עם כפתור "שווה לי?" וכפתורי עריכה/מחיקה */}
+          <div className="flex flex-row justify-between items-center pb-2 mt-auto">
             <button
               type="button"
               className="flex items-center gap-2 border rounded px-3 py-1 text-sm font-semibold text-purple-700 border-purple-300 bg-purple-50 hover:bg-purple-100 transition"
@@ -101,6 +91,14 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
               <Brain size={18} className="text-purple-500"/>
               שווה לי? 🧠
             </button>
+            
+            {isAuthenticated && (
+              <ApartmentCardActions
+                apartment={apartment}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            )}
           </div>
         </div>
       </CardContent>
