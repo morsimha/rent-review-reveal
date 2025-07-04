@@ -106,8 +106,7 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({
         <DialogContent className="max-w-fit bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-purple-200">
           <DialogHeader>
             <DialogTitle className="text-center text-xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              פסנתר אינטראקטיבי
-              <span className="mx-2" role="img" aria-label="Piano">🎹</span>
+            🎼 פסנתר אינטראקטיבי 🎼 
             </DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4">
@@ -118,15 +117,14 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({
                 onClick={openAdvancedPiano}
                 className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-4 py-2 rounded-full shadow-lg transform transition-all duration-200 hover:scale-105"
               >
-                <Sparkles className="w-4 h-4 mr-2" />
-                סטודיו הקלטות AI
+                <Sparkles className="w-4 h-4 mr-0.5" />
+              AI סטודיו הקלטות
               </Button>
-              
               <Button
                 onClick={openVoiceRecorder}
                 className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-4 py-2 rounded-full shadow-lg transform transition-all duration-200 hover:scale-105"
               >
-                <Mic className="w-4 h-4 mr-2" />
+                <Mic className="w-4 h-4 mr-0.3" />
                 הקלט שירה 🎤
               </Button>
             </div>
@@ -139,7 +137,7 @@ const ThemeHeader: React.FC<ThemeHeaderProps> = ({
         <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200">
           <DialogHeader>
             <DialogTitle className="text-center text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              🎹 סטודיו הקלטות AI 🎵
+            🎵 AI סטודיו הקלטות 🎵
               <p className="text-xs font-normal text-gray-600 mt-1">
                 נגן, הקלט, ותן ל-AI לזהות את המנגינה שלך!
               </p>

@@ -29,7 +29,11 @@ const AdvancedPiano: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [soundType, setSoundType] = useState<SoundType>('sine');
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+  const [volume, setVolume] = useState(0.8);
   const recordingStartTime = useRef<number>(0);
+
+  const handleVolumeUp = () => setVolume(v => Math.min(1, v + 0.1));
+  const handleVolumeDown = () => setVolume(v => Math.max(0, v - 0.1));
 
   // תווים פשוטים - רק הלבנים
   const notes = [
@@ -75,7 +79,7 @@ const AdvancedPiano: React.FC = () => {
       oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
       oscillator.type = soundType;
       
-      gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.2);
       
       oscillator.start();
@@ -173,6 +177,12 @@ ${melodyData.map(n => `${n.note} בזמן ${n.time.toFixed(2)}s`).join(', ')}
 
   return (
     <div className="flex flex-col items-center gap-3 p-3 max-w-lg mx-auto max-h-[80vh] overflow-y-auto">
+      {/* Volume controls */}
+      <div className="flex flex-row items-center gap-2 mb-2">
+        <Button onClick={handleVolumeDown} size="sm" className={`${themeConfig.buttonGradient} rounded-full shadow-md hover:scale-110 transition-all duration-200 w-9 h-9 flex items-center justify-center text-lg`}>-</Button>
+        <span className="text-sm">עוצמה: {(volume * 100).toFixed(0)}%</span>
+        <Button onClick={handleVolumeUp} size="sm" className={`${themeConfig.buttonGradient} rounded-full shadow-md hover:scale-110 transition-all duration-200 w-9 h-9 flex items-center justify-center text-lg`}>+</Button>
+      </div>
       {/* בקרות אוקטבה וסוג צליל */}
       <div className="flex flex-col items-center gap-2">
         <div className="flex items-center gap-2">

@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -11,6 +10,10 @@ interface MusicalKeyboardProps {
 const MusicalKeyboard: React.FC<MusicalKeyboardProps> = ({ bigButtons = false }) => {
   const { themeConfig } = useTheme();
   const isMobile = useIsMobile();
+  const [volume, setVolume] = useState(0.8);
+
+  const handleVolumeUp = () => setVolume(v => Math.min(1, v + 0.1));
+  const handleVolumeDown = () => setVolume(v => Math.max(0, v - 0.1));
 
   // סדר: דו הגבוה עד דו הנמוך (כולל 2 תווים גבוהים נוספים)
   const notes = [
@@ -33,22 +36,19 @@ const MusicalKeyboard: React.FC<MusicalKeyboardProps> = ({ bigButtons = false })
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
 
-      // צליל ארוך יותר לחוויית נגינה
-      gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+      // צליל ארוך יותר ועוצמתי יותר
+      gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.2);
       
       oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
       oscillator.type = 'sine';
       
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      
       oscillator.start();
-      oscillator.stop(audioContext.currentTime + 0.5);
+      oscillator.stop(audioContext.currentTime + 1.2);
       
       setTimeout(() => {
         audioContext.close();
-      }, 600);
+      }, 1300);
     } catch (error) {
       console.log('Failed to play note:', error);
     }
@@ -67,23 +67,31 @@ const MusicalKeyboard: React.FC<MusicalKeyboardProps> = ({ bigButtons = false })
   };
 
   return (
-    <div className="flex items-center justify-center gap-2 mb-6 w-full overflow-x-auto">
-      <div className={`flex ${isMobile ? 'flex-wrap' : 'flex-row'} justify-center gap-2 ${isMobile ? 'max-w-sm mx-auto' : ''}`}>
-        {notes.map((note, idx) => (
-          <Button
-            key={idx}
-            onClick={() => playNote(note.frequency)}
-            className={`${themeConfig.buttonGradient} text-white ${getButtonClasses()} rounded-full transition-all duration-300 hover:scale-110 active:scale-95 touch-manipulation shadow-lg hover:shadow-xl transform hover:-translate-y-1`}
-            title={`נגן ${note.name}`}
-          >
-            <div className="flex flex-col items-center">
-              <span className={isMobile ? (bigButtons ? "text-lg" : "text-base") : (bigButtons ? "text-xl" : "text-lg")}>{note.emoji}</span>
-              {bigButtons && (
-                <span className={isMobile ? "text-xs font-semibold" : "text-sm font-semibold"}>{note.name}</span>
-              )}
-            </div>
-          </Button>
-        ))}
+    <div className="flex flex-col items-center justify-center gap-2 mb-6 w-full overflow-x-auto">
+      {/* Volume controls */}
+      <div className="flex flex-row items-center gap-2 mb-2">
+        <Button onClick={handleVolumeDown} size="sm" className={`${themeConfig.buttonGradient} rounded-full shadow-md hover:scale-110 transition-all duration-200 w-9 h-9 flex items-center justify-center text-lg`}>-</Button>
+        <span className="text-sm">עוצמה: {(volume * 100).toFixed(0)}%</span>
+        <Button onClick={handleVolumeUp} size="sm" className={`${themeConfig.buttonGradient} rounded-full shadow-md hover:scale-110 transition-all duration-200 w-9 h-9 flex items-center justify-center text-lg`}>+</Button>
+      </div>
+      <div className="flex items-center justify-center gap-2 mb-6 w-full overflow-x-auto">
+        <div className={`flex ${isMobile ? 'flex-wrap' : 'flex-row'} justify-center gap-2 ${isMobile ? 'max-w-sm mx-auto' : ''}`}>
+          {notes.map((note, idx) => (
+            <Button
+              key={idx}
+              onClick={() => playNote(note.frequency)}
+              className={`${themeConfig.buttonGradient} text-white ${getButtonClasses()} rounded-full transition-all duration-300 hover:scale-110 active:scale-95 touch-manipulation shadow-lg hover:shadow-xl transform hover:-translate-y-1`}
+              title={`נגן ${note.name}`}
+            >
+              <div className="flex flex-col items-center">
+                <span className={isMobile ? (bigButtons ? "text-lg" : "text-base") : (bigButtons ? "text-xl" : "text-lg")}>{note.emoji}</span>
+                {bigButtons && (
+                  <span className={isMobile ? "text-xs font-semibold" : "text-sm font-semibold"}>{note.name}</span>
+                )}
+              </div>
+            </Button>
+          ))}
+        </div>
       </div>
     </div>
   );
