@@ -280,8 +280,8 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
 
           <div ref={mapContainer} className={`w-full ${sizeClasses.height} rounded-lg`} />
           
-          {/* Legend */}
-          <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 text-xs space-y-1" dir="rtl">
+          {/* Legend - moved to top-right */}
+          <div className="absolute top-12 right-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 text-xs space-y-1" dir="rtl">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
               <span>דיברנו</span>
