@@ -106,16 +106,53 @@ export const useApartments = () => {
     }
   };
 
+  // Updated rating functions to NOT automatically refresh apartments
   const updateRating = async (id: string, rating: number) => {
-    return updateApartment(id, { rating });
+    try {
+      await updateApartmentInDB(id, { rating });
+      // Don't refresh here - let the parent component handle the delayed refresh
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating rating:', error);
+      toast({
+        title: "שגיאה",
+        description: "לא ניתן לעדכן את הדירוג",
+        variant: "destructive"
+      });
+      return { success: false, error };
+    }
   };
 
   const updateMorRating = async (id: string, morRating: number) => {
-    return updateApartment(id, { mor_rating: morRating });
+    try {
+      await updateApartmentInDB(id, { mor_rating: morRating });
+      // Don't refresh here - let the parent component handle the delayed refresh
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating Mor rating:', error);
+      toast({
+        title: "שגיאה",
+        description: "לא ניתן לעדכן את דירוג מור",
+        variant: "destructive"
+      });
+      return { success: false, error };
+    }
   };
 
   const updateGabiRating = async (id: string, gabiRating: number) => {
-    return updateApartment(id, { gabi_rating: gabiRating });
+    try {
+      await updateApartmentInDB(id, { gabi_rating: gabiRating });
+      // Don't refresh here - let the parent component handle the delayed refresh
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating Gabi rating:', error);
+      toast({
+        title: "שגיאה",
+        description: "לא ניתן לעדכן את דירוג גבי",
+        variant: "destructive"
+      });
+      return { success: false, error };
+    }
   };
 
   useEffect(() => {

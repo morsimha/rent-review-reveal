@@ -23,13 +23,14 @@ const Index = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCatGameOpen, setIsCatGameOpen] = useState(false);
   const [isDrawingGameOpen, setIsDrawingGameOpen] = useState(false);
-  const [sortBy, setSortBy] = useState<"rating" | "entry_date" | "created_at" | "status">("rating");
+  const [sortBy, setSortBy] = useState<"rating" | "entry_date" | "created_at" | "status">("created_at");
   const [statusFilter, setStatusFilter] = useState<"all" | "spoke" | "not_spoke" | "no_answer">("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedApartmentId, setSelectedApartmentId] = useState<string | null>(null);
   const [layoutMode, setLayoutMode] = useState<'regular' | 'functional' | 'tinder'>('regular');
   const [tinderMode, setTinderMode] = useState<'regular' | 'scanned'>('regular');
   const [isYad2ScanDialogOpen, setIsYad2ScanDialogOpen] = useState(false);
+  const [ratingUpdateDelay, setRatingUpdateDelay] = useState<NodeJS.Timeout | null>(null);
 
   const { isAuthenticated, login } = useAuth();
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -55,7 +56,8 @@ const Index = () => {
     deleteApartment,
     updateMorRating,
     updateGabiRating,
-    uploadImage
+    uploadImage,
+    refreshApartments
   } = useApartments();
 
   const {
@@ -73,12 +75,40 @@ const Index = () => {
 
   const handleMorRatingChange = async (apartmentId: string, newRating: number) => {
     if (!isAuthenticated) return;
+    
+    // Clear existing delay if any
+    if (ratingUpdateDelay) {
+      clearTimeout(ratingUpdateDelay);
+    }
+    
     await updateMorRating(apartmentId, newRating);
+    
+    // Set a 5-second delay before refreshing the apartments list
+    const timeoutId = setTimeout(() => {
+      refreshApartments();
+      setRatingUpdateDelay(null);
+    }, 5000);
+    
+    setRatingUpdateDelay(timeoutId);
   };
 
   const handleGabiRatingChange = async (apartmentId: string, newRating: number) => {
     if (!isAuthenticated) return;
+    
+    // Clear existing delay if any
+    if (ratingUpdateDelay) {
+      clearTimeout(ratingUpdateDelay);
+    }
+    
     await updateGabiRating(apartmentId, newRating);
+    
+    // Set a 5-second delay before refreshing the apartments list
+    const timeoutId = setTimeout(() => {
+      refreshApartments();
+      setRatingUpdateDelay(null);
+    }, 5000);
+    
+    setRatingUpdateDelay(timeoutId);
   };
 
   const handleMorTalkedChange = async (apartmentId: string, value: boolean) => {
@@ -149,6 +179,15 @@ const Index = () => {
       setLayoutMode('regular');
     }
   };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (ratingUpdateDelay) {
+        clearTimeout(ratingUpdateDelay);
+      }
+    };
+  }, [ratingUpdateDelay]);
 
   if (loading) {
     return (
