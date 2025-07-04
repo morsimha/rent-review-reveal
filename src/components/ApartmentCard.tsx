@@ -47,7 +47,6 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
     }
   };
 
-  // ריפקטור: שימוש בהוק
   const adviceDialog = useApartmentAdviceDialog(apartment);
 
   return (
@@ -60,17 +59,6 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
         <div
           className={`h-2 w-full rounded-t-lg ${getStatusColor(apartment.status)}`}
         ></div>
-        
-        {/* Edit/Delete buttons - positioned inside the card at top right */}
-        {isAuthenticated && (
-          <div className="absolute top-3 left-3 z-10">
-            <ApartmentCardActions
-              apartment={apartment}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          </div>
-        )}
         
         {/* Image and prices */}
         <ApartmentCardImageSection apartment={apartment} />
@@ -93,8 +81,8 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             note={apartment.note}
             scheduled_visit_text={apartment.scheduled_visit_text}
           />
-          {/* כפתור "שווה לי?" */}
-          <div className="flex flex-row justify-center pb-2 mt-auto">
+          {/* שורה תחתונה עם כפתור "שווה לי?" וכפתורי עריכה/מחיקה */}
+          <div className="flex flex-row justify-between items-center pb-2 mt-auto">
             <button
               type="button"
               className="flex items-center gap-2 border rounded px-3 py-1 text-sm font-semibold text-purple-700 border-purple-300 bg-purple-50 hover:bg-purple-100 transition"
@@ -103,6 +91,14 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
               <Brain size={18} className="text-purple-500"/>
               שווה לי? 🧠
             </button>
+            
+            {isAuthenticated && (
+              <ApartmentCardActions
+                apartment={apartment}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            )}
           </div>
         </div>
       </CardContent>

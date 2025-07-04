@@ -252,7 +252,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
         <div className="relative">
           {/* Map Size Selector - Only show in compact mode with only 2 options */}
           {isCompact && (
-            <div className="absolute top-2 left-2 z-10 flex gap-1">
+            <div className="absolute top-2 left-2 z-10 flex gap-2">
               <button
                 onClick={() => setMapSize('half')}
                 className={`p-1.5 rounded-lg transition-all duration-300 ${
@@ -281,12 +281,12 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
           <div ref={mapContainer} className={`w-full ${sizeClasses.height} rounded-lg`} />
           
           {/* Legend */}
-          <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 text-xs" dir="rtl">
-            <div className="flex items-center gap-2 mb-1">
+          <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 text-xs space-y-1" dir="rtl">
+            <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
               <span>דיברנו</span>
             </div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
               <span>לא דיברנו</span>
             </div>
