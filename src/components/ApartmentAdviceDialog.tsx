@@ -30,7 +30,7 @@ const ApartmentAdviceDialog: React.FC<Props> = ({
           </DialogTitle>
         </DialogHeader>
         <DialogDescription>
-          התייעצות עם בינה מלאכותית לגבי מידת הכדאיות של הדירה. תשובה קצרה – לא במקום שיקול דעתכם 😸
+          התייעצות עם בינה מלאכותית לגבי מידת הכדאיות של הדירה 😸
         </DialogDescription>
         <div className="py-4 min-h-16 text-center">
           {loading ? (

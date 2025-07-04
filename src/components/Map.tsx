@@ -174,7 +174,7 @@ const Map: React.FC<MapProps> = ({ apartments, selectedApartmentId, setSelectedA
         zoom: 11,
       });
 
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-left');
 
       map.current.on('load', async () => {
         await addApartmentMarkers();

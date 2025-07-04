@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Phone, Link } from "lucide-react";
 import type { Apartment } from "@/types/ApartmentTypes";
@@ -43,27 +42,27 @@ const ApartmentCardMainInfo: React.FC<Props> = ({ apartment }) => {
       </div>
 
       {(apartment.contact_name || apartment.contact_phone) && (
-        <div className="text-sm text-gray-700 mb-2 text-right">
-          {apartment.contact_name && <p className="mb-1 text-right">{apartment.contact_name}</p>}
+        <div className="text-sm text-gray-700 mb-2 text-left">
+          {apartment.contact_name && <p className="mb-1 text-right" style={{ textAlign: 'right' }}>{apartment.contact_name}</p>}
           {apartment.contact_phone && (
-            <p className="flex items-center gap-1 justify-end text-right">
-              <span>{apartment.contact_phone}</span>
+            <p className="flex items-center gap-1 justify-start text-left">
               <Phone className="w-4 h-4" />
+              <span>{apartment.contact_phone}</span>
             </p>
           )}
         </div>
       )}
 
       {apartment.apartment_link && (
-        <div className="mb-2 text-right">
+        <div className="mb-2 text-left">
           <a
             href={apartment.apartment_link}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-blue-600 hover:underline flex items-center gap-1 justify-end text-right"
+            className="text-sm text-blue-600 hover:underline flex items-center gap-1 justify-start text-left"
           >
-            <span>קישור לדירה</span>
             <Link className="w-4 h-4" />
+            <span>קישור לדירה</span>
           </a>
         </div>
       )}

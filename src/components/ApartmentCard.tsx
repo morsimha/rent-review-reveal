@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import type { Apartment } from "@/types/ApartmentTypes";
 import ApartmentCardImageSection from "./ApartmentCardImageSection";
@@ -6,10 +5,11 @@ import ApartmentCardMainInfo from "./ApartmentCardMainInfo";
 import ApartmentCardNote from "./ApartmentCardNote";
 import ApartmentCardRatings from "./ApartmentCardRatings";
 import ApartmentCardActions from "./ApartmentCardActions";
-import { Brain } from "lucide-react";
+import { Brain, Edit, Trash2 } from "lucide-react";
 import ApartmentAdviceDialog from "./ApartmentAdviceDialog";
 import { useApartmentAdviceDialog } from "./hooks/useApartmentAdviceDialog";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface ApartmentCardProps {
   apartment: Apartment;
@@ -82,22 +82,45 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
             scheduled_visit_text={apartment.scheduled_visit_text}
           />
           {/* שורה תחתונה עם כפתור "שווה לי?" וכפתורי עריכה/מחיקה */}
-          <div className="flex flex-row justify-between items-center pb-2 mt-auto">
-            <button
-              type="button"
-              className="flex items-center gap-2 border rounded px-3 py-1 text-sm font-semibold text-purple-700 border-purple-300 bg-purple-50 hover:bg-purple-100 transition"
-              onClick={adviceDialog.openDialog}
-            >
-              <Brain size={18} className="text-purple-500"/>
-              שווה לי? 🧠
-            </button>
-            
+          <div className="flex flex-row items-center pb-2 mt-auto">
+            {/* Edit button on the left */}
             {isAuthenticated && (
-              <ApartmentCardActions
-                apartment={apartment}
-                onEdit={onEdit}
-                onDelete={onDelete}
-              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={e => {
+                  e.stopPropagation();
+                  onEdit(apartment);
+                }}
+                className="h-8 w-8 p-0 bg-white/90 hover:bg-white shadow-sm"
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+            )}
+            {/* Centered advice button */}
+            <div className="flex-1 flex justify-center">
+              <button
+                type="button"
+                className="flex items-center gap-2 border rounded px-3 py-1 text-sm font-semibold text-purple-700 border-purple-300 bg-purple-50 hover:bg-purple-100 transition"
+                onClick={adviceDialog.openDialog}
+              >
+                <Brain size={18} className="text-purple-500"/>
+                שווה לי? 🧠
+              </button>
+            </div>
+            {/* Delete button on the right */}
+            {isAuthenticated && (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={e => {
+                  e.stopPropagation();
+                  onDelete(apartment.id);
+                }}
+                className="bg-red-500 hover:bg-red-600 h-8 w-8 p-0 shadow-sm"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
             )}
           </div>
         </div>
