@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Apartment } from '@/types/ApartmentTypes';
 
@@ -32,9 +33,18 @@ export const uploadApartmentImageToStorage = async (file: File): Promise<string 
 };
 
 export const insertApartment = async (apartmentData: Omit<Apartment, 'id' | 'created_at' | 'updated_at'>) => {
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  const dataWithUserId = {
+    ...apartmentData,
+    user_id: user.id,
+  };
+
   const { data, error } = await supabase
     .from('apartments')
-    .insert([apartmentData])
+    .insert([dataWithUserId])
     .select()
     .single();
   if (error) throw error;
@@ -43,7 +53,7 @@ export const insertApartment = async (apartmentData: Omit<Apartment, 'id' | 'cre
   try {
     await supabase.functions.invoke('send-apartment-email', {
       body: {
-        ...apartmentData,
+        ...dataWithUserId,
         action: 'added',
         note: apartmentData.note || "", // ensure נשלח
       }
@@ -57,7 +67,6 @@ export const insertApartment = async (apartmentData: Omit<Apartment, 'id' | 'cre
   return data;
 };
 
-// *** MAIN CHANGE: Remove the email notification logic from updateApartmentInDB ***
 export const updateApartmentInDB = async (id: string, updates: Partial<Apartment>) => {
   const { error: updateError } = await supabase
     .from('apartments')
@@ -67,6 +76,10 @@ export const updateApartmentInDB = async (id: string, updates: Partial<Apartment
 };
 
 export const moveApartmentToRecycleBin = async (id: string) => {
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
   // First, get the apartment data
   const { data: apartment, error: fetchError } = await supabase
     .from('apartments')
@@ -91,7 +104,7 @@ export const moveApartmentToRecycleBin = async (id: string) => {
       square_meters: apartment.square_meters,
       floor: apartment.floor,
       pets_allowed: apartment.pets_allowed,
-      couple_id: apartment.couple_id,
+      user_id: user.id,
     }]);
   
   if (insertError) throw insertError;

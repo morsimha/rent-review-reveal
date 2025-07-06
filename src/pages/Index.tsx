@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -10,13 +11,13 @@ import ApartmentForm from '@/components/ApartmentForm';
 import ApartmentCard from '@/components/ApartmentCard';
 import EditApartmentDialog from '@/components/EditApartmentDialog';
 import { useAuth } from '@/contexts/AuthContext';
-import PasswordDialog from '@/components/PasswordDialog';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import ThemeHeader from '@/components/ThemeHeader';
 import TinderMode from '@/components/TinderMode';
 import Yad2ScanDialog from '@/components/Yad2ScanDialog';
 import { useScannedApartments } from '@/hooks/useScannedApartments';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
@@ -32,21 +33,17 @@ const Index = () => {
   const [isYad2ScanDialogOpen, setIsYad2ScanDialogOpen] = useState(false);
   const [ratingUpdateDelay, setRatingUpdateDelay] = useState<NodeJS.Timeout | null>(null);
 
-  const { isAuthenticated, login } = useAuth();
-  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
-  const [authAttempted, setAuthAttempted] = useState(false);
+  const { user, isAuthenticated, logout, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const { themeConfig } = useTheme();
+  const navigate = useNavigate();
 
+  // Redirect to auth if not authenticated
   useEffect(() => {
-    if (!isAuthenticated && !authAttempted) {
-      setTimeout(() => {
-        if (!sessionStorage.getItem('isAuthenticated')) {
-          setIsPasswordDialogOpen(true);
-        }
-      }, 100);
+    if (!authLoading && !isAuthenticated) {
+      navigate('/auth');
     }
-  }, [isAuthenticated, authAttempted]);
+  }, [isAuthenticated, authLoading, navigate]);
 
   const {
     apartments,
@@ -138,37 +135,6 @@ const Index = () => {
     await deleteApartment(apartmentId);
   };
 
-  const handlePasswordSubmit = (password: string) => {
-    setAuthAttempted(true);
-    const success = login(password);
-    if (success) {
-      setIsPasswordDialogOpen(false);
-      toast({
-        title: "התחברת בהצלחה!",
-        description: "כעת באפשרותך לערוך את רשימת הדירות.",
-      });
-    } else {
-      toast({
-        title: "סיסמא שגויה",
-        description: "הסיסמא שהזנת אינה נכונה. הנך במצב צפייה בלבד.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const onPasswordDialogChange = (open: boolean) => {
-    setIsPasswordDialogOpen(open);
-    if (!open) {
-      setAuthAttempted(true);
-      if (!isAuthenticated) {
-        toast({
-          title: "מצב צפייה בלבד",
-          description: "לא הוזנה סיסמא. לא ניתן לבצע שינויים.",
-        });
-      }
-    }
-  };
-
   const handleLayoutToggle = () => {
     if (layoutMode === 'regular') {
       setLayoutMode('functional');
@@ -180,6 +146,15 @@ const Index = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await logout();
+    toast({
+      title: "התנתקת בהצלחה",
+      description: "להתראות!",
+    });
+    navigate('/auth');
+  };
+
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -189,6 +164,19 @@ const Index = () => {
     };
   }, [ratingUpdateDelay]);
 
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className={`min-h-screen ${themeConfig.backgroundGradient} flex items-center justify-center`} dir="rtl">
+        <div className="text-center">
+          <div className="text-4xl mb-4">{themeConfig.mainEmoji}</div>
+          <p className={`${themeConfig.accentColor} text-lg`}>טוען...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading while fetching apartments
   if (loading) {
     return (
       <div className={`min-h-screen ${themeConfig.backgroundGradient} flex items-center justify-center`} dir="rtl">
@@ -253,6 +241,20 @@ const Index = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8 relative z-10">
+        {/* User Info and Logout */}
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-sm text-gray-600">
+            שלום, {user?.email}
+          </div>
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            size="sm"
+          >
+            התנתק
+          </Button>
+        </div>
+
         {/* Themed Header */}
         <ThemeHeader 
           onDrawingGameOpen={() => setIsDrawingGameOpen(true)}
@@ -478,12 +480,6 @@ const Index = () => {
 
       {/* Cat Game Modal */}
       <CatGame isOpen={isCatGameOpen} onClose={() => setIsCatGameOpen(false)} />
-
-      <PasswordDialog
-        open={isPasswordDialogOpen}
-        onOpenChange={onPasswordDialogChange}
-        onPasswordSubmit={handlePasswordSubmit}
-      />
     </div>
   );
 };

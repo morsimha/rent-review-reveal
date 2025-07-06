@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface ScannedApartment {
@@ -59,6 +60,10 @@ export const deleteScannedApartment = async (apartmentId: string) => {
 export const moveScannedApartmentToMain = async (scannedApartment: ScannedApartment) => {
   console.log('Moving scanned apartment to main:', scannedApartment.id);
   
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+  
   // Insert into main apartments table
   const { data, error: insertError } = await supabase
     .from('apartments')
@@ -78,6 +83,7 @@ export const moveScannedApartmentToMain = async (scannedApartment: ScannedApartm
       rating: 0,
       mor_rating: 0,
       gabi_rating: 0,
+      user_id: user.id,
     }])
     .select()
     .single();
@@ -105,9 +111,16 @@ export const moveScannedApartmentToMain = async (scannedApartment: ScannedApartm
 export const scanYad2Apartments = async (scanParams: ScanParameters) => {
   console.log('Calling yad2-scanner function with params:', scanParams);
   
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+  
   try {
     const { data, error } = await supabase.functions.invoke('yad2-scanner', {
-      body: { scanParams },
+      body: { 
+        scanParams,
+        user_id: user.id 
+      },
       headers: {
         'Content-Type': 'application/json',
       }

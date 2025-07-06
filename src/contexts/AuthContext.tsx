@@ -1,44 +1,101 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-const PASSWORD = "mor&gaby"; // The password to access editing features
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
+  user: User | null;
+  session: Session | null;
   isAuthenticated: boolean;
-  login: (password: string) => boolean;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (email: string, password: string, fullName?: string) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(true); // Temporarily set to true to bypass password
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedAuth = sessionStorage.getItem('isAuthenticated');
-    if (storedAuth === 'true') {
-      setIsAuthenticated(true);
-    } else if (storedAuth === 'false') { // Handle logout case
-      setIsAuthenticated(false);
-    }
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = (password: string): boolean => {
-    if (password === PASSWORD) {
-      sessionStorage.setItem('isAuthenticated', 'true');
-      setIsAuthenticated(true);
-      return true;
+  const login = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'שגיאה בהתחברות' };
     }
-    return false;
   };
 
-  const logout = () => {
-    sessionStorage.setItem('isAuthenticated', 'false'); // Set to false instead of removing
-    setIsAuthenticated(false);
+  const signup = async (email: string, password: string, fullName?: string) => {
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: fullName || '',
+          }
+        }
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'שגיאה בהרשמה' };
+    }
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{
+      user,
+      session,
+      isAuthenticated: !!user,
+      login,
+      signup,
+      logout,
+      loading
+    }}>
       {children}
     </AuthContext.Provider>
   );
