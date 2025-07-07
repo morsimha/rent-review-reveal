@@ -7,7 +7,7 @@ interface AuthContextType {
   session: Session | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  signup: (email: string, password: string, fullName?: string, firstName?: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (email: string, password: string, lastName?: string, firstName?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   loading: boolean;
   firstName: string;
@@ -59,9 +59,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signup = async (email: string, password: string, fullName?: string, firstName?: string) => {
+  const signup = async (email: string, password: string, lastName?: string, firstName?: string) => {
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}/confirm-email`;
       
       const { error } = await supabase.auth.signUp({
         email,
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            full_name: fullName || '',
+            last_name: lastName || '',
             first_name: firstName || '',
           }
         }

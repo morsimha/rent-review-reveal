@@ -11,7 +11,7 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [firstName, setFirstName] = useState('');
   const [loading, setLoading] = useState(false);
   
@@ -41,7 +41,7 @@ const Auth = () => {
           });
         }
       } else {
-        const result = await signup(email, password, fullName, firstName);
+        const result = await signup(email, password, lastName, firstName);
         if (result.success) {
           toast({
             title: "נרשמת בהצלחה!",
@@ -112,16 +112,17 @@ const Auth = () => {
             
             {!isLogin && (
               <div>
-                <label htmlFor="fullName" className="block text-sm font-medium mb-1">
-                  שם מלא
+                <label htmlFor="lastName" className="block text-sm font-medium mb-1">
+                  שם משפחה
                 </label>
                 <Input
-                  id="fullName"
+                  id="lastName"
                   type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="הכנס שם מלא"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="הכנס שם משפחה"
                   className="text-right"
+                  required
                 />
               </div>
             )}
