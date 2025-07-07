@@ -12,6 +12,7 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
   const [loading, setLoading] = useState(false);
   
   const { login, signup } = useAuth();
@@ -40,7 +41,7 @@ const Auth = () => {
           });
         }
       } else {
-        const result = await signup(email, password, fullName);
+        const result = await signup(email, password, fullName, firstName);
         if (result.success) {
           toast({
             title: "נרשמת בהצלחה!",
@@ -84,7 +85,7 @@ const Auth = () => {
       <Card className="w-full max-w-md relative z-10">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">
-            {themeConfig.mainEmoji} Rent Master
+            {themeConfig.mainEmoji} Rent Master {themeConfig.mainEmoji}
           </CardTitle>
           <CardDescription>
             {isLogin ? 'התחבר לחשבון שלך' : 'צור חשבון חדש'}
@@ -92,6 +93,23 @@ const Auth = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {!isLogin && (
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium mb-1">
+                  שם פרטי
+                </label>
+                <Input
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="הכנס שם פרטי"
+                  className="text-right"
+                  required
+                />
+              </div>
+            )}
+            
             {!isLogin && (
               <div>
                 <label htmlFor="fullName" className="block text-sm font-medium mb-1">

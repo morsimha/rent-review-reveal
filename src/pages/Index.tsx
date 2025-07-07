@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -33,7 +32,7 @@ const Index = () => {
   const [isYad2ScanDialogOpen, setIsYad2ScanDialogOpen] = useState(false);
   const [ratingUpdateDelay, setRatingUpdateDelay] = useState<NodeJS.Timeout | null>(null);
 
-  const { user, isAuthenticated, logout, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, logout, loading: authLoading, firstName } = useAuth();
   const { toast } = useToast();
   const { themeConfig } = useTheme();
   const navigate = useNavigate();
@@ -244,7 +243,7 @@ const Index = () => {
         {/* User Info and Logout */}
         <div className="flex justify-between items-center mb-4">
           <div className="text-sm text-gray-600">
-            שלום, {user?.email}
+            שלום, {firstName}!
           </div>
           <Button
             onClick={handleLogout}
