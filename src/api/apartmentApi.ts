@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Apartment } from '@/types/ApartmentTypes';
 
@@ -37,8 +36,10 @@ export const insertApartment = async (apartmentData: Omit<Apartment, 'id' | 'cre
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
+  // Remove any user_id from apartmentData to avoid override
+  const { user_id, ...rest } = apartmentData;
   const dataWithUserId = {
-    ...apartmentData,
+    ...rest,
     user_id: user.id,
   };
 

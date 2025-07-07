@@ -243,7 +243,6 @@ export type Database = {
       }
       invitations: {
         Row: {
-          couple_id: string
           created_at: string
           expires_at: string
           id: string
@@ -252,7 +251,6 @@ export type Database = {
           status: string
         }
         Insert: {
-          couple_id: string
           created_at?: string
           expires_at?: string
           id?: string
@@ -261,7 +259,6 @@ export type Database = {
           status?: string
         }
         Update: {
-          couple_id?: string
           created_at?: string
           expires_at?: string
           id?: string
@@ -269,20 +266,11 @@ export type Database = {
           inviter_id?: string
           status?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "invitations_couple_id_fkey"
-            columns: ["couple_id"]
-            isOneToOne: false
-            referencedRelation: "couples"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
           avatar_url: string | null
-          couple_id: string | null
           created_at: string
           email: string | null
           full_name: string | null
@@ -291,7 +279,6 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
-          couple_id?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -300,7 +287,6 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
-          couple_id?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -314,7 +300,6 @@ export type Database = {
           apartment_link: string | null
           contact_name: string | null
           contact_phone: string | null
-          couple_id: string | null
           created_at: string
           description: string | null
           floor: number | null
@@ -330,7 +315,6 @@ export type Database = {
           apartment_link?: string | null
           contact_name?: string | null
           contact_phone?: string | null
-          couple_id?: string | null
           created_at?: string
           description?: string | null
           floor?: number | null
@@ -346,7 +330,6 @@ export type Database = {
           apartment_link?: string | null
           contact_name?: string | null
           contact_phone?: string | null
-          couple_id?: string | null
           created_at?: string
           description?: string | null
           floor?: number | null
@@ -358,15 +341,7 @@ export type Database = {
           square_meters?: number | null
           title?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "scanned_apartments_couple_id_fkey"
-            columns: ["couple_id"]
-            isOneToOne: false
-            referencedRelation: "couples"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {

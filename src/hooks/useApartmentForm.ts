@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Apartment } from '@/types/ApartmentTypes';
@@ -143,6 +142,7 @@ export const useApartmentForm = (
       rating: 0,
       mor_rating: 0,
       gabi_rating: 0,
+      scheduled_visit_text: quickEditData.scheduled_visit_text || null,
     };
     const success = await onAddApartment(apartmentData);
     if (success) {
@@ -210,6 +210,7 @@ export const useApartmentForm = (
       pets_allowed: formData.pets_allowed,
       has_shelter: formData.has_shelter,
       entry_date: cleanDateData(formData.entry_date),
+      scheduled_visit_text: formData.scheduled_visit_text || null,
     };
     const success = await onAddApartment(apartmentData);
     if (success) {
