@@ -461,7 +461,7 @@ const Index = () => {
 
         {filteredApartments.length === 0 && layoutMode !== 'tinder' && (
           <div className="text-center py-12">
-            <p className={`${themeConfig.accentColor} text-lg`}>לא נמצאו דירות בהתאם לסינון {themeConfig.mainEmoji}</p>
+            <p className={`${themeConfig.accentColor} text-lg`}>לא נמצאו דירות. הוסף את הדירה הראשונה שלך!{themeConfig.mainEmoji}</p>
           </div>
         )}
       </div>

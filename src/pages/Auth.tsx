@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -85,7 +84,7 @@ const Auth = () => {
       <Card className="w-full max-w-md relative z-10">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">
-            {themeConfig.mainEmoji} מעצב הדירות
+            {themeConfig.mainEmoji} Rent Master
           </CardTitle>
           <CardDescription>
             {isLogin ? 'התחבר לחשבון שלך' : 'צור חשבון חדש'}
