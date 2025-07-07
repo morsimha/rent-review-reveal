@@ -15,7 +15,6 @@ export type Database = {
           arnona: number | null
           contact_name: string | null
           contact_phone: string | null
-          couple_id: string | null
           created_at: string
           description: string | null
           entry_date: string | null
@@ -38,13 +37,13 @@ export type Database = {
           status: string | null
           title: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           apartment_link?: string | null
           arnona?: number | null
           contact_name?: string | null
           contact_phone?: string | null
-          couple_id?: string | null
           created_at?: string
           description?: string | null
           entry_date?: string | null
@@ -67,13 +66,13 @@ export type Database = {
           status?: string | null
           title: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           apartment_link?: string | null
           arnona?: number | null
           contact_name?: string | null
           contact_phone?: string | null
-          couple_id?: string | null
           created_at?: string
           description?: string | null
           entry_date?: string | null
@@ -96,16 +95,9 @@ export type Database = {
           status?: string | null
           title?: string
           updated_at?: string
+          user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "apartments_couple_id_fkey"
-            columns: ["couple_id"]
-            isOneToOne: false
-            referencedRelation: "couples"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       cat_game_scores: {
         Row: {
