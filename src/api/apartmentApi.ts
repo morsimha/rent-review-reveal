@@ -37,26 +37,14 @@ export const insertApartment = async (apartmentData: Omit<Apartment, 'id' | 'cre
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
-  // Get the user's couple_id from profiles
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('couple_id')
-    .eq('id', user.id)
-    .single();
-
-  if (profileError) {
-    console.error('Error fetching user profile:', profileError);
-    throw new Error('Failed to get user profile');
-  }
-
-  const dataWithCoupleId = {
+  const dataWithUserId = {
     ...apartmentData,
-    couple_id: profile?.couple_id || null,
+    user_id: user.id,
   };
 
   const { data, error } = await supabase
     .from('apartments')
-    .insert([dataWithCoupleId])
+    .insert([dataWithUserId])
     .select()
     .single();
   if (error) throw error;
@@ -65,7 +53,7 @@ export const insertApartment = async (apartmentData: Omit<Apartment, 'id' | 'cre
   try {
     await supabase.functions.invoke('send-apartment-email', {
       body: {
-        ...dataWithCoupleId,
+        ...dataWithUserId,
         action: 'added',
         note: apartmentData.note || "", // ensure נשלח
       }
@@ -92,18 +80,6 @@ export const moveApartmentToRecycleBin = async (id: string) => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
-  // Get the user's couple_id from profiles
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('couple_id')
-    .eq('id', user.id)
-    .single();
-
-  if (profileError) {
-    console.error('Error fetching user profile:', profileError);
-    throw new Error('Failed to get user profile');
-  }
-
   // First, get the apartment data
   const { data: apartment, error: fetchError } = await supabase
     .from('apartments')
@@ -128,7 +104,7 @@ export const moveApartmentToRecycleBin = async (id: string) => {
       square_meters: apartment.square_meters,
       floor: apartment.floor,
       pets_allowed: apartment.pets_allowed,
-      couple_id: profile?.couple_id || null,
+      user_id: user.id,
     }]);
   
   if (insertError) throw insertError;

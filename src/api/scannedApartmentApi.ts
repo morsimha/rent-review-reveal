@@ -15,6 +15,7 @@ export interface ScannedApartment {
   floor: number | null;
   pets_allowed: 'yes' | 'no' | 'unknown';
   created_at: string;
+  user_id?: string | null;
 }
 
 export interface ScanParameters {

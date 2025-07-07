@@ -26,5 +26,5 @@ export interface Apartment {
   spoke_with_mor?: boolean | null;
   spoke_with_gabi?: boolean | null;
   scheduled_visit_text?: string | null;
-  couple_id?: string | null;
+  user_id?: string | null;
 }
