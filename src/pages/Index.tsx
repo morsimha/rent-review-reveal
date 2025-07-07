@@ -418,6 +418,7 @@ const Index = () => {
                     onCardClick={() => setSelectedApartmentId(apartment.id)}
                     onMorTalkedChange={handleMorTalkedChange}
                     onGabiTalkedChange={handleGabiTalkedChange}
+                    firstName={firstName}
                   />
                 </div>
               ))}
@@ -452,6 +453,7 @@ const Index = () => {
                   onCardClick={() => setSelectedApartmentId(apartment.id)}
                   onMorTalkedChange={handleMorTalkedChange}
                   onGabiTalkedChange={handleGabiTalkedChange}
+                  firstName={firstName}
                 />
               ))}
             </div>

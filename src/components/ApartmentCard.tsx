@@ -21,6 +21,7 @@ interface ApartmentCardProps {
   onGabiTalkedChange?: (apartmentId: string, value: boolean) => void;
   isAuthenticated: boolean;
   onCardClick?: () => void;
+  firstName: string;
 }
 
 const ApartmentCard: React.FC<ApartmentCardProps> = ({
@@ -33,6 +34,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
   onGabiTalkedChange,
   isAuthenticated,
   onCardClick,
+  firstName,
 }) => {
   const getStatusColor = (status: "spoke" | "not_spoke" | "no_answer") => {
     switch (status) {
@@ -71,6 +73,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           <ApartmentCardRatings
             apartment={apartment}
             isAuthenticated={isAuthenticated}
+            firstName={firstName}
             onMorRatingChange={onMorRatingChange}
             onGabiRatingChange={onGabiRatingChange}
             onMorTalkedChange={onMorTalkedChange}
