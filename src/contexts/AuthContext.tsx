@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -61,7 +62,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signup = async (email: string, password: string, lastName?: string, firstName?: string) => {
     try {
-      const redirectUrl = `${window.location.origin}/confirm-email`;
+      // Use the production URL for email confirmation
+      const redirectUrl = `https://rent-master-4bceea.lovable.app/confirm-email`;
       
       const { error } = await supabase.auth.signUp({
         email,
